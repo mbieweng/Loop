@@ -54,8 +54,17 @@ final class DeviceDataManager: CarbStoreDelegate, CarbStoreSyncDelegate, DoseSto
         }
     }
 
+    var fetchPumpGlucoseEnabled: Bool {
+        get {
+            return UserDefaults.standard.fetchPumpGlucoseEnabled
+        }
+        set {
+            UserDefaults.standard.fetchPumpGlucoseEnabled = newValue
+        }
+    }
+
     var sensorInfo: SensorDisplayable? {
-        return latestGlucoseG5 ?? latestGlucoseG4 ?? latestGlucoseFromShare ?? latestPumpStatusFromMySentry
+        return latestGlucoseG5 ?? latestGlucoseG4 ?? latestGlucoseFromShare ?? latestPumpStatusFromMySentry ?? latestEnliteData
     }
 
     var latestPumpStatus: RileyLinkKit.PumpStatus?
@@ -366,6 +375,14 @@ final class DeviceDataManager: CarbStoreDelegate, CarbStoreSyncDelegate, DoseSto
 
         device.assertIdleListening()
 
+        assertCurrentPumpStatus(device: device) {
+            if UserDefaults.standard.fetchPumpGlucoseEnabled {
+                self.assertCurrentEnliteData(device: device)
+            }
+        }
+    }
+
+    private func assertCurrentPumpStatus(device: RileyLinkDevice, _ completion: (() -> Void)? = nil) {
         // How long should we wait before we poll for new pump data?
         let pumpStatusAgeTolerance = rileyLinkManager.idleListeningEnabled ? TimeInterval(minutes: 11) : TimeInterval(minutes: 4)
 
@@ -391,6 +408,7 @@ final class DeviceDataManager: CarbStoreDelegate, CarbStoreSyncDelegate, DoseSto
                     nsPumpStatus = nil
                 }
                 self.nightscoutDataManager.uploadDeviceStatus(nsPumpStatus)
+                completion?()
             }
         }
     }
@@ -472,6 +490,61 @@ final class DeviceDataManager: CarbStoreDelegate, CarbStoreSyncDelegate, DoseSto
                     self.logger.addError("Device auto-tune failed with error: \(error)", fromSource: "RileyLink")
                 }
             }
+        }
+    }
+
+    // MARK: - Enlite
+
+    fileprivate var latestEnliteData: EnliteSensorDisplayable?
+
+    private func updateEnliteSensorStatus(_ events: [TimestampedGlucoseEvent]) {
+        let sensorEvents = events.filter({ $0.glucoseEvent is RelativeTimestampedGlucoseEvent })
+
+        if let latestSensorEvent = sensorEvents.last?.glucoseEvent as? RelativeTimestampedGlucoseEvent {
+            self.latestEnliteData = EnliteSensorDisplayable(latestSensorEvent)
+        }
+    }
+
+    private func assertCurrentEnliteData(device: RileyLinkDevice, _ completion: (() -> Void)? = nil) {
+        guard let device = rileyLinkManager.firstConnectedDevice else {
+            return
+        }
+
+        let fetchGlucoseSince = glucoseStore?.latestGlucose?.startDate.addingTimeInterval(TimeInterval(minutes: 1)) ?? Date(timeIntervalSinceNow: TimeInterval(hours: -24))
+
+        if fetchGlucoseSince.timeIntervalSinceNow <= TimeInterval(minutes: -4.5) {
+            device.ops?.getGlucoseHistoryEvents(since: fetchGlucoseSince, completion: { (result) in
+                switch result {
+                case .success(let glucoseEvents):
+
+                    defer {
+                        _ = self.remoteDataManager.nightscoutUploader?.processGlucoseEvents(glucoseEvents, source: device.deviceURI)
+                    }
+
+                    self.updateEnliteSensorStatus(glucoseEvents)
+
+                    let glucoseValues = glucoseEvents
+                        .filter({ $0.glucoseEvent is SensorValueGlucoseEvent && $0.date > fetchGlucoseSince })
+                        .map({ (e:TimestampedGlucoseEvent) -> (quantity: HKQuantity, date: Date, isDisplayOnly: Bool) in
+                            let glucoseEvent = e.glucoseEvent as! SensorValueGlucoseEvent
+                            let quantity = HKQuantity(unit: HKUnit.milligramsPerDeciliterUnit(), doubleValue: Double(glucoseEvent.sgv))
+                            return (quantity: quantity, date: e.date, isDisplayOnly: false)
+                        })
+
+                    self.glucoseStore?.addGlucoseValues(glucoseValues, device: nil, resultHandler:  { (success, _, error) in
+                        if let error = error {
+                            self.logger.addError(error, fromSource: "GlucoseStore")
+                        }
+
+                        if success {
+                            NotificationCenter.default.post(name: .GlucoseUpdated, object: self)
+                        }
+                    })
+
+                case .failure(let error):
+                    self.logger.addError(error, fromSource: "PumpOps")
+                }
+            })
         }
     }
 
