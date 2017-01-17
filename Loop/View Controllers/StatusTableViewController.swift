@@ -468,7 +468,8 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
 
             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
 
-            let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0
+            //let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0
+            let alpha: CGFloat = 1
             cell.titleLabel?.alpha = alpha
             cell.subtitleLabel?.alpha = alpha
 
@@ -543,13 +544,14 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
         case .charts:
             // 20: Status bar
             // 44: Toolbar
-            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 20 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
+            // 77: hud view
+            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 77 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
 
             switch ChartRow(rawValue: indexPath.row)! {
             case .glucose:
-                return max(100, 0.37 * availableSize)
+                return max(100, 0.34 * availableSize)
             case .iob, .dose, .cob:
-                return max(100, 0.21 * availableSize)
+                return max(100, 0.22 * availableSize)
             }
         case .status:
             return UITableViewAutomaticDimension
@@ -607,7 +609,8 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
             for case let row as ChartTableViewCell in self.tableView.visibleCells {
                 let forwards = gestureRecognizer.state == .began
                 UIView.animate(withDuration: forwards ? 0.2 : 0.5, delay: forwards ? 0 : 1, animations: {
-                    let alpha: CGFloat = forwards ? 0 : 1
+                    //let alpha: CGFloat = forwards ? 0 : 1
+                    let alpha: CGFloat = 1;
                     row.titleLabel?.alpha = alpha
                     row.subtitleLabel?.alpha = alpha
                 })
