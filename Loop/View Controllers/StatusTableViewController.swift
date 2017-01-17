@@ -548,9 +548,9 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
 
             switch ChartRow(rawValue: indexPath.row)! {
             case .glucose:
-                return max(100, 0.34 * availableSize)
+                return max(100, 0.37 * availableSize)
             case .iob, .dose, .cob:
-                return max(100, 0.22 * availableSize)
+                return max(100, 0.21 * availableSize)
             }
         case .status:
             return UITableViewAutomaticDimension
