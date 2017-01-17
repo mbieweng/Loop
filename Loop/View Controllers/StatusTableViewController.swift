@@ -660,22 +660,39 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
             vc.hidesBottomBarWhenPushed = true
         case let vc as BolusViewController:
             if let maxBolus = self.dataManager.maximumBolus {
-                vc.maxBolus = maxBolus
+                DispatchQueue.main.async {
+                    vc.maxBolus = maxBolus
+                }
             }
 
-            if let bolus = sender as? Double {
-                vc.recommendedBolus = bolus
+            if let recommendation = sender as? BolusRecommendation {
+                DispatchQueue.main.async {
+                    vc.bolusRecommendation = recommendation
+                }
             } else {
-                self.dataManager.loopManager.getRecommendedBolus { (units, error) -> Void in
+                self.dataManager.loopManager.getRecommendedBolus { (recommendation, error) -> Void in
                     if let error = error {
                         self.dataManager.logger.addError(error, fromSource: "Bolus")
-                    } else if let bolus = units {
+                    } else if let recommendation = recommendation {
                         DispatchQueue.main.async {
-                            vc.recommendedBolus = bolus
+                            vc.bolusRecommendation = recommendation
                         }
                     }
                 }
             }
+            self.dataManager.loopManager.getLoopStatus({ (glucose, _, _, _, _, iob, cob, error) in
+                DispatchQueue.main.async {
+                    vc.glucoseUnit = self.charts.glucoseUnit
+                    vc.activeInsulin = iob?.value
+                    vc.activeCarbohydrates = cob?.quantity.doubleValue(for: HKUnit.gram())
+                    vc.loopError = error
+
+                    if let glucose = glucose, let lastPoint = glucose.last {
+                        vc.eventualGlucose = lastPoint
+                    }
+                }
+            })
+
         case let vc as PredictionTableViewController:
             vc.dataManager = dataManager
         case let vc as SettingsTableViewController:
@@ -691,7 +708,7 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
     @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
         if let carbVC = segue.source as? CarbEntryEditViewController, let updatedEntry = carbVC.updatedCarbEntry {
 
-            dataManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry) { (units, error) -> Void in
+            dataManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry) { (recommendation, error) -> Void in
                 DispatchQueue.main.async {
                     if let error = error {
                         // Ignore bolus wizard errors
@@ -702,8 +719,8 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
                             self.needsRefresh = true
                             self.reloadData()
                         }
-                    } else if self.active && self.visible, let bolus = units, bolus > 0 {
-                        self.performSegue(withIdentifier: BolusViewController.className, sender: bolus)
+                    } else if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
+                        self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
                         self.needsRefresh = true
                     } else {
                         self.needsRefresh = true
