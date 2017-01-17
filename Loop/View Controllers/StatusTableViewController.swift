@@ -154,7 +154,7 @@ final class StatusTableViewController: ChartsTableViewController {
         let minimumSegmentWidth: CGFloat = 50
         let availableWidth = (size ?? self.tableView.bounds.size).width - self.charts.fixedHorizontalMargin
         let totalHours = floor(Double(availableWidth / minimumSegmentWidth))
-        let historyHours = totalHours - (deviceManager.loopManager.insulinActionDuration ?? TimeInterval(hours: 4)).hours
+        let historyHours = totalHours*1.1 - (deviceManager.loopManager.insulinActionDuration ?? TimeInterval(hours: 4)).hours
 
         var components = DateComponents()
         components.minute = 0
@@ -469,17 +469,18 @@ final class StatusTableViewController: ChartsTableViewController {
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.iobChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Active Insulin", comment: "The title of the Insulin On-Board graph")
+                cell.titleLabel?.text = NSLocalizedString("IOB", comment: "The title of the Insulin On-Board graph")
             case .dose:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.doseChartWithFrame(frame)?.view
                 }
                 cell.titleLabel?.text = NSLocalizedString("Del", comment: "The title of the insulin delivery graph")
+
             case .cob:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.cobChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Active Carbohydrates", comment: "The title of the Carbs On-Board graph")
+                cell.titleLabel?.text = NSLocalizedString("Carbs", comment: "The title of the Carbs On-Board graph")
             }
 
             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
@@ -528,6 +529,7 @@ final class StatusTableViewController: ChartsTableViewController {
             case .glucose:
                 if let eventualGlucose = eventualGlucoseDescription {
                     cell.subtitleLabel?.text = String(format: NSLocalizedString("Eventually %@", comment: "The subtitle format describing eventual glucose. (1: localized glucose value description)"), eventualGlucose)
+
                 } else {
                     cell.subtitleLabel?.text = nil
                 }
@@ -564,9 +566,9 @@ final class StatusTableViewController: ChartsTableViewController {
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch Section(rawValue: indexPath.section)! {
         case .charts:
-            // 20: Status bar
+            // 77: Status bar
             // 44: Toolbar
-            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 20 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
+            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 77 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
 
             switch ChartRow(rawValue: indexPath.row)! {
             case .glucose:
