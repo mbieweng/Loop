@@ -548,9 +548,9 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
 
             switch ChartRow(rawValue: indexPath.row)! {
             case .glucose:
-                return max(100, 0.37 * availableSize)
+                return max(100, 0.34 * availableSize)
             case .iob, .dose, .cob:
-                return max(100, 0.21 * availableSize)
+                return max(100, 0.22 * availableSize)
             }
         case .status:
             return UITableViewAutomaticDimension
@@ -609,6 +609,7 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
                 let forwards = gestureRecognizer.state == .began
                 UIView.animate(withDuration: forwards ? 0.2 : 0.5, delay: forwards ? 0 : 1, animations: {
                     //let alpha: CGFloat = forwards ? 0 : 1
+
                     let alpha: CGFloat = 1
                     row.titleLabel?.alpha = alpha
                     row.subtitleLabel?.alpha = alpha
