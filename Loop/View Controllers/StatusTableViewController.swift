@@ -453,22 +453,23 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.iobChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Active Insulin", comment: "The title of the Insulin On-Board graph")
+                cell.titleLabel?.text = NSLocalizedString("IOB", comment: "The title of the Insulin On-Board graph")
             case .dose:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.doseChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Insulin Delivery", comment: "The title of the insulin delivery graph")
+                cell.titleLabel?.text = NSLocalizedString("Delivery", comment: "The title of the insulin delivery graph")
             case .cob:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.cobChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Active Carbohydrates", comment: "The title of the Carbs On-Board graph")
+                cell.titleLabel?.text = NSLocalizedString("Carbs", comment: "The title of the Carbs On-Board graph")
             }
 
             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
 
-            let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0
+            //let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0
+            let alpha: CGFloat = 1
             cell.titleLabel?.alpha = alpha
             cell.subtitleLabel?.alpha = alpha
 
@@ -541,9 +542,9 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch Section(rawValue: indexPath.section)! {
         case .charts:
-            // 20: Status bar
+            // 77: Status bar
             // 44: Toolbar
-            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 20 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
+            let availableSize = max(tableView.bounds.width, tableView.bounds.height) - 77 - (tableView.tableHeaderView?.frame.height ?? 0) - 44
 
             switch ChartRow(rawValue: indexPath.row)! {
             case .glucose:
@@ -607,7 +608,8 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
             for case let row as ChartTableViewCell in self.tableView.visibleCells {
                 let forwards = gestureRecognizer.state == .began
                 UIView.animate(withDuration: forwards ? 0.2 : 0.5, delay: forwards ? 0 : 1, animations: {
-                    let alpha: CGFloat = forwards ? 0 : 1
+                    //let alpha: CGFloat = forwards ? 0 : 1
+                    let alpha: CGFloat = 1
                     row.titleLabel?.alpha = alpha
                     row.subtitleLabel?.alpha = alpha
                 })
