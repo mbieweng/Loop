@@ -464,7 +464,7 @@ final class StatusTableViewController: ChartsTableViewController {
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.glucoseChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Glucose", comment: "The title of the glucose and prediction graph")
+                cell.titleLabel?.text = NSLocalizedString("Gluc", comment: "The title of the glucose and prediction graph")
             case .iob:
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.iobChartWithFrame(frame)?.view
@@ -474,7 +474,7 @@ final class StatusTableViewController: ChartsTableViewController {
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.doseChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Insulin Delivery", comment: "The title of the insulin delivery graph")
+                cell.titleLabel?.text = NSLocalizedString("Del", comment: "The title of the insulin delivery graph")
             case .cob:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.cobChartWithFrame(frame)?.view
@@ -484,7 +484,7 @@ final class StatusTableViewController: ChartsTableViewController {
 
             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
 
-            let alpha: CGFloat = charts.gestureRecognizer?.state == .possible ? 1 : 0
+            let alpha: CGFloat = charts.gestureRecognizer?.state == .possible ? 1 : 0.3
             cell.titleLabel?.alpha = alpha
             cell.subtitleLabel?.alpha = alpha
 
@@ -614,6 +614,7 @@ final class StatusTableViewController: ChartsTableViewController {
             }
         }
     }
+
 
     // MARK: - Actions
 
