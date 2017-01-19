@@ -26,7 +26,10 @@ public final class BasalRateHUDView: BaseHUDView {
 
     public func setNetBasalRate(_ rate: Double, percent: Double, at date: Date) {
         let time = timeFormatter.string(from: date)
-        caption?.text = time
+        
+        //caption?.text = time
+        caption?.text = timeAgoString(date: date)
+        
 
         if let rateString = decimalFormatter.string(from: NSNumber(value: rate)) {
             basalRateLabel?.text = String(format: basalRateFormatString, rateString)

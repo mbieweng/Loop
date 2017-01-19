@@ -68,7 +68,9 @@ public final class GlucoseHUDView: BaseHUDView {
         var accessibilityStrings = [String]()
 
         let time = timeFormatter.string(from: glucoseStartDate)
-        caption?.text = time
+        //caption?.text = time
+        caption?.text = timeAgoString(date:glucoseStartDate)
+        
         let unit = HKUnit(from: unitString)
 
         let numberFormatter = NumberFormatter.glucoseFormatter(for: unit)

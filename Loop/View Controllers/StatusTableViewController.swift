@@ -448,7 +448,7 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.glucoseChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Glucose", comment: "The title of the glucose and prediction graph")
+                cell.titleLabel?.text = NSLocalizedString("Gluc", comment: "The title of the glucose and prediction graph")
             case .iob:
                 cell.chartContentView.chartGenerator = { [unowned self] (frame) in
                     return self.charts.iobChartWithFrame(frame)?.view
@@ -458,7 +458,7 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.doseChartWithFrame(frame)?.view
                 }
-                cell.titleLabel?.text = NSLocalizedString("Delivery", comment: "The title of the insulin delivery graph")
+                cell.titleLabel?.text = NSLocalizedString("Del", comment: "The title of the insulin delivery graph")
             case .cob:
                 cell.chartContentView?.chartGenerator = { [unowned self] (frame) in
                     return self.charts.cobChartWithFrame(frame)?.view
@@ -468,8 +468,7 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
 
             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
 
-            //let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0
-            let alpha: CGFloat = 1
+            let alpha: CGFloat = charts.panGestureRecognizer?.state == .possible ? 1 : 0.3
             cell.titleLabel?.alpha = alpha
             cell.subtitleLabel?.alpha = alpha
 
@@ -607,10 +606,8 @@ final class StatusTableViewController: UITableViewController, UIGestureRecognize
         case .began, .cancelled, .ended, .failed:
             for case let row as ChartTableViewCell in self.tableView.visibleCells {
                 let forwards = gestureRecognizer.state == .began
-                UIView.animate(withDuration: forwards ? 0.2 : 0.5, delay: forwards ? 0 : 1, animations: {
-                    //let alpha: CGFloat = forwards ? 0 : 1
-
-                    let alpha: CGFloat = 1
+                UIView.animate(withDuration: forwards ? 0.2 : 0.5, delay: forwards ? 0 : 0.3, animations: {
+                    let alpha: CGFloat = forwards ? 0.3 : 1
                     row.titleLabel?.alpha = alpha
                     row.subtitleLabel?.alpha = alpha
                 })
