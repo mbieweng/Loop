@@ -223,6 +223,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
             var subtitleText = input.localizedDescription(forGlucoseUnit: charts.glucoseUnit) ?? ""
 
+            
             if input == .retrospection,
                 let startGlucose = retrospectivePredictedGlucose?.first,
                 let endGlucose = retrospectivePredictedGlucose?.last,
@@ -237,9 +238,14 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
                 )
 
                 subtitleText = String(format: "%@\n%@", subtitleText, retro)
+                cell.subtitleLabel?.text = retro;
+
+            } else {
+                cell.subtitleLabel?.text = nil
             }
 
-            cell.subtitleLabel?.text = subtitleText
+
+            //cell.subtitleLabel?.text = subtitleText
 
             cell.contentView.layoutMargins.left = tableView.separatorInset.left
 
