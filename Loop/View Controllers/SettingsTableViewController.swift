@@ -103,7 +103,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
         case maxBasal
         case maxBolus
         case batteryChemistry
-        static let count = 12
+        static let count = 13
     }
 
     fileprivate enum ServiceRow: Int, CaseCountable {
