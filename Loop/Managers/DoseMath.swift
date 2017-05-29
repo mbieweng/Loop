@@ -81,6 +81,19 @@ struct DoseMath {
         var rate: Double?
         var duration = TimeInterval(minutes: 30)
 
+        // 
+        NSLog("Next hour glucose check")
+        let nextHourMinGlucose = glucose.filter { $0.startDate <= date.addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }!
+        if nextHourMinGlucose.quantity <= minimumBGGuard.quantity {
+            // alert
+           NSLog("Next hour low glucose: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
+           NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: glucoseTargetRange.unit));
+        } else {
+            NSLog("Next hour glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
+            
+        }
+        //
+        
         if minGlucose.quantity <= minimumBGGuard.quantity {
             rate = 0
         } else if minGlucose.quantity.doubleValue(for: glucoseTargetRange.unit) < minGlucoseTargets.minValue && eventualGlucose.quantity.doubleValue(for: glucoseTargetRange.unit) <= eventualGlucoseTargets.minValue {
