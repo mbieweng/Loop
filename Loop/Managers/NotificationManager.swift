@@ -19,6 +19,7 @@ struct NotificationManager {
         case pumpBatteryLow
         case pumpReservoirEmpty
         case pumpReservoirLow
+        case lowGluc
     }
 
     enum Action: String {
@@ -94,6 +95,27 @@ struct NotificationManager {
 
         UNUserNotificationCenter.current().add(request)
     }
+    
+    static func sendLowGlucoseNotification(quantity: Double) {
+        let notification = UNMutableNotificationContent()
+        
+        notification.title = NSLocalizedString("Low BG", comment: "The notification title for a predicted low glucose")
+        
+        //notification.body = NSLocalizedString("Low BG expected within 1 hour", comment: "The notification alert describing a low glucose")
+        notification.body = String(format: NSLocalizedString("Low bg %.0f expected within 1 hour", comment: "The notification alert describing a low glucose"), quantity)
+
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.lowGluc.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.lowGluc.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+
 
     // Cancel any previous scheduled notifications in the Loop Not Running category
     static func clearPendingNotificationRequests() {
@@ -169,6 +191,8 @@ struct NotificationManager {
 
         UNUserNotificationCenter.current().add(request)
     }
+    
+    
 
     static func sendPumpReservoirLowNotificationForAmount(_ units: Double, andTimeRemaining remaining: TimeInterval?) {
         let notification = UNMutableNotificationContent()

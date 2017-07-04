@@ -168,7 +168,7 @@ class StatusViewController: UIViewController, NCWidgetProviding {
             return NCUpdateResult.failed
         }
         if let lastGlucose = context.glucose?.last {
-            glucoseHUD.setGlucoseQuantity(lastGlucose.value,
+           glucoseHUD.setGlucoseQuantity(lastGlucose.value,
                at: lastGlucose.startDate,
                unit: lastGlucose.unit,
                sensor: context.sensor

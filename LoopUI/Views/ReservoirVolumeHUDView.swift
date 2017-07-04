@@ -57,8 +57,9 @@ public final class ReservoirVolumeHUDView: LevelHUDView {
         if let units = numberFormatter.string(from: NSNumber(value: volume)) {
             volumeLabel.text = String(format: NSLocalizedString("%@U", comment: "Format string for reservoir volume. (1: The localized volume)"), units)
             let time = timeFormatter.string(from: date)
-            caption?.text = time
-
+            //caption?.text = time
+            caption?.text = timeAgoString(date: date)
+            
             accessibilityValue = String(format: NSLocalizedString("%1$@ units remaining at %2$@", comment: "Accessibility format string for (1: localized volume)(2: time)"), units, time)
         }
     }
