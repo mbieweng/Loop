@@ -20,6 +20,7 @@ struct NotificationManager {
         case pumpReservoirEmpty
         case pumpReservoirLow
         case lowGluc
+        case highGluc
     }
 
     enum Action: String {
@@ -30,6 +31,8 @@ struct NotificationManager {
         case bolusAmount
         case bolusStartDate
     }
+    
+    private static var lastHighBGAlertTime : Date = Date(timeIntervalSince1970: 0);
 
     private static var notificationCategories: Set<UNNotificationCategory> {
         var categories = [UNNotificationCategory]()
@@ -114,6 +117,34 @@ struct NotificationManager {
         )
         
         UNUserNotificationCenter.current().add(request)
+    }
+    
+    static func sendHighGlucoseNotification(quantity: Double) {
+        
+        if(-self.lastHighBGAlertTime.timeIntervalSinceNow < 30*60)  {
+            NSLog("Only %f min since last high glucose alert...snoozing", -self.lastHighBGAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        
+        notification.title = NSLocalizedString("High BG", comment: "The notification title for a predicted high glucose")
+        
+        notification.body = String(format: NSLocalizedString("High bg %.0f expected within 30 min", comment: "The notification alert describing a high glucose"), quantity)
+        
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.lowGluc.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.highGluc.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastHighBGAlertTime = Date.init();
+        
     }
 
 

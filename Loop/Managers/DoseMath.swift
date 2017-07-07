@@ -87,10 +87,21 @@ enum DoseMath {
         let nextHourMinGlucose = glucose.filter { $0.startDate <= date.addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }!
         if nextHourMinGlucose.quantity <= minimumBGGuard.quantity {
             // alert
-           NSLog("Next hour low glucose: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
+           NSLog("Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
            NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: glucoseTargetRange.unit));
         } else {
-            NSLog("Next hour glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
+            NSLog("Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, minimumBGGuard.quantity)
+            
+        }
+       
+        let maxBGGuard = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:300)
+        let nextHourMaxGlucose = (glucose.filter { $0.startDate <= date.addingTimeInterval(30*60) }).last!
+        if nextHourMaxGlucose.quantity >= maxBGGuard.quantity {
+            // alert
+            NSLog("Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, maxBGGuard.quantity)
+            NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: glucoseTargetRange.unit));
+        } else {
+            NSLog("Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, maxBGGuard.quantity)
             
         }
         //
