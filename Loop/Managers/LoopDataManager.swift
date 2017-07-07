@@ -60,7 +60,7 @@ final class LoopDataManager {
         carbStore = CarbStore(
             defaultAbsorptionTimes: (
                 fast: TimeInterval(hours: 1),
-                medium: TimeInterval(hours: 2.5),
+                medium: TimeInterval(hours: 3),
                 slow: TimeInterval(hours: 5)
             ),
             carbRatioSchedule: carbRatioSchedule,
