@@ -312,12 +312,18 @@ final class StatusTableViewController: ChartsTableViewController {
             self.deviceManager.loopManager.getLoopState { (manager, state) in
                 let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
                 //let startGlucose = retrospectivePredictedGlucose?.first
-                let endGlucose = retrospectivePredictedGlucose?.last
+                let retroGlucose = retrospectivePredictedGlucose?.last
                 let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
                 
-                if let diff1 = endGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                    if let diff2 = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                        self.hudView.glucoseHUD.setGlucoseTrendValue(diff2-diff1, unit: self.charts.glucoseUnit)
+                if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                    if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                        self.hudView.glucoseHUD.setGlucoseTrendValue(currentVal-retroVal, unit: self.charts.glucoseUnit)
+                        if(abs(currentVal-retroVal) > 40) {
+                            NSLog("Prediction error alert: %.0f", currentVal-retroVal)
+                            NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
+                        } else {
+                            NSLog("Prediction error ok %.0f", currentVal-retroVal)
+                        }
                     }
                 }
             }

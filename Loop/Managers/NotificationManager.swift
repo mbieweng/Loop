@@ -21,6 +21,7 @@ struct NotificationManager {
         case pumpReservoirLow
         case lowGluc
         case highGluc
+        case forecastError
     }
 
     enum Action: String {
@@ -33,6 +34,7 @@ struct NotificationManager {
     }
     
     private static var lastHighBGAlertTime : Date = Date(timeIntervalSince1970: 0);
+    private static var lastForecastErrorAlertTime : Date = Date(timeIntervalSince1970: 0);
 
     private static var notificationCategories: Set<UNNotificationCategory> {
         var categories = [UNNotificationCategory]()
@@ -133,7 +135,7 @@ struct NotificationManager {
         notification.body = String(format: NSLocalizedString("High bg %.0f expected within 30 min", comment: "The notification alert describing a high glucose"), quantity)
         
         notification.sound = UNNotificationSound.default()
-        notification.categoryIdentifier = Category.lowGluc.rawValue
+        notification.categoryIdentifier = Category.highGluc.rawValue
         
         let request = UNNotificationRequest(
             identifier: Category.highGluc.rawValue,
@@ -144,6 +146,35 @@ struct NotificationManager {
         UNUserNotificationCenter.current().add(request)
         
         self.lastHighBGAlertTime = Date.init();
+        
+    }
+    
+    static func sendForecastErrorNotification(quantity: Double) {
+        
+        if(-self.lastForecastErrorAlertTime.timeIntervalSinceNow < 30*60)  {
+            NSLog("Only %f min since lastForecastErrorAlertTime...snoozing", -self.lastForecastErrorAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        
+        let notification = UNMutableNotificationContent()
+        
+        notification.title = NSLocalizedString("Large Prediction Differential", comment: "The notification title for a large prediction error")
+        
+        notification.body = String(format: NSLocalizedString("BG currently %.0f from predicted", comment: "The notification alert describing a high prediction error"), quantity)
+        
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.forecastError.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.forecastError.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastForecastErrorAlertTime = Date.init();
         
     }
 

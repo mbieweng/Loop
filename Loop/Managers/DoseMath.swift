@@ -94,7 +94,7 @@ enum DoseMath {
             
         }
        
-        let maxBGGuard = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:300)
+        let maxBGGuard = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:250)
         let nextHourMaxGlucose = (glucose.filter { $0.startDate <= date.addingTimeInterval(30*60) }).last!
         if nextHourMaxGlucose.quantity >= maxBGGuard.quantity {
             // alert
