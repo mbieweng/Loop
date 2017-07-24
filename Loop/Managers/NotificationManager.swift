@@ -33,6 +33,7 @@ struct NotificationManager {
         case bolusStartDate
     }
     
+    private static var lastLowBGAlertTime : Date = Date(timeIntervalSince1970: 0);
     private static var lastHighBGAlertTime : Date = Date(timeIntervalSince1970: 0);
     private static var lastForecastErrorAlertTime : Date = Date(timeIntervalSince1970: 0);
 
@@ -102,6 +103,12 @@ struct NotificationManager {
     }
     
     static func sendLowGlucoseNotification(quantity: Double) {
+       
+        if(-self.lastLowBGAlertTime.timeIntervalSinceNow < 4*60)  {
+            NSLog("Only %f min since last low glucose alert...snoozing", -self.lastLowBGAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
         let notification = UNMutableNotificationContent()
         
         notification.title = NSLocalizedString("Low BG", comment: "The notification title for a predicted low glucose")
@@ -113,12 +120,14 @@ struct NotificationManager {
         notification.categoryIdentifier = Category.lowGluc.rawValue
         
         let request = UNNotificationRequest(
-            identifier: Category.lowGluc.rawValue,
+            identifier: "\(Category.lowGluc.rawValue)\(UUID().uuidString)",
             content: notification,
             trigger: nil
         )
         
         UNUserNotificationCenter.current().add(request)
+ 
+        self.lastLowBGAlertTime = Date.init();
     }
     
     static func sendHighGlucoseNotification(quantity: Double) {
@@ -159,7 +168,7 @@ struct NotificationManager {
         
         let notification = UNMutableNotificationContent()
         
-        notification.title = NSLocalizedString("Large Prediction Differential", comment: "The notification title for a large prediction error")
+        notification.title = NSLocalizedString("Prediction Differential", comment: "The notification title for a large prediction error")
         
         notification.body = String(format: NSLocalizedString("BG currently %.0f from predicted", comment: "The notification alert describing a high prediction error"), quantity)
         
