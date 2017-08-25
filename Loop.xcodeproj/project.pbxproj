@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2748CAA71F32DB0100AD86A4 /* ConnectIQ.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2748CAA61F32DB0100AD86A4 /* ConnectIQ.framework */; };
+		2748CAA91F32DC9B00AD86A4 /* GarminConnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2748CAA81F32DC9B00AD86A4 /* GarminConnectManager.swift */; };
 		43027F0F1DFE0EC900C51989 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F526D5E1DF2459000A04910 /* HKUnit.swift */; };
 		4302F4E11D4E9C8900F0FCAF /* TextFieldTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E01D4E9C8900F0FCAF /* TextFieldTableViewController.swift */; };
 		4302F4E31D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E21D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift */; };
@@ -362,6 +364,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2748CAA61F32DB0100AD86A4 /* ConnectIQ.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ConnectIQ.framework; sourceTree = "<group>"; };
+		2748CAA81F32DC9B00AD86A4 /* GarminConnectManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GarminConnectManager.swift; sourceTree = "<group>"; };
 		4302F4E01D4E9C8900F0FCAF /* TextFieldTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextFieldTableViewController.swift; sourceTree = "<group>"; };
 		4302F4E21D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InsulinDeliveryTableViewController.swift; sourceTree = "<group>"; };
 		4302F4E41D4EA75100F0FCAF /* DoseStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoseStore.swift; sourceTree = "<group>"; };
@@ -596,6 +600,7 @@
 				4F7528941DFE1E9500C322D6 /* LoopUI.framework in Frameworks */,
 				43C6407C1DA051850093E25D /* InsulinKit.framework in Frameworks */,
 				438A95A81D8B9B24009D12E1 /* xDripG5.framework in Frameworks */,
+				2748CAA71F32DB0100AD86A4 /* ConnectIQ.framework in Frameworks */,
 				43C246A81D89990F0031F8D1 /* Crypto.framework in Frameworks */,
 				434FB6461D68F1CD007B9C70 /* Amplitude.framework in Frameworks */,
 				C10428971D17BAD400DD539A /* NightscoutUploadKit.framework in Frameworks */,
@@ -936,6 +941,7 @@
 				430C1ABC1E5568A80067F1AE /* StatusChartsManager+LoopKit.swift */,
 				4F70C20F1DE8FAC5006380B7 /* StatusExtensionDataManager.swift */,
 				4328E0341CFC0AE100E199AA /* WatchDataManager.swift */,
+				2748CAA81F32DC9B00AD86A4 /* GarminConnectManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1072,6 +1078,7 @@
 		968DCD53F724DE56FFE51920 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2748CAA61F32DB0100AD86A4 /* ConnectIQ.framework */,
 				434FB6451D68F1CD007B9C70 /* Amplitude.framework */,
 				43F78D481C914197002152D1 /* CarbKit.framework */,
 				43C246A71D89990F0031F8D1 /* Crypto.framework */,
@@ -1446,6 +1453,7 @@
 				"$(SRCROOT)/Carthage/Build/iOS/NightscoutUploadKit.framework",
 				"$(SRCROOT)/Carthage/Build/iOS/Crypto.framework",
 				"$(SRCROOT)/Carthage/Build/iOS/G4ShareSpy.framework",
+				"$(SRCROOT)/ConnectIQ.framework",
 			);
 			outputPaths = (
 			);
@@ -1520,6 +1528,7 @@
 				4FB76FBB1E8C42CF00B39636 /* UIColor.swift in Sources */,
 				4F6663941E905FD2009E74FC /* ChartColorPalette+Loop.swift in Sources */,
 				4328E0351CFC0AE100E199AA /* WatchDataManager.swift in Sources */,
+				2748CAA91F32DC9B00AD86A4 /* GarminConnectManager.swift in Sources */,
 				43D381621EBD9759007F8C8F /* HeaderValuesTableViewCell.swift in Sources */,
 				43BFF0C51E465A2D00FF19A9 /* UIColor+HIG.swift in Sources */,
 				4302F4E31D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift in Sources */,
@@ -1876,6 +1885,10 @@
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = JWS46GTGXX;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				"OTHER_SWIFT_FLAGS[sdk=iphonesimulator*]" = "-D IOS_SIMULATOR";
@@ -1893,6 +1906,10 @@
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = JWS46GTGXX;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(MAIN_APP_BUNDLE_IDENTIFIER)";
@@ -2061,7 +2078,6 @@
 				CODE_SIGN_ENTITLEMENTS = "Loop Status Extension/Loop Status Extension.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-
 				DEVELOPMENT_TEAM = JWS46GTGXX;
 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";

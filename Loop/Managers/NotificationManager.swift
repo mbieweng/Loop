@@ -104,7 +104,7 @@ struct NotificationManager {
     
     static func sendLowGlucoseNotification(quantity: Double) {
        
-        if(-self.lastLowBGAlertTime.timeIntervalSinceNow < 4*60)  {
+        if(-self.lastLowBGAlertTime.timeIntervalSinceNow < 8*60)  {
             NSLog("Only %f min since last low glucose alert...snoozing", -self.lastLowBGAlertTime.timeIntervalSinceNow/60)
             return
         }

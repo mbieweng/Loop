@@ -15,7 +15,6 @@ import LoopKit
 import LoopUI
 import SwiftCharts
 
-
 /// Describes the state within the bolus setting flow
 ///
 /// - recommended: A bolus recommendation was discovered and the bolus view controller is presenting/presented
@@ -314,9 +313,10 @@ final class StatusTableViewController: ChartsTableViewController {
                 //let startGlucose = retrospectivePredictedGlucose?.first
                 let retroGlucose = retrospectivePredictedGlucose?.last
                 let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-                
+                var delta : Double = 0
                 if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
                     if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                        delta = currentVal-retroVal;
                         self.hudView.glucoseHUD.setGlucoseTrendValue(currentVal-retroVal, unit: self.charts.glucoseUnit)
                         if(abs(currentVal-retroVal) > 40) {
                             NSLog("Prediction error alert: %.0f", currentVal-retroVal)
@@ -326,8 +326,16 @@ final class StatusTableViewController: ChartsTableViewController {
                         }
                     }
                 }
+                
+                if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                    if let currentDate = currentGlucose?.endDate {
+                        GarminConnectManager.shared.sendCurrentGlucose(value: currentVal, date: currentDate, predictionDelta: delta)
+                    }
+                }
             }
-            ///
+            
+            
+            
             
             if let reservoir = lastReservoirValue {
                 if let capacity = self.deviceManager.pumpState?.pumpModel?.reservoirCapacity {

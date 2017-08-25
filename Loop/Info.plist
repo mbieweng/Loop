@@ -39,6 +39,7 @@
 	<array>
 		<string>dexcomcgm</string>
 		<string>dexcomshare</string>
+		<string>gcm-ciq</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
