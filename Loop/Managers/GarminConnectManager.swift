@@ -71,7 +71,6 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                 if let unit = unit {
                     
                     let delta : Double = 0
-                    
                     /*
                     let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
                     let retroGlucose = retrospectivePredictedGlucose?.last
@@ -86,10 +85,8 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                     
                     self.deviceManager.loopManager.glucoseStore.getCachedGlucoseValues(start: Date(timeIntervalSinceNow:TimeInterval(minutes: -30)),
                                                                                        completion: {(samples) in
-                                                                                        self.sendSamples(samples: samples, unit: unit, delta: delta)
-                    }
-                        
-                    )
+                                                                                        //self.sendSamples(samples: samples, unit: unit, delta: delta)
+                                                                                        self.sendRecentData(samples: samples, unit: unit, predictionDelta: delta) }  )
                     
                 }
                 
@@ -99,29 +96,16 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
 
 
 
-
-    func sendSamples(samples: [GlucoseValue], unit: HKUnit, delta: Double) {
-        NSLog("Garmin send sample count \(samples.count)")
-       
-        for val in samples {
-            NSLog("Garmin sending sample \(String(describing: val.endDate))  \(val.quantity.doubleValue(for: unit)) ")
-            sendCurrentGlucose(value: val.quantity.doubleValue(for: unit), date: val.endDate, predictionDelta: delta)
-        }
+    func sendRecentData(samples: [GlucoseValue], unit: HKUnit, predictionDelta: Double) {
         
-        
-
-        
-    }
-
-    
-    func sendCurrentGlucose(value: Double, date: Date, predictionDelta: Double) {
-
         if(devices.count == 0 ) { return }
         
-        var data : Dictionary = [String: Double]();
-        data["glucose"] = value;
-        data["glucosetime"] = date.timeIntervalSince1970
+        var data : Dictionary = [String: Any]();
+        //data["glucose"] = value;
+        data["glucosetime"] = samples.last?.startDate.timeIntervalSince1970
         data["predictiondelta"] = predictionDelta
+        data["glucosevalues"] = samples.map{ $0.quantity.doubleValue(for: unit)}
+      
         NSLog("Garmin Sending message: \(data)")
         ConnectIQ.sharedInstance().sendMessage(data, to: self.garminLoopApp, progress: {(sentBytes: UInt32, totalBytes: UInt32) -> Void in
             let percent: Double = 100.0 * Double(sentBytes / totalBytes)
@@ -129,10 +113,10 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
         }, completion: {(result: IQSendMessageResult) -> Void in
             NSLog("Garmin Send message finished with result: \(NSStringFromSendMessageResult(result))")
         })
-
+        
         
     }
-    
+
     func saveDevicesToFileSystem() {
         print("Saving known devices.")
         if !NSKeyedArchiver.archiveRootObject(devices, toFile: self.devicesFilePath()) {

@@ -350,66 +350,24 @@ final class StatusTableViewController: ChartsTableViewController {
                     hudView.loopCompletionHUD.dosingEnabled = dosingEnabled
                 }
 
-            // MB Custom Alerts
-            self.deviceManager.loopManager.getLoopState { (manager, state) in
-                
-                // Prediction Error Alert
-                let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
-                //let startGlucose = retrospectivePredictedGlucose?.first
-                let retroGlucose = retrospectivePredictedGlucose?.last
-                let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-                var delta : Double = 0
-                if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                    if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                        delta = currentVal-retroVal;
-                        self.hudView?.glucoseHUD.setGlucoseTrendValue(currentVal-retroVal, unit: self.charts.glucoseUnit)
-                        if(abs(currentVal-retroVal) > 40) {
-                            NSLog("Prediction error alert: %.0f", currentVal-retroVal)
-                            NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
-                        } else {
-                            NSLog("Prediction error ok %.0f", currentVal-retroVal)
+                // MB Custom
+                self.deviceManager.loopManager.getLoopState { (manager, state) in
+                    let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
+                    let retroGlucose = retrospectivePredictedGlucose?.last
+                    let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
+                    var delta : Double = 0
+                    if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                        if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                            delta = currentVal-retroVal;
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit)
+                            NSLog("MB Updating retro differential hud to \(delta)")
                         }
                     }
-                }
-                
-                
-                // High and low alerts
-                if let glucose = state.predictedGlucose {
-                    NSLog("Next hour glucose check")
-                    let nextHourMinGlucose = glucose.filter { $0.startDate <= date.addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }!
-                    let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
-                    if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
-                        // alert
-                        NSLog("Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
-                        NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: self.charts.glucoseUnit));
-                    } else {
-                        NSLog("Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
-                        
-                    }
-                    
-                    let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:250)
-                    let nextHourMaxGlucose = (glucose.filter { $0.startDate <= date.addingTimeInterval(30*60) }).last!
-                    if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
-                        // alert
-                        NSLog("Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
-                        NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: self.charts.glucoseUnit));
-                    } else {
-                        NSLog("Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
-                        
-                    }
-                    
-                    // Garmin update
-                    if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                        if let currentDate = currentGlucose?.endDate {
-                            GarminConnectManager.shared.sendCurrentGlucose(value: currentVal, date: currentDate, predictionDelta: delta)
-                        }
-                    }
-
                 }
                 // End MB Custom Alerts
-                
-            }
-                
+            
+            
+            
             
                 // Glucose HUD
                 if let glucose = self.deviceManager.loopManager.glucoseStore.latestGlucose {

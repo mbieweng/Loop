@@ -599,7 +599,74 @@ final class LoopDataManager {
                 throw error
             }
         }
+        
+        checkAlerts()
+        
     }
+    
+    private func checkAlerts() {
+        // MB Custom Alerts
+        NSLog("MB Custom alerts")
+        //self.deviceManager.loopManager.getLoopState { (manager, state) in
+        
+        // Prediction Error Alert
+        //let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
+        //let startGlucose = retrospectivePredictedGlucose?.first
+        let retroGlucose = retrospectivePredictedGlucose?.last
+        let currentGlucose = glucoseStore.latestGlucose
+        let unit = HKUnit.milligramsPerDeciliter()
+        if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
+            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
+                if(abs(currentVal-retroVal) > 40) {
+                    NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
+                    NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
+                } else {
+                    NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
+                }
+            }
+        }
+        
+        // High and low alerts
+        if let glucose = predictedGlucose {
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
+                let lowAlertThreshold = settings.minimumBGGuard ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
+                    // alert
+                    NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    NSLog("MB Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    
+                }
+            }
+            
+            let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:250)
+            if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
+                if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
+                    // alert
+                    NSLog("MB Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    NSLog("MB Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    
+                }
+            }
+            
+            /*// Garmin update
+            NSLog("MB Garmin update")
+            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
+                if let currentDate = currentGlucose?.endDate {
+                    GarminConnectManager.shared.sendCurrentGlucose(value: currentVal, date: currentDate, predictionDelta: delta)
+                }
+            }
+            */
+            
+        }
+        
+        NSLog("MB End custom alerts")
+        // End MB Custom Alerts
+    }
+    
 
     private func notify(forChange context: LoopUpdateContext) {
         NotificationCenter.default.post(name: .LoopDataUpdated,
