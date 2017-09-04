@@ -1,7 +1,11 @@
 {
   "iOS" : [
     {
+<<<<<<< HEAD
       "hash" : "94b0cbe31f76e462037d76c66cba4c05eb6bb95323f82a84a14f570a65786980",
+=======
+      "hash" : "c7bb83f472aff44ec724aa20da5a68e9975ee8a531103d219080e3fe755ac4d0",
+>>>>>>> LoopKit/dev
       "name" : "ShareClient"
     }
   ],
