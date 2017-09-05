@@ -30,36 +30,46 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     }
         
     func setup() {
-        //self.restoreDevicesFromFileSystem();
         NSLog("Garmin setup")
+        self.restoreDevicesFromFileSystem()
+        registerDevices()
         if(self.devices.count == 0) {
             ConnectIQ.sharedInstance().showDeviceSelection()
         }
         
     }
     
-    func processDeviceUrl(url: URL) {
+    func processDeviceUrl(url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
         
-        NSLog("Garmin Processdevice URL")
+        NSLog("Garmin processDeviceURL")
+        
+        let sourceApplicationBundleID = options[.sourceApplication] as? String
+        if (url.scheme != GarminConnectManager.ReturnURLScheme  ||  sourceApplicationBundleID != IQGCMBundle) { return false }
+            
         let dlist = ConnectIQ.sharedInstance().parseDeviceSelectionResponse(from: url)
         if (dlist != nil) {
             self.devices = dlist as! [IQDevice];
-            NSLog("Garmin device list: \(String(describing: self.devices))")
-            
-            ConnectIQ.sharedInstance().unregister(forAllDeviceEvents: self)
-            for device in self.devices {
-                ConnectIQ.sharedInstance().register(forDeviceEvents: device, delegate: self )
-                self.garminLoopApp = IQApp(uuid: UUID(uuidString: "0180e520-5f7e-11e4-9803-0800200c9a67"), store: UUID(), device: device)
-                ConnectIQ.sharedInstance().getAppStatus(self.garminLoopApp, completion: { (appStatus: IQAppStatus?) in
-                    NSLog("Garmin App status \(String(describing: appStatus)) \(String(describing: appStatus?.isInstalled))")
-                    
-                })
-                ConnectIQ.sharedInstance().register(forAppMessages: self.garminLoopApp, delegate: self)
-                
-            }
+            self.registerDevices()
+            self.saveDevicesToFileSystem()
         }
-
+        return true
     }
+    
+    private func registerDevices() {
+        NSLog("Garmin register devices.  Device list: \(String(describing: self.devices))")
+        ConnectIQ.sharedInstance().unregister(forAllDeviceEvents: self)
+        for device in self.devices {
+            ConnectIQ.sharedInstance().register(forDeviceEvents: device, delegate: self )
+            self.garminLoopApp = IQApp(uuid: UUID(uuidString: "0180e520-5f7e-11e4-9803-0800200c9a67"), store: UUID(), device: device)
+            ConnectIQ.sharedInstance().getAppStatus(self.garminLoopApp, completion: { (appStatus: IQAppStatus?) in
+                NSLog("Garmin App status \(String(describing: appStatus?.version)) \(String(describing: appStatus?.isInstalled))")
+                
+            })
+            ConnectIQ.sharedInstance().register(forAppMessages: self.garminLoopApp, delegate: self)
+            
+        }
+    }
+    
     
     public func receivedMessage(_ message: Any!, from app: IQApp!) {
         NSLog("Garmin received message \(String(describing: message))")
@@ -83,6 +93,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                     }
                     */
                     
+            
                     self.deviceManager.loopManager.glucoseStore.getCachedGlucoseValues(start: Date(timeIntervalSinceNow:TimeInterval(minutes: -30)),
                                                                                        completion: {(samples) in
                                                                                         //self.sendSamples(samples: samples, unit: unit, delta: delta)
@@ -118,7 +129,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     }
 
     func saveDevicesToFileSystem() {
-        print("Saving known devices.")
+        print("Saving known devices to \(self.devicesFilePath())")
         if !NSKeyedArchiver.archiveRootObject(devices, toFile: self.devicesFilePath()) {
             print("Failed to save devices file.")
         }
@@ -155,6 +166,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     }
     
     func devicesFilePath() -> String {
+        
         var paths = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true)
         let appSupportDirectory = URL(fileURLWithPath: paths[0])
         let dirExists = (try? appSupportDirectory.checkResourceIsReachable()) ?? false
@@ -167,7 +179,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                 print("There was an error creating the directory \(appSupportDirectory) with error: \(error)")
             }
         }
-        return appSupportDirectory.appendingPathComponent(kDevicesFileName).absoluteString
+        return appSupportDirectory.appendingPathComponent(kDevicesFileName).path
     }
 
 

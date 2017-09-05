@@ -10,7 +10,6 @@ import UIKit
 import UserNotifications
 import CarbKit
 import InsulinKit
-import ConnectIQ
 
 @UIApplicationMain
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -37,18 +36,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         GarminConnectManager.shared.setup()
         return true
     }
-    
-    ///
+
     func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
+        /// Handle Garmin device list 
         NSLog("Open url");
-        let sourceApplicationBundleID = options[.sourceApplication] as? String
-        if (url.scheme == GarminConnectManager.ReturnURLScheme  && sourceApplicationBundleID == IQGCMBundle) {
-            GarminConnectManager.shared.processDeviceUrl(url: url)
-            return true;
-        }
-        return false;
+        return GarminConnectManager.shared.processDeviceUrl(url: url, options:options)
     }
-    ///
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
