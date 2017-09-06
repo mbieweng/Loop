@@ -73,40 +73,91 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     
     public func receivedMessage(_ message: Any!, from app: IQApp!) {
         NSLog("Garmin received message \(String(describing: message))")
-        //if((message: String == "ready")
         
-        self.deviceManager.loopManager.getLoopState { (manager, state) in
-            
-            self.deviceManager.loopManager.glucoseStore.preferredUnit { (unit, error) in
-                if let unit = unit {
-                    
-                    let delta : Double = 0
-                    /*
-                    let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
-                    let retroGlucose = retrospectivePredictedGlucose?.last
-                    let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-                    
-                    if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
-                        if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
-                            delta = currentVal-retroVal;
-                        }
-                    }
-                    */
-                    
-            
-                    self.deviceManager.loopManager.glucoseStore.getCachedGlucoseValues(start: Date(timeIntervalSinceNow:TimeInterval(minutes: -30)),
-                                                                                       completion: {(samples) in
-                                                                                        //self.sendSamples(samples: samples, unit: unit, delta: delta)
-                                                                                        self.sendRecentData(samples: samples, unit: unit, predictionDelta: delta) }  )
-                    
-                }
+        sendContext()
+
                 
-            }
-        }
     }
 
 
+    private func sendContext() {
+        NSLog("Garmin send context")
+        if(devices.count == 0 ) { return }
+        let defaults = UserDefaults(suiteName: Bundle.main.appGroupSuiteName)
+        
+        self.deviceManager.loopManager.getLoopState { (manager, state) in
+            //let maximumBolus = manager.settings.maximumBolus
+            let activeCarbohydrates = state.carbsOnBoard?.quantity.doubleValue(for: .gram())
+            //let bolusRecommendation: BolusRecommendation?
+            
+            manager.doseStore.insulinOnBoard(at: Date()) { (result) in
+                let activeInsulin: Double?
+                switch result {
+                    case .success(let value):
+                        activeInsulin = value.value
+                    case .failure:
+                        activeInsulin = nil
+                }
+             
+                if let context = defaults?.statusExtensionContext {
+                    var data : Dictionary = [String: Any]();
+                    
+                    data["iob"] = activeInsulin
+                    data["cob"] = activeCarbohydrates
 
+                    if let glucose = context.glucose {
+                        data["lastglucose"] = glucose.last?.value
+                        data["glucosetime"] = glucose.last?.startDate.timeIntervalSince1970
+                        data["glucose"] =  Array((glucose.map {$0.value}).suffix(12))
+                        
+                        data["predictiondelta"] = 0;
+                        /*
+                        if let retroVal = state.retrospectivePredictedGlucose?.last,
+                            let currentVal = self.deviceManager.loopManager.glucoseStore.latestGlucose {
+                            data["predictiondelta"] = currentVal.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter())-retroVal.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter())
+                        }
+                        */
+                        
+                    }
+                    
+                    if let predictedGlucose = context.predictedGlucose {
+                        data["glucoseforecast"] = Array(predictedGlucose.values.prefix(12))
+                        data["eventualglucose"] = predictedGlucose.values.last;
+                    }
+                    
+                    if let loop = context.loop {
+                        data["lastloop"] = loop.lastCompleted?.timeIntervalSince1970
+                    }
+                    
+                    if let netbasal = context.netBasal {
+                        data["netbasal"] = netbasal.rate
+                        
+                    }
+                    
+                    
+                    
+                    
+                    NSLog("Garmin Sending context: \(data)")
+                    ConnectIQ.sharedInstance().sendMessage(data, to: self.garminLoopApp, progress: {(sentBytes: UInt32, totalBytes: UInt32) -> Void in
+                        let percent: Double = 100.0 * Double(sentBytes / totalBytes)
+                        print("Garmin Progress: \(percent)% sent \(sentBytes) bytes of \(totalBytes)")
+                    }, completion: {(result: IQSendMessageResult) -> Void in
+                        NSLog("Garmin Send message finished with result: \(NSStringFromSendMessageResult(result))")
+                    })
+                    
+                }
+                
+                
+                
+            }
+            
+            
+            
+        }
+        
+        
+    }
+    
     func sendRecentData(samples: [GlucoseValue], unit: HKUnit, predictionDelta: Double) {
         
         if(devices.count == 0 ) { return }

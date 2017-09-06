@@ -52,13 +52,13 @@ class Chart {
                 if (x_old != null) {
                     dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
                     
-                    dc.setColor(colorForGlucose(item), colorForGlucose(item));
+                    dc.setColor(lineColorForGlucose(item), lineColorForGlucose(item));
                     if(i<12) { 
-                    		dc.setPenWidth(3);
+                    		dc.setPenWidth(6);
                     		dc.drawLine(x_old, y_old, x, y);
                     	} else {
                     		//dc.setColor(colorForGlucose(item), colorForGlucose(item));
-                    		dc.setPenWidth(1);
+                    		dc.setPenWidth(2);
                     		dc.drawLine(x_old, y_old, x, y);
                     		//dc.drawCircle(x, y, 2);
                     	}
@@ -96,7 +96,7 @@ class Chart {
         }
     }
 
-	function colorForGlucose(val) {
+	function lineColorForGlucose(val) {
     	   if(val==null) { return Graphics.COLOR_WHITE; }
     	   if(val<80) { return Graphics.COLOR_RED; }
     	   if(val>180) { return Graphics.COLOR_YELLOW; }

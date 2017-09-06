@@ -27,33 +27,21 @@ class LoopWidgetView extends Ui.View {
     var chart;
     var have_connected = false;
    
-    var lastUpdateTime;
+    var lastGlucoseTime;
+    var lastLoopTime;
     var eventualGlucose;
-    var predictionDelta;
     var iob;
     var cob;
     var currentGlucose;
+    var retrospectiveDifferential;
+	var predictionDelta;
+	var netBasal;
 	
 	function initialize() {
 		Ui.View.initialize();
-		
-		System.println("sensor enabling");
-		// if(Comm has :registerForPhoneAppMessages) {
-        //    System.println("phone app messages");
-            //Comm.registerForPhoneAppMessages(method(:onPhone));	
-		//} else {
+		//System.println("mailbox listener");
+        Comm.setMailboxListener(method(:onMail));
         
-         	System.println("mailbox listener");
-        /* 	if(Comm has :emptyMailbox) {
-         		try {
-         			 System.println("empty mailbox");
-  					 Comm.emptyMailbox();
-				} catch (ex) {}
-			}
-		*/
-         	Comm.setMailboxListener(method(:onMail));
-        
-		System.println("sensor enabling done");
 	}
 		
     function toggle_colors() {
@@ -71,28 +59,25 @@ class LoopWidgetView extends Ui.View {
             model.read_data();
             chart = new Chart(model);
 
-            var app = App.getApp();
-            if (app.getProperty(INVERT) == true) {
-                invert = true;
-            }
+            //var app = App.getApp();
+            //if (app.getProperty(INVERT) == true) {
+            //    invert = true;
+            //}
         }
         
-        System.println("init listener");
-		var listener = new CommListener();
-        System.println("init listener2");
-        Comm.transmit("ready", null, listener);
-        System.println("init listener3");
+        requestData();
         
-        // Testing
-        
-		model.new_value(null);	
-		model.new_value(null);
-		model.new_value(null);
-		model.new_value(null);
-		model.new_value(null);	
-		model.new_value(null);
-		model.new_value(null);
-		model.new_value(null);
+        // Test Data
+        /*  
+		model.new_value(100);	
+		model.new_value(55);
+		model.new_value(110);
+		model.new_value(60);
+		model.new_value(120);	
+		model.new_value(130);
+		
+		model.new_value(140);
+		model.new_value(120);
 		model.new_value(100.0);
 		model.new_value(100.0);
 		model.new_value(90.0);
@@ -111,17 +96,31 @@ class LoopWidgetView extends Ui.View {
 		model.new_value(70.0);
 		model.new_value(100.0);
 		model.new_value(110.0);
-		iob=12.34;
+		iob=-12.34;
 		cob=123.45;
-		eventualGlucose=270.2;
+		eventualGlucose=236;
 		currentGlucose=55;
-		lastUpdateTime = Time.now().value() - 11*60;
+		lastGlucoseTime = Time.now().value() - 11*60;
+		lastLoopTime = Time.now().value() - 3*60;
 		predictionDelta = -55;
-		
-		Ui.requestUpdate();
+		netBasal = 2.322;
 	
-    }
+		checkAndAlert();
+		Ui.requestUpdate();
+		// end test section
+		*/
 
+    }
+    
+	function requestData() {
+		System.println("init listener");
+		var listener = new CommListener();
+        System.println("init listener2");
+        Comm.transmit("sendcontext", null, listener);
+        System.println("init listener3");
+	}
+	
+	
     //! Called when this View is removed from the screen. Save the
     //! state of your app here.
     function onHide() {
@@ -140,14 +139,13 @@ class LoopWidgetView extends Ui.View {
         dc.clear();
         dc.setColor(fg, Graphics.COLOR_TRANSPARENT);
 
+        
         var duration_label;
-        
-        
-        if(lastUpdateTime == null || predictionDelta == null) { 
-        		duration_label = "Waiting";
+        if(lastGlucoseTime == null || predictionDelta == null) { 
+        		duration_label = "Waiting for data";
         	} else {
-       	 	if((Time.now().value() - lastUpdateTime)/60 > 10) { dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_DK_BLUE); }
-        		duration_label = Math.round((Time.now().value() - lastUpdateTime)/60).format("%.0f") + " MIN AGO (" + Math.round(predictionDelta).format("%+.0f") + ")";
+       	 	if((Time.now().value() - lastGlucoseTime)/60 > 10) { dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_YELLOW); }
+        		duration_label = " " + Math.round((Time.now().value() - lastGlucoseTime)/60).format("%.0f") + " Min Ago ";
         }
         text(dc, 109, 192, Graphics.FONT_XTINY, duration_label);
     		dc.setColor(fg, Graphics.COLOR_TRANSPARENT);
@@ -155,17 +153,33 @@ class LoopWidgetView extends Ui.View {
         // TODO this is maybe just a tiny bit too ad-hoc
         if (dc.getWidth() == 218 && dc.getHeight() == 218) {
             // Fenix 3
-            text(dc, 109, 15, Graphics.FONT_TINY, "BG");
             
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            text(dc, 56, 40, Graphics.FONT_XTINY, "COB:" + fmt_num(cob));
-            text(dc, 56, 54, Graphics.FONT_XTINY, "IOB:" + fmt_decimal(iob));
+            if(lastLoopTime != null) {
+	            var loopAge = (Time.now().value() - lastLoopTime)/60;
+	            if (loopAge >= 15) { dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_RED); }
+	            else if (loopAge >= 5) { dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT); }
+	            else { dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT); } 
+            }
+            text(dc, 109, 8, Graphics.FONT_XTINY, " LOOP ");
             
-            dc.setColor(chart.colorForGlucose(eventualGlucose), Graphics.COLOR_TRANSPARENT); 
-            text(dc, 160, 47, Graphics.FONT_SMALL, "->" + fmt_num(eventualGlucose));
+            dc.setColor(fg, Graphics.COLOR_TRANSPARENT);
             
-            dc.setColor(chart.colorForGlucose(currentGlucose), Graphics.COLOR_TRANSPARENT); 
-            text(dc, 109, 45, Graphics.FONT_NUMBER_MEDIUM, fmt_num(currentGlucose) );
+            var basalLabel;
+          	if(netBasal == null) { basalLabel = "--- U"; }
+            else { basalLabel =  "" + netBasal.format("%+.2f") + " U"; } 
+            
+            dc.drawText(79, 31, Graphics.FONT_XTINY,  basalLabel, Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER); 
+  		    dc.drawText(79, 45, Graphics.FONT_XTINY, "COB: " + fmt_num(cob), Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.drawText(79, 59, Graphics.FONT_XTINY, "IOB: " + fmt_decimal(iob),  Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER);
+            
+            //dc.drawText(140, 58, Graphics.FONT_XTINY,  "    (" + fmt_num(predictionDelta) + ")", Graphics.TEXT_JUSTIFY_LEFT|Graphics.TEXT_JUSTIFY_VCENTER);
+            
+            
+            setTextColorForGlucose(eventualGlucose, dc);
+            dc.drawText(140, 45, Graphics.FONT_SMALL, "->" + fmt_num(eventualGlucose) + " ", Graphics.TEXT_JUSTIFY_LEFT|Graphics.TEXT_JUSTIFY_VCENTER);
+                
+            setTextColorForGlucose(currentGlucose, dc);
+            text(dc, 109, 42, Graphics.FONT_NUMBER_MEDIUM, " " + fmt_num(currentGlucose) + " ");
              
             dc.setColor(fg, Graphics.COLOR_TRANSPARENT);
                 
@@ -183,12 +197,30 @@ class LoopWidgetView extends Ui.View {
         }
     }
 
+	function setTextColorForGlucose(val, dc) {
+		if(val==null) { dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT); }
+    	  	else if(val<80) { dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_RED); }
+    	   	else if(val>240) { dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);  /*dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_YELLOW);*/  }
+    	   	else if(val>180) { dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);  }
+    	    else { dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT); }
+    	    
+    	}
+    	        
     function fmt_num(num) {
         if (num == null) {
             return "---";
         }
         else {
             return "" + num.format("%.0f");
+        }
+    }
+    
+    function fmt_plusminus(num) {
+        if (num == null) {
+            return "---";
+        }
+        else {
+            return "" + num.format("%+f");
         }
     }
     
@@ -201,20 +233,49 @@ class LoopWidgetView extends Ui.View {
         }
     }
     
-    
-    
     function text(dc, x, y, font, s) {
         dc.drawText(x, y, font, s,
                     Graphics.TEXT_JUSTIFY_CENTER|Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    var vibrateData = [new Attention.VibeProfile( 25, 100),
-                       new Attention.VibeProfile( 50, 100),
-                       new Attention.VibeProfile( 75, 100),
-                       new Attention.VibeProfile(100, 100),
-                       new Attention.VibeProfile( 75, 100),
-                       new Attention.VibeProfile( 50, 100),
-                       new Attention.VibeProfile( 25, 100)];
+    var vibrateData = [new Attention.VibeProfile( 100, 100),
+                       new Attention.VibeProfile( 0, 100),
+                       new Attention.VibeProfile( 100, 100),
+                       new Attention.VibeProfile( 0, 100),
+                       new Attention.VibeProfile( 100, 300),
+                       new Attention.VibeProfile( 0, 100)
+                       ];
+                       
+   	function checkAndAlert() {
+   		var alert = false;
+   		
+   		if(currentGlucose != null) {
+   			if(currentGlucose < 80) { alert = true; }
+   		}
+   		
+   		if(eventualGlucose != null) {
+   			if(eventualGlucose < 80) { alert = true; }
+   		}
+   		
+   		if(lastLoopTime != null) {
+   			var loopAge = (Time.now().value() - lastLoopTime)/60;
+            if (loopAge >= 15) { alert = true; }
+        	}
+        	
+        	if(predictionDelta != null) {
+   			if(predictionDelta.abs() > 40) { alert = true; }
+        	}
+   		
+   		if(alert) {
+	   		if (Attention has :vibrate) {
+	   			Attention.vibrate(vibrateData);
+	   		}
+	   	} else {
+	   		if (Attention has :vibrate) {
+	   			Attention.vibrate( [new Attention.VibeProfile(75, 50)] );
+	   		}
+	   	}
+   	} 
 
   	function onMail(mailIter) {
    		System.println("onmail");
@@ -227,8 +288,7 @@ class LoopWidgetView extends Ui.View {
 			System.println("onmail3");
         		System.println(mail.toString());
 			System.println("onmail4");
-            //model.new_value(mail.get("glucose"));
-			var history = mail.get("glucose");
+            var history = mail.get("glucose");
     			if(history != null) {
     				for (var i = 0; i < 12-history.size(); i++) { 
     					model.new_value(null);
@@ -247,19 +307,22 @@ class LoopWidgetView extends Ui.View {
             } 
             
             System.println("onmail4.5");
-    			lastUpdateTime = mail.get("glucosetime");
+    			lastGlucoseTime = mail.get("glucosetime");
     			System.println("onmail5");
     			predictionDelta = mail.get("predictiondelta");
     			System.println("onmail6");
     			iob = mail.get("iob");
     			cob = mail.get("cob");
     			eventualGlucose = mail.get("eventualglucose");
-    			
-            mail = mailIter.next();
+    		    lastLoopTime = mail.get("lastloop");
+    		    netBasal = mail.get("netbasal");
+    		    mail = mailIter.next();
+    		    
         }
 
         Comm.emptyMailbox();
         Ui.requestUpdate();
+        checkAndAlert();
     }
 }
 
@@ -271,14 +334,20 @@ class LoopWidgetDelegate extends Ui.InputDelegate {
 	
     function onKey(evt) {
         if (evt.getKey() == Ui.KEY_ENTER) {
-            Ui.pushView(new Rez.Menus.MainMenu(), new MenuDelegate(),
-                        Ui.SLIDE_LEFT);
+            view.lastGlucoseTime = null;
+            view.currentGlucose = null;
+            Ui.requestUpdate();
+           	view.requestData();
+           	 
+           // Ui.pushView(new Rez.Menus.MainMenu(), new MenuDelegate(),
+           //             Ui.SLIDE_LEFT);
             return true;
         }
         return false;
     } 
 }
 
+/*
 class MenuDelegate extends Ui.MenuInputDelegate {
      function initialize() {
 		Ui.MenuInputDelegate.initialize();
@@ -338,5 +407,6 @@ class PeriodMenuDelegate extends Ui.MenuInputDelegate {
         Ui.popView(Ui.SLIDE_RIGHT);
         return true;
     } 
+    
 } 
-
+*/
