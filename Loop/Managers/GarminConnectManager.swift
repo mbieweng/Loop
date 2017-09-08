@@ -106,11 +106,10 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                     data["cob"] = activeCarbohydrates
 
                     if let glucose = context.glucose {
-                        data["lastglucose"] = glucose.last?.value
-                        data["glucosetime"] = glucose.last?.startDate.timeIntervalSince1970
+                        data["lastGlucose"] = glucose.last?.value
+                        data["lastGlucoseTime"] = glucose.last?.startDate.timeIntervalSince1970
                         data["glucose"] =  Array((glucose.map {$0.value}).suffix(12))
-                        
-                        data["predictiondelta"] = 0;
+                        data["predictionDelta"] = 0;
                         /*
                         if let retroVal = state.retrospectivePredictedGlucose?.last,
                             let currentVal = self.deviceManager.loopManager.glucoseStore.latestGlucose {
@@ -121,28 +120,25 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                     }
                     
                     if let predictedGlucose = context.predictedGlucose {
-                        data["glucoseforecast"] = Array(predictedGlucose.values.prefix(12))
-                        data["eventualglucose"] = predictedGlucose.values.last;
+                        data["glucoseForecast"] = Array(predictedGlucose.values.prefix(12))
+                        data["eventualGlucose"] = predictedGlucose.values.last;
                     }
                     
                     if let loop = context.loop {
-                        data["lastloop"] = loop.lastCompleted?.timeIntervalSince1970
+                        data["lastLoopTime"] = loop.lastCompleted?.timeIntervalSince1970
                     }
                     
                     if let netbasal = context.netBasal {
-                        data["netbasal"] = netbasal.rate
+                        data["netBasal"] = netbasal.rate
                         
                     }
                     
-                    
-                    
-                    
-                    NSLog("Garmin Sending context: \(data)")
+                    NSLog("Garmin sending context: \(data)")
                     ConnectIQ.sharedInstance().sendMessage(data, to: self.garminLoopApp, progress: {(sentBytes: UInt32, totalBytes: UInt32) -> Void in
                         let percent: Double = 100.0 * Double(sentBytes / totalBytes)
-                        print("Garmin Progress: \(percent)% sent \(sentBytes) bytes of \(totalBytes)")
+                        print("Garmin progress: \(percent)% sent \(sentBytes) bytes of \(totalBytes)")
                     }, completion: {(result: IQSendMessageResult) -> Void in
-                        NSLog("Garmin Send message finished with result: \(NSStringFromSendMessageResult(result))")
+                        NSLog("Garmin send message finished with result: \(NSStringFromSendMessageResult(result))")
                     })
                     
                 }

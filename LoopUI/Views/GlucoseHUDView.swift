@@ -131,8 +131,9 @@ public final class GlucoseHUDView: BaseHUDView {
         if let valueString = numberFormatter.string(from: NSNumber(value: glucoseQuantity)) {
             unitStrings.append(String(format: NSLocalizedString("(%1$@)", comment: "Glucose trend value"), valueString))
         }
-        unitLabel.text = unitStrings.joined(separator: " ")
-        
+        DispatchQueue.main.async {
+            self.unitLabel.text = unitStrings.joined(separator: " ")
+        }
     }
 
     private lazy var timeFormatter: DateFormatter = {

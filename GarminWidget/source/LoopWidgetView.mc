@@ -68,7 +68,7 @@ class LoopWidgetView extends Ui.View {
         requestData();
         
         // Test Data
-        /*  
+         /* 
 		model.new_value(100);	
 		model.new_value(55);
 		model.new_value(110);
@@ -166,7 +166,7 @@ class LoopWidgetView extends Ui.View {
             
             var basalLabel;
           	if(netBasal == null) { basalLabel = "--- U"; }
-            else { basalLabel =  "" + netBasal.format("%+.2f") + " U"; } 
+            else { basalLabel =  "" + netBasal.format("%+.1f") + " U"; } 
             
             dc.drawText(79, 31, Graphics.FONT_XTINY,  basalLabel, Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER); 
   		    dc.drawText(79, 45, Graphics.FONT_XTINY, "COB: " + fmt_num(cob), Graphics.TEXT_JUSTIFY_RIGHT|Graphics.TEXT_JUSTIFY_VCENTER);
@@ -238,13 +238,7 @@ class LoopWidgetView extends Ui.View {
                     Graphics.TEXT_JUSTIFY_CENTER|Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    var vibrateData = [new Attention.VibeProfile( 100, 100),
-                       new Attention.VibeProfile( 0, 100),
-                       new Attention.VibeProfile( 100, 100),
-                       new Attention.VibeProfile( 0, 100),
-                       new Attention.VibeProfile( 100, 300),
-                       new Attention.VibeProfile( 0, 100)
-                       ];
+   
                        
    	function checkAndAlert() {
    		var alert = false;
@@ -268,27 +262,33 @@ class LoopWidgetView extends Ui.View {
    		
    		if(alert) {
 	   		if (Attention has :vibrate) {
-	   			Attention.vibrate(vibrateData);
-	   		}
+	   			var vibe = [new Attention.VibeProfile( 100, 100),
+                       new Attention.VibeProfile( 0, 100),
+                       new Attention.VibeProfile( 100, 300),
+                       new Attention.VibeProfile( 0, 100),
+                       new Attention.VibeProfile( 100, 100),
+                       new Attention.VibeProfile( 0, 100),
+                       new Attention.VibeProfile( 100, 300)
+          
+                      ];
+	   			Attention.vibrate(vibe);
+             }
 	   	} else {
 	   		if (Attention has :vibrate) {
-	   			Attention.vibrate( [new Attention.VibeProfile(75, 50)] );
+	   			Attention.vibrate( [new Attention.VibeProfile(100, 50),
+	   								new Attention.VibeProfile(0, 50),
+	   								new Attention.VibeProfile(100, 50)] );
 	   		}
 	   	}
    	} 
 
   	function onMail(mailIter) {
-   		System.println("onmail");
-        var mail;
+   		var mail;
 
         mail = mailIter.next();
- 		System.println("onmail2");
-        
         while(mail != null) {
-			System.println("onmail3");
-        		System.println(mail.toString());
-			System.println("onmail4");
-            var history = mail.get("glucose");
+	    		System.println(mail.toString());
+	        var history = mail.get("glucose");
     			if(history != null) {
     				for (var i = 0; i < 12-history.size(); i++) { 
     					model.new_value(null);
@@ -298,24 +298,20 @@ class LoopWidgetView extends Ui.View {
                		currentGlucose = history[i];
                	}
             } 
-            var forecast = mail.get("glucoseforecast");
+            var forecast = mail.get("glucoseForecast");
     			if(forecast != null) {
     				for (var i = 1; i < forecast.size(); i++) {
                		model.new_value(forecast[i]);
-               		//currentGlucose = history[i];
                	}
             } 
             
-            System.println("onmail4.5");
-    			lastGlucoseTime = mail.get("glucosetime");
-    			System.println("onmail5");
-    			predictionDelta = mail.get("predictiondelta");
-    			System.println("onmail6");
+            lastGlucoseTime = mail.get("lastGlucoseTime");
+    			predictionDelta = mail.get("predictionDelta");
     			iob = mail.get("iob");
     			cob = mail.get("cob");
-    			eventualGlucose = mail.get("eventualglucose");
-    		    lastLoopTime = mail.get("lastloop");
-    		    netBasal = mail.get("netbasal");
+    			eventualGlucose = mail.get("eventualGlucose");
+    		    lastLoopTime = mail.get("lastLoopTime");
+    		    netBasal = mail.get("netBasal");
     		    mail = mailIter.next();
     		    
         }

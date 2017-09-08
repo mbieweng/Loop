@@ -605,13 +605,9 @@ final class LoopDataManager {
     }
     
     private func checkAlerts() {
-        // MB Custom Alerts
-        NSLog("MB Custom alerts")
-        //self.deviceManager.loopManager.getLoopState { (manager, state) in
         
-        // Prediction Error Alert
-        //let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
-        //let startGlucose = retrospectivePredictedGlucose?.first
+        NSLog("MB Custom alerts")
+        // Prediction differential alert
         let retroGlucose = retrospectivePredictedGlucose?.last
         let currentGlucose = glucoseStore.latestGlucose
         let unit = HKUnit.milligramsPerDeciliter()
