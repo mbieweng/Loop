@@ -132,7 +132,7 @@ struct NotificationManager {
     
     static func sendHighGlucoseNotification(quantity: Double) {
         
-        if(-self.lastHighBGAlertTime.timeIntervalSinceNow < 30*60)  {
+        if(-self.lastHighBGAlertTime.timeIntervalSinceNow < 60*60)  {
             NSLog("Only %f min since last high glucose alert...snoozing", -self.lastHighBGAlertTime.timeIntervalSinceNow/60)
             return
         }
@@ -160,7 +160,7 @@ struct NotificationManager {
     
     static func sendForecastErrorNotification(quantity: Double) {
         
-        if(-self.lastForecastErrorAlertTime.timeIntervalSinceNow < 30*60)  {
+        if(-self.lastForecastErrorAlertTime.timeIntervalSinceNow < 60*60)  {
             NSLog("Only %f min since lastForecastErrorAlertTime...snoozing", -self.lastForecastErrorAlertTime.timeIntervalSinceNow/60)
             return
         }

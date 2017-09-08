@@ -628,8 +628,23 @@ final class LoopDataManager {
         
         // High and low alerts
         if let glucose = predictedGlucose {
+            
+            // 20 min check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(20*60) }.min{ $0.quantity < $1.quantity }) {
+                let lowAlertThreshold = settings.suspendThreshold ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
+                    // alert
+                    NSLog("MB Next 20 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    NSLog("MB Next 20 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    
+                }
+            }
+
+            // one hour check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = settings.minimumBGGuard ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:55)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
