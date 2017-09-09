@@ -114,7 +114,7 @@ struct NotificationManager {
         notification.title = NSLocalizedString("Low BG", comment: "The notification title for a predicted low glucose")
         
         //notification.body = NSLocalizedString("Low BG expected within 1 hour", comment: "The notification alert describing a low glucose")
-        notification.body = String(format: NSLocalizedString("Low bg %.0f expected within 1 hour", comment: "The notification alert describing a low glucose"), quantity)
+        notification.body = String(format: NSLocalizedString("Low bg %.0f expected", comment: "The notification alert describing a low glucose"), quantity)
 
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.lowGluc.rawValue
@@ -141,7 +141,7 @@ struct NotificationManager {
         
         notification.title = NSLocalizedString("High BG", comment: "The notification title for a predicted high glucose")
         
-        notification.body = String(format: NSLocalizedString("High bg %.0f expected within 30 min", comment: "The notification alert describing a high glucose"), quantity)
+        notification.body = String(format: NSLocalizedString("High bg %.0f expected", comment: "The notification alert describing a high glucose"), quantity)
         
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.highGluc.rawValue

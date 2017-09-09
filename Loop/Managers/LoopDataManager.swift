@@ -60,8 +60,8 @@ final class LoopDataManager {
         carbStore = CarbStore(
             healthStore: healthStore,
             defaultAbsorptionTimes: (
-                fast: TimeInterval(hours: 1),
-                medium: TimeInterval(hours: 3),
+                fast: TimeInterval(hours: 0.5),
+                medium: TimeInterval(hours: 2),
                 slow: TimeInterval(hours: 5)
             ),
             carbRatioSchedule: carbRatioSchedule,
@@ -662,15 +662,6 @@ final class LoopDataManager {
                     
                 }
             }
-            
-            /*// Garmin update
-            NSLog("MB Garmin update")
-            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
-                if let currentDate = currentGlucose?.endDate {
-                    GarminConnectManager.shared.sendCurrentGlucose(value: currentVal, date: currentDate, predictionDelta: delta)
-                }
-            }
-            */
             
         }
         
