@@ -2,14 +2,18 @@
   "iOS" : [
     {
 <<<<<<< HEAD
+<<<<<<< HEAD
       "hash" : "46233505e8e98ba524d09749e9afb5e5fa97b8a1d2a849a12eab047d201f79fb",
 =======
       "hash" : "79cbe93b42fabad98bdcfb18194b45ac90a9b0fe26323c135f9c0f15e525c7df",
 >>>>>>> LoopKit/dev
+=======
+      "hash" : "35cb6c6d9de549086ef2dbd86a480ec706e52d2aa3549899032d5cccfe68e599",
+>>>>>>> LoopKit/dev
       "name" : "xDripG5"
     }
   ],
-  "commitish" : "v0.8.0",
+  "commitish" : "v0.8.1",
   "watchOS" : [
 
   ],

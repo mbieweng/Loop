@@ -2,14 +2,18 @@
   "iOS" : [
     {
 <<<<<<< HEAD
+<<<<<<< HEAD
       "hash" : "94b0cbe31f76e462037d76c66cba4c05eb6bb95323f82a84a14f570a65786980",
 =======
       "hash" : "c7bb83f472aff44ec724aa20da5a68e9975ee8a531103d219080e3fe755ac4d0",
 >>>>>>> LoopKit/dev
+=======
+      "hash" : "d87c4461d79024396b8132e517c41d32b0fb4d64f1bfb199aa3a93265246de74",
+>>>>>>> LoopKit/dev
       "name" : "ShareClient"
     }
   ],
-  "commitish" : "v0.4.0",
+  "commitish" : "v0.4.1",
   "watchOS" : [
 
   ],
