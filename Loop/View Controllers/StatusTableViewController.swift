@@ -361,35 +361,6 @@ final class StatusTableViewController: ChartsTableViewController {
         reloadGroup.notify(queue: .main) {
             self.tableView.beginUpdates()
             if let hudView = self.hudView {
-<<<<<<< HEAD
-                // Loop completion HUD
-                hudView.loopCompletionHUD.lastLoopCompleted = lastLoopCompleted
-                self.lastLoopError = lastLoopError
-                if let dosingEnabled = dosingEnabled {
-                    hudView.loopCompletionHUD.dosingEnabled = dosingEnabled
-                }
-
-                // MB Custom
-                self.deviceManager.loopManager.getLoopState { (manager, state) in
-                    let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
-                    let retroGlucose = retrospectivePredictedGlucose?.last
-                    let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-                    var delta : Double = 0
-                    if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                        if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                            delta = currentVal-retroVal;
-                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit)
-                            NSLog("MB Updating retro differential hud to \(delta)")
-                        }
-                    }
-                }
-                // End MB Custom Alerts
-            
-            
-            
-            
-=======
->>>>>>> LoopKit/dev
                 // Glucose HUD
                 if let glucose = self.deviceManager.loopManager.glucoseStore.latestGlucose {
                     hudView.glucoseHUD.setGlucoseQuantity(glucose.quantity.doubleValue(for: self.charts.glucoseUnit),
@@ -410,6 +381,23 @@ final class StatusTableViewController: ChartsTableViewController {
 
                 // Battery HUD
                 hudView.batteryHUD.batteryLevel = self.deviceManager.pumpBatteryChargeRemaining
+            
+                // MB Custom differential
+                self.deviceManager.loopManager.getLoopState { (manager, state) in
+                    let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
+                    let retroGlucose = retrospectivePredictedGlucose?.last
+                    let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
+                    var delta : Double = 0
+                    if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                        if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
+                            delta = currentVal-retroVal;
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit)
+                            NSLog("MB Updating retro differential hud to \(delta)")
+                        }
+                    }
+                }
+                // End MB Custom
+            
             }
 
             // Fetch the current IOB subtitle
@@ -730,7 +718,6 @@ final class StatusTableViewController: ChartsTableViewController {
             case .glucose:
                 if let eventualGlucose = eventualGlucoseDescription {
                     cell.subtitleLabel?.text = String(format: NSLocalizedString("Eventually %@", comment: "The subtitle format describing eventual glucose. (1: localized glucose value description)"), eventualGlucose)
-
                 } else {
                     cell.subtitleLabel?.text = nil
                 }
@@ -828,7 +815,6 @@ final class StatusTableViewController: ChartsTableViewController {
             break
         }
     }
-
 
     // MARK: - Actions
 
