@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "iOS" : [
     {
 <<<<<<< HEAD
@@ -12,15 +13,22 @@
 >>>>>>> LoopKit/dev
       "name" : "xDripG5"
     }
+=======
+  "Mac" : [
+
+>>>>>>> LoopKit/dev
   ],
-  "commitish" : "v0.8.1",
   "watchOS" : [
 
   ],
   "tvOS" : [
 
   ],
-  "Mac" : [
-
+  "commitish" : "v0.8.1",
+  "iOS" : [
+    {
+      "name" : "xDripG5",
+      "hash" : "ba09e9c5440f4e1ecc80415292e9e7a75b43a3d0801ff3e8650252de2abc352d"
+    }
   ]
 }

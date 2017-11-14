@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "iOS" : [
     {
 <<<<<<< HEAD
@@ -12,15 +13,22 @@
 >>>>>>> LoopKit/dev
       "name" : "Amplitude"
     }
+=======
+  "Mac" : [
+
+>>>>>>> LoopKit/dev
   ],
-  "commitish" : "v3.14.1",
   "watchOS" : [
 
   ],
   "tvOS" : [
 
   ],
-  "Mac" : [
-
+  "commitish" : "v3.14.1",
+  "iOS" : [
+    {
+      "name" : "Amplitude",
+      "hash" : "679042923a98116dd7270d42e3c35ce499bd2020702689c7f162b1b6091aeb11"
+    }
   ]
 }
