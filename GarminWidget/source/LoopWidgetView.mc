@@ -290,7 +290,7 @@ class LoopWidgetView extends Ui.View {
 	    		System.println(mail.toString());
 	        var history = mail.get("glucose");
     			if(history != null) {
-    				for (var i = 0; i < 12-history.size(); i++) { 
+    				for (var i = 0; i < 6-history.size(); i++) { 
     					model.new_value(null);
     				}      
     				for (var i = 1; i < history.size(); i++) {

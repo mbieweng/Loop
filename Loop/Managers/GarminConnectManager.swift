@@ -108,7 +108,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                     if let glucose = context.glucose {
                         data["lastGlucose"] = glucose.last?.value
                         data["lastGlucoseTime"] = glucose.last?.startDate.timeIntervalSince1970
-                        data["glucose"] =  Array((glucose.map {$0.value}).suffix(12))
+                        data["glucose"] =  Array((glucose.map {$0.value}).suffix(6))
                         data["predictionDelta"] = 0;
                         /*
                         if let retroVal = state.retrospectivePredictedGlucose?.last,

@@ -53,7 +53,7 @@ class Chart {
                     dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
                     
                     dc.setColor(lineColorForGlucose(item), lineColorForGlucose(item));
-                    if(i<12) { 
+                    if(i<=6) { 
                     		dc.setPenWidth(6);
                     		dc.drawLine(x_old, y_old, x, y);
                     	} else {

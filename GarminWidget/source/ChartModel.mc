@@ -5,7 +5,7 @@ using Toybox.Application as App;
 
 class ChartModel {
     var current = null;
-    var values_size = 24;
+    var values_size = 18;
     var values;
     var range_mult;
     var range_mult_count = 0;
@@ -18,7 +18,7 @@ class ChartModel {
     var max_i;
     
     function initialize() {
-        set_range_minutes(120);
+        set_range_minutes(90);
     }
 
     function get_values() {
@@ -78,8 +78,8 @@ class ChartModel {
    
 
     function update_min_max() {
-        min = 50;
-        max = 250;
+        min = 70;
+        max = 220;
         min_i = 0;
         max_i = 0;
 
