@@ -18,7 +18,8 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     static let shared = GarminConnectManager()
 
     static let ReturnURLScheme = Bundle.main.bundleIdentifier
-    let deviceManager = DeviceDataManager()
+    
+    var deviceManager: DeviceDataManager!
     
     var devices : Array = [IQDevice]()
 
@@ -110,12 +111,14 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
                         data["lastGlucoseTime"] = glucose.last?.startDate.timeIntervalSince1970
                         data["glucose"] =  Array((glucose.map {$0.value}).suffix(6))
                         data["predictionDelta"] = 0;
+                        
                         /*
                         if let retroVal = state.retrospectivePredictedGlucose?.last,
                             let currentVal = self.deviceManager.loopManager.glucoseStore.latestGlucose {
                             data["predictiondelta"] = currentVal.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter())-retroVal.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter())
                         }
                         */
+                        
                         
                     }
                     

@@ -391,7 +391,15 @@ final class StatusTableViewController: ChartsTableViewController {
                     if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
                         if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
                             delta = currentVal-retroVal;
-                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit)
+                            /*
+                            if let sens = self.deviceManager.loopManager.insulinSensitivitySchedule?.quantity(at: Date.init()).doubleValue(for: self.charts.glucoseUnit) {
+                                self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: sens)
+                            }
+                            */
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: 1-manager.autoSensFactor)
+                            
+                            //self.deviceManager.loopManager.autoSensFactor
+                            //self.deviceManager.loopManager.insulinSensitivitySchedule?.quantity(at: Date.init())
                             NSLog("MB Updating retro differential hud to \(delta)")
                         }
                     }

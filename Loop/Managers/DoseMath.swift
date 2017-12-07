@@ -49,16 +49,25 @@ extension InsulinCorrection {
         minimumProgrammableIncrementPerUnit: Double
     ) -> TempBasalRecommendation {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
+        
+        // MB Aggressive
+        let aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
+        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate)")
+        rate += aggressiveTempRateDelta
+        //
+        
         switch self {
         case .aboveRange, .inRange, .entirelyBelowRange:
             rate += scheduledBasalRate
         case .suspend:
             break
         }
-
+        
         rate = Swift.min(maxBasalRate, Swift.max(0, rate))
         rate = round(rate * minimumProgrammableIncrementPerUnit) / minimumProgrammableIncrementPerUnit
-
+        
+        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
+        
         return TempBasalRecommendation(
             unitsPerHour: rate,
             duration: duration
@@ -366,6 +375,7 @@ extension Collection where Iterator.Element == GlucoseValue {
         minimumProgrammableIncrementPerUnit: Double = 40,
         continuationInterval: TimeInterval = .minutes(11)
     ) -> TempBasalRecommendation? {
+        
         let correction = self.insulinCorrection(
             to: correctionRange,
             at: date,

@@ -535,7 +535,9 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 scheduleVC.title = NSLocalizedString("Carb Ratios", comment: "The title of the carb ratios schedule screen")
                 scheduleVC.unit = .gram()
 
-                if let schedule = dataManager.loopManager.carbRatioSchedule {
+                // MB Show defaults instead of autosens adjusted values
+                if let schedule = UserDefaults.standard.carbRatioSchedule {
+                // if let schedule = dataManager.loopManager.carbRatioSchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
                     scheduleVC.unit = schedule.unit
@@ -548,7 +550,9 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 scheduleVC.delegate = self
                 scheduleVC.title = NSLocalizedString("Insulin Sensitivities", comment: "The title of the insulin sensitivities schedule screen")
 
-                if let schedule = dataManager.loopManager.insulinSensitivitySchedule {
+                // MB Show defaults instead of autosens adjusted values
+                if let schedule = UserDefaults.standard.insulinSensitivitySchedule {
+                //if let schedule = dataManager.loopManager.insulinSensitivitySchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
                     scheduleVC.unit = schedule.unit

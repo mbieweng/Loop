@@ -23,6 +23,12 @@ final class LoopDataManager {
         case tempBasal
     }
 
+    // MB AutoSens
+    var averageRetroError = 0.0
+    var autoSensFactor = 1.0
+    var lastAutoSensUpdate : Date = Date.init(timeIntervalSince1970: 0)
+    //
+    
     static let LoopUpdateContextKey = "com.loudnate.Loop.LoopDataManager.LoopUpdateContext"
 
     fileprivate typealias GlucoseChange = (start: GlucoseValue, end: GlucoseValue)
@@ -600,8 +606,81 @@ final class LoopDataManager {
             }
         }
         
+        // MB Custom
         checkAlerts()
+        updateAutoSens();
+        //
+    }
+    
+    private func updateAutoSens() {
+        NSLog("MB updateAutoSens");
         
+        let doNothingTolerance : Double = 10.0
+        let lowTrendSensitivityIncrease : Double = 0.02
+        let highTrendSensitivityDecrease : Double = 0.01
+        let minLimit : Double = 0.95
+        let maxLimit : Double = 1.20
+        let minWaitMinutes  : Double = 4.0
+        let dataPoints : Double = 4 // 12 per hour
+        
+        if(-self.lastAutoSensUpdate.timeIntervalSinceNow < minWaitMinutes*60) {
+            NSLog("MB AutoSens updated only \(-self.lastAutoSensUpdate.timeIntervalSinceNow/60) min ago, waiting")
+            return
+        }
+       
+        let retroGlucose = retrospectivePredictedGlucose?.last
+        let currentGlucose = glucoseStore.latestGlucose
+        let unit = HKUnit.milligramsPerDeciliter()
+        if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
+            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
+               
+                let currentAvg = averageRetroError.rawValue;
+                averageRetroError = currentAvg * (dataPoints-1)/dataPoints + (currentVal-retroVal)/dataPoints
+                
+                var newFactor = autoSensFactor
+               
+                if(averageRetroError < -doNothingTolerance) {
+                    newFactor = autoSensFactor + lowTrendSensitivityIncrease
+                } else if(averageRetroError > doNothingTolerance) {
+                    newFactor = autoSensFactor - highTrendSensitivityDecrease
+                } 
+                
+                autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, newFactor))
+                lastAutoSensUpdate = Date.init()
+                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
+
+                // Update Insulin Sensitivity
+                if let defaultInsulinSensitivitySchedule = UserDefaults.standard.insulinSensitivitySchedule {
+                
+                
+                    var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
+                    defaultInsulinSensitivitySchedule.items.forEach{ item in
+                        adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
+                    }
+                    let adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
+                
+                    carbStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
+                    doseStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Sensitivity now \(adjustedInsulinSensSched.debugDescription)")
+                }
+            
+                // Update Carb Ratio
+                if let defaultCarbRatioSchedule = UserDefaults.standard.carbRatioSchedule {
+                    
+                    var adjustedCarbItems : [RepeatingScheduleValue<Double>] = []
+                    defaultCarbRatioSchedule.items.forEach{ item in
+                        adjustedCarbItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
+                    }
+                    let adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
+                    
+                    carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
+                    //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Carb ratio now \(carbRatioSchedule.debugDescription)")
+                }
+                
+                
+            }
+        }
     }
     
     private func checkAlerts() {
@@ -619,28 +698,29 @@ final class LoopDataManager {
                 } else {
                     NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
                 }
+                
             }
         }
         
         // High and low alerts
         if let glucose = predictedGlucose {
             
-            // 20 min check
-            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(20*60) }.min{ $0.quantity < $1.quantity }) {
+            // 30 min check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.min{ $0.quantity < $1.quantity }) {
                 let lowAlertThreshold = settings.suspendThreshold ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
-                    NSLog("MB Next 20 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NSLog("MB Next 30 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    NSLog("MB Next 20 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NSLog("MB Next 30 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     
                 }
             }
 
             // one hour check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:55)
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:65)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)

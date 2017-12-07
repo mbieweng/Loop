@@ -33,7 +33,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             let statusVC = navVC.viewControllers.first as? StatusTableViewController {
             statusVC.deviceManager = deviceManager
         }
+        GarminConnectManager.shared.deviceManager = deviceManager
         GarminConnectManager.shared.setup()
+        
         return true
     }
 

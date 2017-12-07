@@ -122,13 +122,20 @@ public final class GlucoseHUDView: BaseHUDView {
         accessibilityValue = accessibilityStrings.joined(separator: ", ")
     }
     
-    public func setGlucoseTrendValue(_ glucoseQuantity: Double, unit: HKUnit) {
-        var unitStrings = [unit.glucoseUnitDisplayString]
-        let numberFormatter = NumberFormatter.glucoseFormatter(for: unit)
-        numberFormatter.positiveFormat = "+0"
-        numberFormatter.negativeFormat = "-0"
-
-        if let valueString = numberFormatter.string(from: NSNumber(value: glucoseQuantity)) {
+    public func setGlucoseTrendValue(_ glucoseQuantity: Double, unit: HKUnit, sensitivity: Double) {
+        var unitStrings = [""] // [unit.glucoseUnitDisplayString]
+        
+        let sensFormatter = NumberFormatter.init();
+        sensFormatter.numberStyle = .percent
+        
+        if let sensString = sensFormatter.string(from: NSNumber(value: sensitivity)) {
+            unitStrings.append(String(format: NSLocalizedString("%1$@", comment: "Insulin sensitivity"), sensString))
+        }
+        
+        let valueFormatter = NumberFormatter.glucoseFormatter(for: unit)
+        valueFormatter.positiveFormat = "+0"
+        valueFormatter.negativeFormat = "-0"
+        if let valueString = valueFormatter.string(from: NSNumber(value: glucoseQuantity)) {
             unitStrings.append(String(format: NSLocalizedString("(%1$@)", comment: "Glucose trend value"), valueString))
         }
         DispatchQueue.main.async {
