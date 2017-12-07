@@ -122,6 +122,8 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
         case insulinSensitivity
         case maxBasal
         case maxBolus
+        
+        case autoSensFactor
     }
 
     fileprivate enum ServiceRow: Int, CaseCountable {
@@ -361,6 +363,14 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 } else {
                     configCell.detailTextLabel?.text = TapToSetString
                 }
+                
+            case .autoSensFactor:
+                configCell.textLabel?.text = NSLocalizedString("AutoSens Factor", comment: "The title text for the autosens factor value")
+                
+                let asf = UserDefaults.standard.autoSensFactor
+                configCell.detailTextLabel?.text = "\(valueNumberFormatter.string(from: NSNumber(value: asf))!) x"
+                
+                
             }
 
             return configCell
@@ -500,7 +510,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
         case .configuration:
             let row = ConfigurationRow(rawValue: indexPath.row)!
             switch row {
-            case .maxBasal, .maxBolus:
+            case .maxBasal, .maxBolus, .autoSensFactor:
                 let vc: TextFieldTableViewController
 
                 switch row {
@@ -508,6 +518,8 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                     vc = .maxBasal(dataManager.loopManager.settings.maximumBasalRatePerHour)
                 case .maxBolus:
                     vc = .maxBolus(dataManager.loopManager.settings.maximumBolus)
+                case .autoSensFactor:
+                    vc = .autoSensFactor(UserDefaults.standard.autoSensFactor)
                 default:
                     fatalError()
                 }
@@ -962,6 +974,12 @@ extension SettingsTableViewController: TextFieldTableViewControllerDelegate {
                         dataManager.loopManager.settings.maximumBolus = units
                     } else {
                         dataManager.loopManager.settings.maximumBolus = nil
+                    }
+                case .autoSensFactor:
+                    if let value = controller.value, let asf = valueNumberFormatter.number(from: value)?.doubleValue {
+                        UserDefaults.standard.autoSensFactor = Swift.min(1.5, Swift.max(0.9, asf))
+                    } else {
+                         UserDefaults.standard.autoSensFactor = 1.0
                     }
                 default:
                     assertionFailure()

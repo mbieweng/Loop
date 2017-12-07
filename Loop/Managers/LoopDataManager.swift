@@ -25,8 +25,11 @@ final class LoopDataManager {
 
     // MB AutoSens
     var averageRetroError = 0.0
-    var autoSensFactor = 1.0
     var lastAutoSensUpdate : Date = Date.init(timeIntervalSince1970: 0)
+    //
+    
+    // MB Alerts
+    var bolusAlertStartTime = Date.init()
     //
     
     static let LoopUpdateContextKey = "com.loudnate.Loop.LoopDataManager.LoopUpdateContext"
@@ -612,16 +615,19 @@ final class LoopDataManager {
         //
     }
     
+    // MB Autosens
     private func updateAutoSens() {
         NSLog("MB updateAutoSens");
         
-        let doNothingTolerance : Double = 10.0
-        let lowTrendSensitivityIncrease : Double = 0.02
-        let highTrendSensitivityDecrease : Double = 0.01
+        let doNothingTolerance : Double = 5.0
+        let lowTrendSensitivityIncrease : Double = 0.005
+        let highTrendSensitivityDecrease : Double = 0.005
         let minLimit : Double = 0.95
-        let maxLimit : Double = 1.20
+        let maxLimit : Double = 1.25
         let minWaitMinutes  : Double = 4.0
-        let dataPoints : Double = 4 // 12 per hour
+        let dataPoints : Double = 3 // 12 per hour
+        
+        var autoSensFactor = UserDefaults.standard.autoSensFactor
         
         if(-self.lastAutoSensUpdate.timeIntervalSinceNow < minWaitMinutes*60) {
             NSLog("MB AutoSens updated only \(-self.lastAutoSensUpdate.timeIntervalSinceNow/60) min ago, waiting")
@@ -637,22 +643,20 @@ final class LoopDataManager {
                 let currentAvg = averageRetroError.rawValue;
                 averageRetroError = currentAvg * (dataPoints-1)/dataPoints + (currentVal-retroVal)/dataPoints
                 
-                var newFactor = autoSensFactor
-               
                 if(averageRetroError < -doNothingTolerance) {
-                    newFactor = autoSensFactor + lowTrendSensitivityIncrease
+                    autoSensFactor = autoSensFactor + lowTrendSensitivityIncrease
                 } else if(averageRetroError > doNothingTolerance) {
-                    newFactor = autoSensFactor - highTrendSensitivityDecrease
+                    autoSensFactor = autoSensFactor - highTrendSensitivityDecrease
                 } 
                 
-                autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, newFactor))
+                autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
                 lastAutoSensUpdate = Date.init()
-                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
+                UserDefaults.standard.autoSensFactor = autoSensFactor
+                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor) \(UserDefaults.standard.autoSensFactor)")
 
                 // Update Insulin Sensitivity
                 if let defaultInsulinSensitivitySchedule = UserDefaults.standard.insulinSensitivitySchedule {
-                
-                
+                    
                     var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
                     defaultInsulinSensitivitySchedule.items.forEach{ item in
                         adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
@@ -683,6 +687,7 @@ final class LoopDataManager {
         }
     }
     
+    // MB Alerts
     private func checkAlerts() {
         
         NSLog("MB Custom alerts")
@@ -693,10 +698,10 @@ final class LoopDataManager {
         if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
             if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
                 if(abs(currentVal-retroVal) > 40) {
-                    NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
+                    //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
                     NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
                 } else {
-                    NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
+                    //NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
                 }
                 
             }
@@ -710,37 +715,60 @@ final class LoopDataManager {
                 let lowAlertThreshold = settings.suspendThreshold ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
-                    NSLog("MB Next 30 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //NSLog("MB Next 30 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    NSLog("MB Next 30 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //NSLog("MB Next 30 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     
                 }
             }
 
             // one hour check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:65)
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:60)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
-                    NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    NSLog("MB Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //NSLog("MB Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     
                 }
             }
             
+            // High glucose
             let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:250)
             if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
                 if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
                     // alert
-                    NSLog("MB Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    //NSLog("MB Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
                     NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    NSLog("MB Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    //NSLog("MB Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
                     
                 }
+            }
+            
+            // Bolus needed
+            do {
+                let minAlertBolus : Double = 1.0;
+                let minTime : Double = 11 * 60 // sec;
+                let bolusAmount = try self.recommendBolus().amount
+                
+                if(bolusAmount > minAlertBolus) {
+                    if (bolusAlertStartTime.timeIntervalSinceNow < -minTime ) {
+                        NotificationManager.sendRecommendBolusNotification(quantity: bolusAmount)
+                        DiagnosticLogger.shared?.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
+                        bolusAlertStartTime = Date.init();
+                    } else {
+                         DiagnosticLogger.shared?.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
+                    }
+                } else {
+                    bolusAlertStartTime = Date.init();
+                }
+                
+            } catch {
+                DiagnosticLogger.shared?.forCategory("MBAlerts").debug("No alert, unable to calcualate bolus recommendation.")
             }
             
         }

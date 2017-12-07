@@ -29,7 +29,27 @@ extension UserDefaults {
         case pumpModelNumber = "com.loudnate.Naterade.PumpModelNumber"
         case pumpRegion = "com.loopkit.Loop.PumpRegion"
         case pumpTimeZone = "com.loudnate.Naterade.PumpTimeZone"
+        
+        // MB Extensions
+        case autoSensFactor = "com.loopkit.Loop.autoSensFactor"
+        //
     }
+    
+    // MB Extensions
+    var autoSensFactor : Double {
+        get {
+            let value : Double = double(forKey:Key.autoSensFactor.rawValue)
+            if(value != 0)  {
+                return value
+            } else {
+                return 1.0
+            }
+        }
+        set {
+            set(newValue.rawValue, forKey: Key.autoSensFactor.rawValue)
+        }
+    }
+    
 
     var basalRateSchedule: BasalRateSchedule? {
         get {

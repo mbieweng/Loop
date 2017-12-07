@@ -19,9 +19,11 @@ struct NotificationManager {
         case pumpBatteryLow
         case pumpReservoirEmpty
         case pumpReservoirLow
+        
         case lowGluc
         case highGluc
         case forecastError
+        case bolusRecommend
     }
 
     enum Action: String {
@@ -36,6 +38,7 @@ struct NotificationManager {
     private static var lastLowBGAlertTime : Date = Date(timeIntervalSince1970: 0);
     private static var lastHighBGAlertTime : Date = Date(timeIntervalSince1970: 0);
     private static var lastForecastErrorAlertTime : Date = Date(timeIntervalSince1970: 0);
+    private static var lastRecommendBolusAlertTime : Date = Date(timeIntervalSince1970: 0);
 
     private static var notificationCategories: Set<UNNotificationCategory> {
         var categories = [UNNotificationCategory]()
@@ -165,13 +168,9 @@ struct NotificationManager {
             return
         }
         
-        
         let notification = UNMutableNotificationContent()
-        
         notification.title = NSLocalizedString("Prediction Differential", comment: "The notification title for a large prediction error")
-        
         notification.body = String(format: NSLocalizedString("BG currently %.0f from predicted", comment: "The notification alert describing a high prediction error"), quantity)
-        
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.forecastError.rawValue
         
@@ -184,6 +183,31 @@ struct NotificationManager {
         UNUserNotificationCenter.current().add(request)
         
         self.lastForecastErrorAlertTime = Date.init();
+        
+    }
+    
+    static func sendRecommendBolusNotification(quantity: Double) {
+        
+        if(-self.lastRecommendBolusAlertTime.timeIntervalSinceNow < 30*60)  {
+            NSLog("Only %f min since lastBolusAlertTime...snoozing", -self.lastRecommendBolusAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        notification.title = NSLocalizedString("Bolus Recommended", comment: "The notification title for a bolus recommended")
+        notification.body = String(format: NSLocalizedString("Bolus %.0f recommended", comment: "The notification alert describing a bolus recommended"), quantity)
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.forecastError.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.bolusRecommend.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastRecommendBolusAlertTime = Date.init();
         
     }
 
