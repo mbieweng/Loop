@@ -619,13 +619,14 @@ final class LoopDataManager {
     private func updateAutoSens() {
         NSLog("MB updateAutoSens");
         
-        let doNothingTolerance : Double = 5.0
-        let lowTrendSensitivityIncrease : Double = 0.005
-        let highTrendSensitivityDecrease : Double = 0.005
-        let minLimit : Double = 0.95
+        let doNothingTolerance : Double = 10.0
+        //let lowTrendSensitivityIncrease : Double = 0.005
+        //let highTrendSensitivityDecrease : Double = 0.005
+        let adjustmentFactor = 0.004/10 // 0.4% per 10 mg/dL
+        let minLimit : Double = 0.90
         let maxLimit : Double = 1.25
         let minWaitMinutes  : Double = 4.0
-        let dataPoints : Double = 3 // 12 per hour
+        let smoothingPoints : Double = 3 // 12 per hour
         
         var autoSensFactor = UserDefaults.standard.autoSensFactor
         
@@ -641,18 +642,18 @@ final class LoopDataManager {
             if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
                
                 let currentAvg = averageRetroError.rawValue;
-                averageRetroError = currentAvg * (dataPoints-1)/dataPoints + (currentVal-retroVal)/dataPoints
-                
+                averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
+                let adjustment = Swift.abs(averageRetroError)*adjustmentFactor
                 if(averageRetroError < -doNothingTolerance) {
-                    autoSensFactor = autoSensFactor + lowTrendSensitivityIncrease
+                    autoSensFactor = autoSensFactor + adjustment
                 } else if(averageRetroError > doNothingTolerance) {
-                    autoSensFactor = autoSensFactor - highTrendSensitivityDecrease
+                    autoSensFactor = autoSensFactor - adjustment
                 } 
                 
                 autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
                 lastAutoSensUpdate = Date.init()
                 UserDefaults.standard.autoSensFactor = autoSensFactor
-                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor) \(UserDefaults.standard.autoSensFactor)")
+                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
 
                 // Update Insulin Sensitivity
                 if let defaultInsulinSensitivitySchedule = UserDefaults.standard.insulinSensitivitySchedule {
@@ -752,7 +753,7 @@ final class LoopDataManager {
             // Bolus needed
             do {
                 let minAlertBolus : Double = 1.0;
-                let minTime : Double = 11 * 60 // sec;
+                let minTime : Double = 9 * 60 // sec;
                 let bolusAmount = try self.recommendBolus().amount
                 
                 if(bolusAmount > minAlertBolus) {

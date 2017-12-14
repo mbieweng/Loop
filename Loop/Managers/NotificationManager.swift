@@ -195,7 +195,7 @@ struct NotificationManager {
         
         let notification = UNMutableNotificationContent()
         notification.title = NSLocalizedString("Bolus Recommended", comment: "The notification title for a bolus recommended")
-        notification.body = String(format: NSLocalizedString("Bolus %.0f recommended", comment: "The notification alert describing a bolus recommended"), quantity)
+        notification.body = String(format: NSLocalizedString("Consider %.1f U bolus", comment: "The notification alert describing a bolus recommended"), quantity)
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.forecastError.rawValue
         
