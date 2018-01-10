@@ -239,7 +239,7 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 180.0 {
+    if initialValue < minValue && glucoseValue > 140.0 {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
     }
@@ -249,7 +249,7 @@ private func targetGlucoseValue(percentEffectDuration: Double,
 
     // Allow bolus dosing below minValue during initial interval set to 15% of
     // effect duration, so nominally 0.15*6*60 min = 54 min
-    let useInitialValueUntilPercent = 0.15
+    let useInitialValueUntilPercent = 0.10
     
     guard percentEffectDuration > useInitialValueUntilPercent else {
         return initialValue - BGzeroTempEffect
@@ -498,7 +498,7 @@ extension Collection where Iterator.Element == GlucoseValue {
             to: correctionRange,
             at: date,
             // for boluses, initial threshold is below suspend threshold
-            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter(), doubleValue: 70),
+            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter(), doubleValue: 75),
             suspendThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
             sensitivity: sensitivity.quantity(at: date),
             model: model
