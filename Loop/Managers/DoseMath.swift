@@ -51,7 +51,14 @@ extension InsulinCorrection {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
         
         // MB Aggressive
-        let aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
+        var aggressiveTempRateDelta : Double
+        if(UserDefaults.standard.autoSensFactor > 1.15) {
+            aggressiveTempRateDelta = Swift.min(rate, 0)
+            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.standard.autoSensFactor) aggressive high temp disabled")
+        } else {
+            aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
+        }
+        
         DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate)")
         rate += aggressiveTempRateDelta
         //
@@ -205,7 +212,7 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
 private func zeroTempEffect(percentEffectDuration: Double) -> Double {
     // WARNING: code not tested for Loop operating in mmol/L
     // values in the lines 199-203 may be customized
-    let Aggressiveness = 0.5 // choose between 0 (no super bolus) to 1 (max super bolus)
+    let Aggressiveness = 0.4 // choose between 0 (no super bolus) to 1 (max super bolus)
     let BasalRate = 0.6 // set to minimum daily basal rate in [U/h]
     let InsulinSensitivity = 60.0 // set to minimum daily ISF in [(mg/dL)/U]
     let td = 360.0 // set to td = DIA = 360 min nominally for exponential curves
@@ -239,13 +246,13 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 140.0 {
+    if initialValue < minValue && glucoseValue > 120.0 {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
     }
     
     // The inflection point in time: before it we use minValue, after it we linearly blend from minValue to maxValue
-    let useMinValueUntilPercent = 0.5
+    let useMinValueUntilPercent = 0.20
 
     // Allow bolus dosing below minValue during initial interval set to 15% of
     // effect duration, so nominally 0.15*6*60 min = 54 min
