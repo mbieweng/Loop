@@ -622,7 +622,7 @@ final class LoopDataManager {
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.003/10 // 0.3% per 10 mg/dL
+        let adjustmentFactor = 0.005/10 // 0.3% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 1.60
         let minWaitMinutes  : Double = 4.0
