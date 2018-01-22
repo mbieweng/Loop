@@ -52,7 +52,7 @@ extension InsulinCorrection {
         
         // MB Aggressive
         var aggressiveTempRateDelta : Double
-        if(UserDefaults.standard.autoSensFactor > 1.10) {
+        if(UserDefaults.standard.autoSensFactor > 1.15) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
             DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.standard.autoSensFactor) aggressive high temp disabled")
         } else {
