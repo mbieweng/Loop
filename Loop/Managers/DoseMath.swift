@@ -246,7 +246,8 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 120.0 {
+    if initialValue < minValue && glucoseValue > 120.0 && (UserDefaults.standard.autoSensFactor < 1.15) {
+    //if initialValue < minValue && glucoseValue > 120.0 && {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
     }
