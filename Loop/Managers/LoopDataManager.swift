@@ -641,7 +641,7 @@ final class LoopDataManager {
         if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
             if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
                
-                autoSensFactor = pow(autoSensFactor, 0.98) // Trend to zero
+                autoSensFactor = pow(autoSensFactor, 0.99) // Trend to zero
                 
                 let currentAvg = averageRetroError.rawValue;
                 averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
