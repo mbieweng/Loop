@@ -70,7 +70,7 @@ final class LoopDataManager {
             healthStore: healthStore,
             defaultAbsorptionTimes: (
                 fast: TimeInterval(hours: 0.5),
-                medium: TimeInterval(hours: 2.0),
+                medium: TimeInterval(hours: 2.5),
                 slow: TimeInterval(hours: 5)
             ),
             carbRatioSchedule: carbRatioSchedule,
@@ -617,21 +617,19 @@ final class LoopDataManager {
     
     // MB Autosens
     private func updateAutoSens() {
-        NSLog("MB updateAutoSens");
         
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.005/10 // 0.3% per 10 mg/dL
+        let adjustmentFactor = 0.004/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
-        let maxLimit : Double = 1.60
+        let maxLimit : Double = 2.00
         let minWaitMinutes  : Double = 4.0
         let smoothingPoints : Double = 1
         
         var autoSensFactor = UserDefaults.standard.autoSensFactor
         
         if(-self.lastAutoSensUpdate.timeIntervalSinceNow < minWaitMinutes*60) {
-            NSLog("MB AutoSens updated only \(-self.lastAutoSensUpdate.timeIntervalSinceNow/60) min ago, waiting")
             return
         }
        
@@ -641,7 +639,12 @@ final class LoopDataManager {
         if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
             if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
                
-                autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
+                let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
+                if(workoutmode && autoSensFactor > 1.0) {
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
+                } else {
+                    autoSensFactor = pow(autoSensFactor, 0.99) // Trend to zero
+                }
                 
                 let currentAvg = averageRetroError.rawValue;
                 averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
@@ -714,16 +717,14 @@ final class LoopDataManager {
         // High and low alerts
         if let glucose = predictedGlucose {
             
-            // 30 min check
-            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.min{ $0.quantity < $1.quantity }) {
+            // 45 min check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(45*60) }.min{ $0.quantity < $1.quantity }) {
                 let lowAlertThreshold = settings.suspendThreshold ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
-                    //NSLog("MB Next 30 min low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    //NSLog("MB Next 30 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
-                    
+                    //NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                 }
             }
 
@@ -741,7 +742,7 @@ final class LoopDataManager {
             }
             
             // High glucose
-            let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:250)
+            let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:220)
             if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
                 if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
                     // alert

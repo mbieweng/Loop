@@ -396,7 +396,7 @@ final class StatusTableViewController: ChartsTableViewController {
                                 self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: sens)
                             }
                             */
-                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: 1-UserDefaults.standard.autoSensFactor)
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: 1/UserDefaults.standard.autoSensFactor-1)
                             
                             //self.deviceManager.loopManager.autoSensFactor
                             //self.deviceManager.loopManager.insulinSensitivitySchedule?.quantity(at: Date.init())
