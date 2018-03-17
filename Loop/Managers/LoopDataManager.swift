@@ -70,7 +70,7 @@ final class LoopDataManager {
             healthStore: healthStore,
             defaultAbsorptionTimes: (
                 fast: TimeInterval(hours: 0.5),
-                medium: TimeInterval(hours: 2.5),
+                medium: TimeInterval(hours: 3),
                 slow: TimeInterval(hours: 5)
             ),
             carbRatioSchedule: carbRatioSchedule,
@@ -621,7 +621,7 @@ final class LoopDataManager {
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.004/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.001/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 2.00
         let minWaitMinutes  : Double = 4.0
@@ -643,7 +643,7 @@ final class LoopDataManager {
                 if(workoutmode && autoSensFactor > 1.0) {
                     DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
                 } else {
-                    autoSensFactor = pow(autoSensFactor, 0.99) // Trend to zero
+                    autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
                 }
                 
                 let currentAvg = averageRetroError.rawValue;
@@ -719,12 +719,12 @@ final class LoopDataManager {
             
             // 45 min check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(45*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = settings.suspendThreshold ?? GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    //NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                 }
             }
 
@@ -1087,7 +1087,7 @@ final class LoopDataManager {
             recommendedTempBasal = nil
             return
         }
-
+        
         recommendedTempBasal = (recommendation: tempBasal, date: Date())
     }
 
