@@ -19,6 +19,11 @@ struct NotificationManager {
         case pumpBatteryLow
         case pumpReservoirEmpty
         case pumpReservoirLow
+        
+        case lowGluc
+        case highGluc
+        case forecastError
+        case bolusRecommend
     }
 
     enum Action: String {
@@ -29,6 +34,11 @@ struct NotificationManager {
         case bolusAmount
         case bolusStartDate
     }
+    
+    private static var lastLowBGAlertTime : Date = Date(timeIntervalSince1970: 0);
+    private static var lastHighBGAlertTime : Date = Date(timeIntervalSince1970: 0);
+    private static var lastForecastErrorAlertTime : Date = Date(timeIntervalSince1970: 0);
+    private static var lastRecommendBolusAlertTime : Date = Date(timeIntervalSince1970: 0);
 
     private static var notificationCategories: Set<UNNotificationCategory> {
         var categories = [UNNotificationCategory]()
@@ -94,6 +104,113 @@ struct NotificationManager {
 
         UNUserNotificationCenter.current().add(request)
     }
+    
+    static func sendLowGlucoseNotification(quantity: Double) {
+       
+        if(-self.lastLowBGAlertTime.timeIntervalSinceNow < 8*60)  {
+            NSLog("Only %f min since last low glucose alert...snoozing", -self.lastLowBGAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        
+        notification.title = NSLocalizedString("Low BG", comment: "The notification title for a predicted low glucose")
+        
+        //notification.body = NSLocalizedString("Low BG expected within 1 hour", comment: "The notification alert describing a low glucose")
+        notification.body = String(format: NSLocalizedString("Low bg %.0f expected", comment: "The notification alert describing a low glucose"), quantity)
+
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.lowGluc.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: "\(Category.lowGluc.rawValue)\(UUID().uuidString)",
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+ 
+        self.lastLowBGAlertTime = Date.init();
+    }
+    
+    static func sendHighGlucoseNotification(quantity: Double) {
+        
+        if(-self.lastHighBGAlertTime.timeIntervalSinceNow < 60*60)  {
+            NSLog("Only %f min since last high glucose alert...snoozing", -self.lastHighBGAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        
+        notification.title = NSLocalizedString("High BG", comment: "The notification title for a predicted high glucose")
+        
+        notification.body = String(format: NSLocalizedString("High bg %.0f expected", comment: "The notification alert describing a high glucose"), quantity)
+        
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.highGluc.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.highGluc.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastHighBGAlertTime = Date.init();
+        
+    }
+    
+    static func sendForecastErrorNotification(quantity: Double) {
+        
+        if(-self.lastForecastErrorAlertTime.timeIntervalSinceNow < 60*60)  {
+            NSLog("Only %f min since lastForecastErrorAlertTime...snoozing", -self.lastForecastErrorAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        notification.title = NSLocalizedString("Prediction Differential", comment: "The notification title for a large prediction error")
+        notification.body = String(format: NSLocalizedString("BG currently %.0f from predicted", comment: "The notification alert describing a high prediction error"), quantity)
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.forecastError.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.forecastError.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastForecastErrorAlertTime = Date.init();
+        
+    }
+    
+    static func sendRecommendBolusNotification(quantity: Double) {
+        
+        if(-self.lastRecommendBolusAlertTime.timeIntervalSinceNow < 30*60)  {
+            NSLog("Only %f min since lastBolusAlertTime...snoozing", -self.lastRecommendBolusAlertTime.timeIntervalSinceNow/60)
+            return
+        }
+        
+        let notification = UNMutableNotificationContent()
+        notification.title = NSLocalizedString("Bolus Recommended", comment: "The notification title for a bolus recommended")
+        notification.body = String(format: NSLocalizedString("Consider %.1f U bolus", comment: "The notification alert describing a bolus recommended"), quantity)
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.forecastError.rawValue
+        
+        let request = UNNotificationRequest(
+            identifier: Category.bolusRecommend.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        
+        self.lastRecommendBolusAlertTime = Date.init();
+        
+    }
+
 
     // Cancel any previous scheduled notifications in the Loop Not Running category
     static func clearPendingNotificationRequests() {
@@ -169,6 +286,8 @@ struct NotificationManager {
 
         UNUserNotificationCenter.current().add(request)
     }
+    
+    
 
     static func sendPumpReservoirLowNotificationForAmount(_ units: Double, andTimeRemaining remaining: TimeInterval?) {
         let notification = UNMutableNotificationContent()

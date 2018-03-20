@@ -23,6 +23,11 @@ final class LoopDataManager {
         case tempBasal
     }
 
+    
+    // MB Alerts
+    var bolusAlertStartTime = Date.init()
+    //
+    
     static let LoopUpdateContextKey = "com.loudnate.Loop.LoopDataManager.LoopUpdateContext"
 
     fileprivate typealias GlucoseChange = (start: GlucoseValue, end: GlucoseValue)
@@ -133,6 +138,7 @@ final class LoopDataManager {
             notify(forChange: .preferences)
         }
     }
+
 
     /// Disable any active workout glucose targets
     func disableWorkoutMode() {
@@ -593,6 +599,98 @@ final class LoopDataManager {
                 throw error
             }
         }
+        
+        // MB Custom
+        checkAlerts()
+        
+    }
+    
+    // MB Alerts
+    private func checkAlerts() {
+        
+        NSLog("MB Custom alerts")
+        // Prediction differential alert
+        let retroGlucose = retrospectivePredictedGlucose?.last
+        let currentGlucose = glucoseStore.latestGlucose
+        let unit = HKUnit.milligramsPerDeciliter()
+        if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
+            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
+                if(abs(currentVal-retroVal) > 40) {
+                    //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
+                    NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
+                } else {
+                    //NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
+                }
+                
+            }
+        }
+        
+        // High and low alerts
+        if let glucose = predictedGlucose {
+            
+            // 45 min check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(45*60) }.min{ $0.quantity < $1.quantity }) {
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
+                    // alert
+                    NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    //NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                }
+            }
+            
+            // one hour check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
+                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:60)
+                if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
+                    // alert
+                    //NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    //NSLog("MB Next hour low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    
+                }
+            }
+            
+            // High glucose
+            let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:220)
+            if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
+                if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
+                    // alert
+                    //NSLog("MB Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: unit));
+                } else {
+                    //NSLog("MB Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
+                    
+                }
+            }
+            
+            // Bolus needed
+            do {
+                let minAlertBolus : Double = 2.0;
+                let minTime : Double = 9 * 60 // sec;
+                let bolusAmount = try self.recommendBolus().amount
+                
+                if(bolusAmount > minAlertBolus) {
+                    if (bolusAlertStartTime.timeIntervalSinceNow < -minTime ) {
+                        NotificationManager.sendRecommendBolusNotification(quantity: bolusAmount)
+                        DiagnosticLogger.shared?.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
+                        bolusAlertStartTime = Date.init();
+                    } else {
+                        DiagnosticLogger.shared?.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
+                    }
+                } else {
+                    bolusAlertStartTime = Date.init();
+                }
+                
+            } catch {
+                DiagnosticLogger.shared?.forCategory("MBAlerts").debug("No alert, unable to calcualate bolus recommendation.")
+            }
+            
+        }
+        
+        NSLog("MB End custom alerts")
+        // End MB Custom Alerts
     }
 
     private func notify(forChange context: LoopUpdateContext) {
@@ -899,7 +997,7 @@ final class LoopDataManager {
             recommendedTempBasal = nil
             return
         }
-
+        
         recommendedTempBasal = (recommendation: tempBasal, date: Date())
     }
 
