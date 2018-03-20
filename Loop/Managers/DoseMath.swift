@@ -46,20 +46,22 @@ extension InsulinCorrection {
         scheduledBasalRate: Double,
         maxBasalRate: Double,
         duration: TimeInterval,
-        minimumProgrammableIncrementPerUnit: Double
+        minimumProgrammableIncrementPerUnit: Double,
+        currentGlucose: GlucoseValue?
     ) -> TempBasalRecommendation {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
         
         // MB Aggressive
         var aggressiveTempRateDelta : Double
-        if(UserDefaults.standard.autoSensFactor > 1.15) {
+        let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter()) ?? 0;
+        if(UserDefaults.standard.autoSensFactor > 1.15 || glucVal < 140 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
-            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.standard.autoSensFactor) aggressive high temp disabled")
+            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.standard.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
         } else {
             aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
         
-        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate)")
+        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
         rate += aggressiveTempRateDelta
         //
         
@@ -214,7 +216,7 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
     // values in the lines 199-203 may be customized
     let Aggressiveness = 0.25 // choose between 0 (no super bolus) to 1 (max super bolus)
     let BasalRate = 0.60 // set to minimum daily basal rate in [U/h]
-    let InsulinSensitivity = 55.0 // set to minimum daily ISF in [(mg/dL)/U]
+    let InsulinSensitivity = 50.0 // set to minimum daily ISF in [(mg/dL)/U]
     let td = 300.0 // set to td = DIA = 360 min nominally for exponential curves
     let tp = 50.0 // set to peak insulin action, Novolog = 75 min, FIASP = 55 min for exp curves
     
@@ -246,7 +248,7 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 160.0 && UserDefaults.standard.autoSensFactor < 1.15 {
+    if initialValue < minValue && glucoseValue > 140.0 && UserDefaults.standard.autoSensFactor < 1.15 {
     //if initialValue < minValue && glucoseValue > 120.0 && {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
@@ -464,12 +466,13 @@ extension Collection where Iterator.Element == GlucoseValue {
         // {
         //    maxBasalRate = scheduledBasalRate
         //}
-
+        
         let temp = correction?.asTempBasal(
             scheduledBasalRate: scheduledBasalRate,
             maxBasalRate: maxBasalRate,
             duration: duration,
-            minimumProgrammableIncrementPerUnit: minimumProgrammableIncrementPerUnit
+            minimumProgrammableIncrementPerUnit: minimumProgrammableIncrementPerUnit,
+            currentGlucose: self.first
         )
 
         return temp?.ifNecessary(

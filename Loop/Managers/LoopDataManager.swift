@@ -724,7 +724,7 @@ final class LoopDataManager {
                     // alert
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
                 } else {
-                    NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //NSLog("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                 }
             }
 
@@ -756,7 +756,7 @@ final class LoopDataManager {
             
             // Bolus needed
             do {
-                let minAlertBolus : Double = 1.0;
+                let minAlertBolus : Double = 2.0;
                 let minTime : Double = 9 * 60 // sec;
                 let bolusAmount = try self.recommendBolus().amount
                 
@@ -808,11 +808,14 @@ final class LoopDataManager {
 
         if let lastTempBasal = lastTempBasal, lastTempBasal.endDate > date {
             let normalBasalRate = basalRates.value(at: date)
-            let remainingTime = lastTempBasal.endDate.timeIntervalSince(date)
+            let remainingTime = min(lastTempBasal.endDate.timeIntervalSince(date), TimeInterval.minutes(5))  // MB Exlude pending basal except for about 5 min (1 loop) worth
             let remainingUnits = (lastTempBasal.unitsPerHour - normalBasalRate) * remainingTime.hours
-
+            
             pendingTempBasalInsulin = max(0, remainingUnits)
-        } else {
+            NSLog("Pending basal \(remainingTime.minutes) min (\(pendingTempBasalInsulin) units) excluded from bolus calculation");
+            
+            
+          } else {
             pendingTempBasalInsulin = 0
         }
 
