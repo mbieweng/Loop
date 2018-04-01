@@ -37,6 +37,7 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
         let amount = bolusRecommendation?.amount ?? 0
         bolusAmountTextField.accessibilityHint = String(format: NSLocalizedString("Recommended Bolus: %@ Units", comment: "Accessibility hint describing recommended bolus units"), spellOutFormatter.string(from: NSNumber(value: amount)) ?? "0")
 
+        
         bolusAmountTextField.becomeFirstResponder()
 
         AnalyticsManager.shared.didDisplayBolusScreen()
@@ -69,6 +70,7 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
         didSet {
             let amount = bolusRecommendation?.amount ?? 0
             recommendedBolusAmountLabel?.text = bolusUnitsFormatter.string(from: NSNumber(value: amount))
+            acceptRecommendedBolus();
             updateNotice()
             if let pendingInsulin = bolusRecommendation?.pendingInsulin {
                 self.pendingInsulin = pendingInsulin
@@ -241,6 +243,7 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
     private func updateNotice() {
         if let notice = bolusRecommendation?.notice {
             noticeLabel?.text = "⚠ \(notice.description(using: glucoseUnit))"
+            
         } else {
             noticeLabel?.text = nil
         }
