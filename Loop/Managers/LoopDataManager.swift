@@ -1026,7 +1026,7 @@ final class LoopDataManager {
             // reset integral action variables in case of calibration event
             RC.resetRetrospectiveCorrection()
             dynamicEffectDuration = effectDuration
-            NSLog("myLoop --- suspected calibration event, no retrospective correction")
+            DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Suspected calibration event, no retrospective correction")
             self.retrospectivePredictedGlucose = nil
             return  // Expected case for calibrations
         }
@@ -1043,7 +1043,7 @@ final class LoopDataManager {
 
         guard let lastGlucose = retrospectivePrediction.last else {
             RC.resetRetrospectiveCorrection()
-            NSLog("myLoop --- glucose data missing, reset retrospective correction")
+            DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Glucose data missing, reset retrospective correction")
             return }
         let glucoseUnit = HKUnit.milligramsPerDeciliter()
         let velocityUnit = glucoseUnit.unitDivided(by: HKUnit.second())
@@ -1058,7 +1058,7 @@ final class LoopDataManager {
             let currentBG = glucoseStore.latestGlucose?.quantity.doubleValue(for: glucoseUnit)
             else {
                 RC.resetRetrospectiveCorrection()
-                NSLog("myLoop --- could not get settings, reset retrospective correction")
+                DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Could not get settings, reset retrospective correction")
                 return
         }
         let date = Date()
@@ -1082,7 +1082,7 @@ final class LoopDataManager {
             carbEffect.filterDateRange(startDate, endDate))
         guard let lastCarbOnlyGlucose = retrospectiveCarbEffect.last else {
             RC.resetRetrospectiveCorrection()
-            NSLog("myLoop --- could not get carb effect, reset retrospective correction")
+            DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Could not get carb effect, reset retrospective correction")
             return
         }
         let currentCarbEffect = -change.start.quantity.doubleValue(for: glucoseUnit) + lastCarbOnlyGlucose.quantity.doubleValue(for: glucoseUnit)
@@ -1120,15 +1120,15 @@ final class LoopDataManager {
             change.start.quantity.doubleValue(for: glucoseUnit)// mg/dL
         
         // monitoring of retrospective correction in debugger or Console ("message: myLoop")
-        NSLog("myLoop ******************************************")
-        NSLog("myLoop ---retrospective correction ([mg/dL] bg unit)---")
-        NSLog("myLoop Current BG: %f", currentBG)
-        NSLog("myLoop 30-min retrospective delta BG: %f", currentDeltaBG)
-        NSLog("myLoop Retrospective insulin effect: %f", currentInsulinEffect)
-        NSLog("myLoop Retrospectve carb effect: %f", currentCarbEffect)
-        NSLog("myLoop Current discrepancy: %f", currentDiscrepancy)
-        NSLog("myLoop Overall retrospective correction: %f", overallRC)
-        NSLog("myLoop Correction effect duration [min]: %f", effectMinutes)
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("******************************************")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Retrospective correction ([mg/dL] bg unit)---")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Current BG: \(currentBG)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("30-min retrospective delta BG: \(currentDeltaBG)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Retrospective insulin effect: \(currentInsulinEffect)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Retrospectve carb effect: \(currentCarbEffect)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Current discrepancy: \(currentDiscrepancy)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Overall retrospective correction: \(overallRC)")
+        DiagnosticLogger.shared?.forCategory("MBIntegralRC").debug("Correction effect duration [min]: \(effectMinutes)")
         
     }
 
