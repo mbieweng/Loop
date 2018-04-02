@@ -621,7 +621,7 @@ final class LoopDataManager {
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.001/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 2.00
         let minWaitMinutes  : Double = 4.0
@@ -643,7 +643,7 @@ final class LoopDataManager {
                 if(workoutmode && autoSensFactor > 1.0) {
                     DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
                 } else {
-                    autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
+                    //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
                 }
                 
                 let currentAvg = averageRetroError.rawValue;
