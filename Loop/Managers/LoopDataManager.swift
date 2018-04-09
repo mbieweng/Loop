@@ -612,6 +612,20 @@ final class LoopDataManager {
         // MB Custom
         checkAlerts()
         updateAutoSens();
+        
+        if(self.carbsOnBoard?.quantity.doubleValue(for: HKUnit.gram()) ?? 0  > 60.0) {
+            self.carbStore.defaultAbsorptionTimes = (
+            fast: TimeInterval(hours: 1),
+            medium: TimeInterval(hours: 3),
+            slow: TimeInterval(hours: 5)
+            )
+        } else {
+            self.carbStore.defaultAbsorptionTimes = (
+                fast: TimeInterval(hours: 0.5),
+                medium: TimeInterval(hours: 2),
+                slow: TimeInterval(hours: 5)
+            )
+        }
         //
     }
     
