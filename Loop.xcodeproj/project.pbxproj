@@ -726,7 +726,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2771F11A20707FC8009AEBEB /* Recovered References */ = {
+		27F13105207B0C52002AA0F9 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
 				43F5C2C81B929C09003EB13D /* HealthKit.framework */,
@@ -812,7 +812,7 @@
 				968DCD53F724DE56FFE51920 /* Frameworks */,
 				43776F8D1B8022E90074EA36 /* Products */,
 				437D9BA11D7B5203007245E8 /* Loop.xcconfig */,
-				2771F11A20707FC8009AEBEB /* Recovered References */,
+				27F13105207B0C52002AA0F9 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -2072,6 +2072,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 45;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -2140,6 +2141,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 45;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
