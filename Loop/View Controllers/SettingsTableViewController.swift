@@ -977,7 +977,7 @@ extension SettingsTableViewController: TextFieldTableViewControllerDelegate {
                     }
                 case .autoSensFactor:
                     if let value = controller.value, let asf = valueNumberFormatter.number(from: value)?.doubleValue {
-                        UserDefaults.standard.autoSensFactor = Swift.min(1.5, Swift.max(0.9, asf))
+                        UserDefaults.standard.autoSensFactor = Swift.min(3.0, Swift.max(0.9, asf))
                     } else {
                          UserDefaults.standard.autoSensFactor = 1.0
                     }
