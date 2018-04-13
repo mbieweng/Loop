@@ -637,7 +637,7 @@ final class LoopDataManager {
         //let highTrendSensitivityDecrease : Double = 0.005
         let adjustmentFactor = 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
-        let maxLimit : Double = 2.00
+        let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
         let smoothingPoints : Double = 1
         
