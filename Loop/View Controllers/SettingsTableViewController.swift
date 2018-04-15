@@ -351,7 +351,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
             case .autoSensFactor:
                 configCell.textLabel?.text = NSLocalizedString("AutoSens Factor", comment: "The title text for the autosens factor value")
                 
-                let asf = UserDefaults.standard.autoSensFactor
+                let asf = UserDefaults.appGroup.autoSensFactor
                 configCell.detailTextLabel?.text = "\(valueNumberFormatter.string(from: NSNumber(value: asf))!) x"
                 
                 
@@ -503,7 +503,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 case .maxBolus:
                     vc = .maxBolus(dataManager.loopManager.settings.maximumBolus)
                 case .autoSensFactor:
-                    vc = .autoSensFactor(UserDefaults.standard.autoSensFactor)
+                    vc = .autoSensFactor(UserDefaults.appGroup.autoSensFactor)
                 default:
                     fatalError()
                 }
@@ -1030,9 +1030,9 @@ extension SettingsTableViewController: LoopKit.TextFieldTableViewControllerDeleg
                     }
                 case .autoSensFactor:
                     if let value = controller.value, let asf = valueNumberFormatter.number(from: value)?.doubleValue {
-                        UserDefaults.standard.autoSensFactor = Swift.min(3.0, Swift.max(0.9, asf))
+                        UserDefaults.appGroup.autoSensFactor = Swift.min(3.0, Swift.max(0.9, asf))
                     } else {
-                         UserDefaults.standard.autoSensFactor = 1.0
+                         UserDefaults.appGroup.autoSensFactor = 1.0
                     }
                 default:
                     assertionFailure()

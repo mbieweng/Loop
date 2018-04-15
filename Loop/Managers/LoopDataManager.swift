@@ -641,7 +641,7 @@ final class LoopDataManager {
         let minWaitMinutes  : Double = 4.0
         let smoothingPoints : Double = 1
         
-        var autoSensFactor = UserDefaults.standard.autoSensFactor
+        var autoSensFactor = UserDefaults.appGroup.autoSensFactor
         
         if(-self.lastAutoSensUpdate.timeIntervalSinceNow < minWaitMinutes*60) {
             return
@@ -672,7 +672,7 @@ final class LoopDataManager {
                 
                 autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
                 lastAutoSensUpdate = Date.init()
-                UserDefaults.standard.autoSensFactor = autoSensFactor
+                UserDefaults.appGroup.autoSensFactor = autoSensFactor
                 DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
 
                 // Update Insulin Sensitivity

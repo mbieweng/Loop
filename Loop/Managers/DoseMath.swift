@@ -54,9 +54,9 @@ extension InsulinCorrection {
         // MB Aggressive
         var aggressiveTempRateDelta : Double
         let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter()) ?? 0;
-        if(UserDefaults.standard.autoSensFactor > 1.15 || glucVal < 120 ) {
+        if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 120 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
-            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.standard.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
+            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.appGroup.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
         } else {
             aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
@@ -248,7 +248,7 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 120.0 && UserDefaults.standard.autoSensFactor < 1.15 {
+    if initialValue < minValue && glucoseValue > 120.0 && UserDefaults.appGroup.autoSensFactor < 1.15 {
     //if initialValue < minValue && glucoseValue > 120.0 && {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
