@@ -108,6 +108,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
         case maxBolus
         
         case autoSensFactor
+        //case autoSensEnable
     }
 
     fileprivate enum ServiceRow: Int, CaseCountable {
@@ -282,7 +283,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
             case .carbRatio:
                 configCell.textLabel?.text = NSLocalizedString("Carb Ratios", comment: "The title text for the carb ratio schedule")
 
-                if let carbRatioSchedule = dataManager.loopManager.carbRatioSchedule {
+                if let carbRatioSchedule = dataManager.loopManager.carbStore.carbRatioSchedule {
                     let unit = carbRatioSchedule.unit
                     let value = valueNumberFormatter.string(from: NSNumber(value: carbRatioSchedule.averageQuantity().doubleValue(for: unit))) ?? "—"
 
@@ -293,7 +294,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
             case .insulinSensitivity:
                 configCell.textLabel?.text = NSLocalizedString("Insulin Sensitivities", comment: "The title text for the insulin sensitivity schedule")
 
-                if let insulinSensitivitySchedule = dataManager.loopManager.insulinSensitivitySchedule {
+                if let insulinSensitivitySchedule = dataManager.loopManager.carbStore.insulinSensitivitySchedule {
                     let unit = insulinSensitivitySchedule.unit
                     let value = valueNumberFormatter.string(from: NSNumber(value: insulinSensitivitySchedule.averageQuantity().doubleValue(for: unit))) ?? "—"
 
@@ -353,7 +354,15 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 
                 let asf = UserDefaults.appGroup.autoSensFactor
                 configCell.detailTextLabel?.text = "\(valueNumberFormatter.string(from: NSNumber(value: asf))!) x"
+            /*case .autoSensEnable
+                let configCell = tableView.dequeueReusableCell(withIdentifier: ConfigCellIdentifier, for: indexPath)
+                let autoSensEnable = dataManager.shareService
                 
+                configCell.textLabel?.text = shareService.title
+                configCell.detailTextLabel?.text = shareService.username ?? TapToSetString
+                
+                return configCell
+              */
                 
             }
 
@@ -532,8 +541,8 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 scheduleVC.unit = .gram()
 
                 // MB Show defaults instead of autosens adjusted values
-                if let schedule = UserDefaults.standard.carbRatioSchedule {
-                // if let schedule = dataManager.loopManager.carbRatioSchedule {
+                if let schedule = UserDefaults.appGroup.carbRatioSchedule {
+                //if let schedule = dataManager.loopManager.carbRatioSchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
                     scheduleVC.unit = schedule.unit
@@ -547,7 +556,7 @@ final class SettingsTableViewController: UITableViewController, DailyValueSchedu
                 scheduleVC.title = NSLocalizedString("Insulin Sensitivities", comment: "The title of the insulin sensitivities schedule screen")
 
                 // MB Show defaults instead of autosens adjusted values
-                if let schedule = UserDefaults.standard.insulinSensitivitySchedule {
+                if let schedule = UserDefaults.appGroup.insulinSensitivitySchedule {
                 //if let schedule = dataManager.loopManager.insulinSensitivitySchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
@@ -1030,10 +1039,14 @@ extension SettingsTableViewController: LoopKit.TextFieldTableViewControllerDeleg
                     }
                 case .autoSensFactor:
                     if let value = controller.value, let asf = valueNumberFormatter.number(from: value)?.doubleValue {
-                        UserDefaults.appGroup.autoSensFactor = Swift.min(3.0, Swift.max(0.9, asf))
+                        dataManager.loopManager.autoSensFactor = asf
                     } else {
-                         UserDefaults.appGroup.autoSensFactor = 1.0
+                        dataManager.loopManager.autoSensFactor = 1.0
                     }
+                    dataManager.loopManager.updateAutoSens()
+                    AnalyticsManager.shared.didChangeCarbRatioSchedule()
+                    AnalyticsManager.shared.didChangeInsulinSensitivitySchedule()
+                    
                 default:
                     assertionFailure()
                 }

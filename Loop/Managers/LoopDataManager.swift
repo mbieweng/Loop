@@ -133,6 +133,7 @@ final class LoopDataManager {
     /// The daily schedule of carbs-to-insulin ratios
     /// This is measured in grams/Unit
     var carbRatioSchedule: CarbRatioSchedule? {
+
         get {
             return carbStore.carbRatioSchedule
         }
@@ -211,6 +212,28 @@ final class LoopDataManager {
             }
         }
     }
+    
+    // MB Autosens
+    /// The daily schedule of insulin sensitivity (also known as ISF)
+    /// This is measured in <blood glucose>/Unit
+    var autoSensFactor: Double {
+        get {
+            return UserDefaults.appGroup.autoSensFactor
+        }
+        set {
+            UserDefaults.appGroup.autoSensFactor = Swift.min(3.0, Swift.max(0.9, newValue))
+            dataAccessQueue.async {
+                self.updateAutoSens()
+                // Invalidate cached effects based on this schedule
+                self.carbEffect = nil
+                self.carbsOnBoard = nil
+                self.insulinEffect = nil
+                
+                self.notify(forChange: .preferences)
+            }
+        }
+    }
+
 
     /// The amount of time since a given date that data should be considered valid
     var recencyInterval = TimeInterval(minutes: 15)
@@ -220,8 +243,14 @@ final class LoopDataManager {
     /// - Parameter timeZone: The time zone
     func setScheduleTimeZone(_ timeZone: TimeZone) {
         self.basalRateSchedule?.timeZone = timeZone
-        self.carbRatioSchedule?.timeZone = timeZone
-        self.insulinSensitivitySchedule?.timeZone = timeZone
+        
+        //self.carbRatioSchedule?.timeZone = timeZone
+        //self.insulinSensitivitySchedule?.timeZone = timeZone
+        // MB autosens
+        UserDefaults.appGroup.carbRatioSchedule?.timeZone = timeZone
+        UserDefaults.appGroup.insulinSensitivitySchedule?.timeZone = timeZone
+        
+        
         settings.glucoseTargetRangeSchedule?.timeZone = timeZone
     }
 
@@ -630,12 +659,12 @@ final class LoopDataManager {
     }
     
     // MB Autosens
-    private func updateAutoSens() {
+    func updateAutoSens() {
         
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.0 // 0.002/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.002/10 // 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
@@ -653,30 +682,34 @@ final class LoopDataManager {
         if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
             if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
                
-                let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
-                if(workoutmode && autoSensFactor > 1.0) {
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
-                } else {
-                    //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
+                if(-self.lastAutoSensUpdate.timeIntervalSinceNow > minWaitMinutes*60) {
+                    let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
+                    if(workoutmode && autoSensFactor > 1.0) {
+                        DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
+                    } else {
+                        //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
+                    }
+                    
+                    let currentAvg = averageRetroError.rawValue;
+                    averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
+                    let adjustment = Swift.abs(averageRetroError)*adjustmentFactor
+                    if(averageRetroError < -doNothingTolerance) {
+                        autoSensFactor = autoSensFactor + adjustment
+                    } else if(averageRetroError > doNothingTolerance) {
+                        autoSensFactor = autoSensFactor - adjustment
+                    }
+                    
+                    lastAutoSensUpdate = Date.init()
+                    autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
+                    UserDefaults.appGroup.autoSensFactor = autoSensFactor
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens updated.  Current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
+                    
                 }
                 
-                let currentAvg = averageRetroError.rawValue;
-                averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
-                let adjustment = Swift.abs(averageRetroError)*adjustmentFactor
-                if(averageRetroError < -doNothingTolerance) {
-                    autoSensFactor = autoSensFactor + adjustment
-                } else if(averageRetroError > doNothingTolerance) {
-                    autoSensFactor = autoSensFactor - adjustment
-                } 
                 
-                
-                autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
-                lastAutoSensUpdate = Date.init()
-                UserDefaults.appGroup.autoSensFactor = autoSensFactor
-                DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
-
                 // Update Insulin Sensitivity
-                if let defaultInsulinSensitivitySchedule = UserDefaults.standard.insulinSensitivitySchedule {
+                if let defaultInsulinSensitivitySchedule = UserDefaults.appGroup.insulinSensitivitySchedule {
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Default sensitivity \(defaultInsulinSensitivitySchedule.debugDescription)")
                     
                     var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
                     defaultInsulinSensitivitySchedule.items.forEach{ item in
@@ -690,7 +723,8 @@ final class LoopDataManager {
                 }
             
                 // Update Carb Ratio
-                if let defaultCarbRatioSchedule = UserDefaults.standard.carbRatioSchedule {
+                if let defaultCarbRatioSchedule = UserDefaults.appGroup.carbRatioSchedule {
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Default carbratio \(defaultCarbRatioSchedule.debugDescription)")
                     
                     var adjustedCarbItems : [RepeatingScheduleValue<Double>] = []
                     defaultCarbRatioSchedule.items.forEach{ item in
@@ -700,7 +734,7 @@ final class LoopDataManager {
                     
                     carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
                     //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Carb ratio now \(carbRatioSchedule.debugDescription)")
+                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Carb ratio now \(carbStore.carbRatioSchedule.debugDescription)")
                 }
                 
                 
