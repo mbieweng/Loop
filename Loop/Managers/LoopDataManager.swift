@@ -222,8 +222,8 @@ final class LoopDataManager {
         }
         set {
             UserDefaults.appGroup.autoSensFactor = Swift.min(3.0, Swift.max(0.9, newValue))
-            dataAccessQueue.async {
-                self.updateAutoSens()
+            self.updateAutoSens()
+            /*dataAccessQueue.async {
                 // Invalidate cached effects based on this schedule
                 self.carbEffect = nil
                 self.carbsOnBoard = nil
@@ -231,6 +231,7 @@ final class LoopDataManager {
                 
                 self.notify(forChange: .preferences)
             }
+            */
         }
     }
 
@@ -664,7 +665,7 @@ final class LoopDataManager {
         let doNothingTolerance : Double = 0.0
         //let lowTrendSensitivityIncrease : Double = 0.005
         //let highTrendSensitivityDecrease : Double = 0.005
-        let adjustmentFactor = 0.002/10 // 0.002/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.000/10 // 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
