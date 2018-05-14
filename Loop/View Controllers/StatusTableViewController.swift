@@ -45,6 +45,7 @@ final class StatusTableViewController: ChartsTableViewController {
         notificationObservers += [
             notificationCenter.addObserver(forName: .LoopDataUpdated, object: deviceManager.loopManager, queue: nil) { [unowned self] note in
                 let context = note.userInfo?[LoopDataManager.LoopUpdateContextKey] as! LoopDataManager.LoopUpdateContext.RawValue
+                let lastLoopCompleted = note.userInfo?[LoopDataManager.LastLoopCompletedKey] as? Date
                 DispatchQueue.main.async {
                     switch LoopDataManager.LoopUpdateContext(rawValue: context) {
                     case .none, .bolus?:
@@ -57,6 +58,10 @@ final class StatusTableViewController: ChartsTableViewController {
                         self.refreshContext.formUnion([.glucose, .carbs])
                     case .tempBasal?:
                         self.refreshContext.update(with: .insulin)
+
+                        if let lastLoopCompleted = lastLoopCompleted {
+                            self.hudView?.loopCompletionHUD.lastLoopCompleted = lastLoopCompleted
+                        }
                     }
 
                     self.hudView?.loopCompletionHUD.loopInProgress = false
