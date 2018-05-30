@@ -24,7 +24,7 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologChild:
             return .minutes(360)
         case .fiasp:
-            return .minutes(360)
+            return .minutes(300)
         }
     }
 
