@@ -257,6 +257,8 @@ fileprivate extension GlucoseRangeSchedule.Override.Context {
             return .preMeal
         case .workout:
             return .workout
+        case .remoteTempTarget:
+            return .workout
         }
     }
 }
