@@ -981,10 +981,10 @@ extension LoopDataManager {
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ALERT: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ALERT: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
 
                 } else {
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
                 }
             }
 
@@ -995,10 +995,10 @@ extension LoopDataManager {
                     // alert
                     //NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ALERT: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ALERT: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
                 } else {
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ok: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
-                    
+                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
+
                 }
             }
             
@@ -1009,10 +1009,10 @@ extension LoopDataManager {
                     // alert
                     //NSLog("MB Next 30 min high glucose alert: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
                     NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: unit));
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ALERT: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ALERT: min \(nextHourMaxGlucose.quantity) threshold \(highAlertThreshold)")
                 } else {
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ok: last %@ threshold %@", nextHourMaxGlucose.quantity, highAlertThreshold.quantity)
-                    
+                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ok: min \nextHourMaxGlucose.quantity) threshold \(highAlertThreshold)")
+
                 }
             }
             
@@ -1028,7 +1028,7 @@ extension LoopDataManager {
                         DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
                         bolusAlertStartTime = Date.init();
                     } else {
-                         DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
+                        //DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
                     }
                 } else {
                     bolusAlertStartTime = Date.init();
