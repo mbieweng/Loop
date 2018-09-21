@@ -1,0 +1,30 @@
+/* Write size limit exceeded error description (1: size limit) */
+"Data exceeded maximum size of %@ bytes" = "情報が最大バイト数 %@ を上回っています";
+
+/* Invalid input error description (1: input) */
+"Input %@ is invalid" = "入力した %@ は無効です";
+
+/* Recovery suggestion for unknown peripheral characteristic */
+"Make sure the device is nearby, and the issue should resolve automatically" = "問題を解消するには機器を近くにおいてください";
+
+/* Timeout error description */
+"Peripheral did not respond in time" = "周辺機器が時間内に反応しませんでした";
+
+/* Not ready error description */
+"Peripheral isnʼt connected" = "周辺機器が接続されていません";
+
+/* Response timeout error description */
+"Pump did not respond in time" = "ポンプが時間内に反応しませんでした";
+
+/* Invalid response error description (1: response) */
+"Response %@ is invalid" = "%@ の反応は無効です";
+
+/* Unsupported command error description */
+"RileyLink firmware does not support the %@ command" = "RileyLink ファームウェアは  %@ コマンドは使えません";
+
+/* Failure reason: unknown peripheral characteristic */
+"The RileyLink was temporarily disconnected" = "RileyLink は一時的に無接続です";
+
+/* Error description */
+"Unknown characteristic" = "不明な特徴";
+

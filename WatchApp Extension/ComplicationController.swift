@@ -19,7 +19,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     }
     
     func getTimelineStartDate(for complication: CLKComplication, withHandler handler: @escaping (Date?) -> Void) {
-        if let date = ExtensionDelegate.shared().lastContext?.glucoseDate {
+        if let date = ExtensionDelegate.shared().activeContext?.glucoseDate {
             handler(date)
         } else {
             handler(nil)
@@ -27,7 +27,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     }
     
     func getTimelineEndDate(for complication: CLKComplication, withHandler handler: @escaping (Date?) -> Void) {
-        if let date = ExtensionDelegate.shared().lastContext?.glucoseDate {
+        if let date = ExtensionDelegate.shared().activeContext?.glucoseDate {
             handler(date)
         } else {
             handler(nil)
@@ -43,16 +43,20 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     private lazy var formatter = NumberFormatter()
 
     func getCurrentTimelineEntry(for complication: CLKComplication, withHandler handler: (@escaping (CLKComplicationTimelineEntry?) -> Void)) {
-        if  let context = ExtensionDelegate.shared().lastContext,
+        let entry: CLKComplicationTimelineEntry?
+
+        if  let context = ExtensionDelegate.shared().activeContext,
             let glucoseDate = context.glucoseDate,
             glucoseDate.timeIntervalSinceNow.minutes >= -15,
             let template = CLKComplicationTemplate.templateForFamily(complication.family, from: context)
         {
             template.tintColor = UIColor.tintColor
-            handler(CLKComplicationTimelineEntry(date: glucoseDate, complicationTemplate: template))
+            entry = CLKComplicationTimelineEntry(date: glucoseDate, complicationTemplate: template)
         } else {
-            handler(nil)
+            entry = nil
         }
+
+        handler(entry)
     }
     
     func getTimelineEntries(for complication: CLKComplication, before date: Date, limit: Int, withHandler handler: (@escaping ([CLKComplicationTimelineEntry]?) -> Void)) {
@@ -62,16 +66,20 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     
     func getTimelineEntries(for complication: CLKComplication, after date: Date, limit: Int, withHandler handler: (@escaping ([CLKComplicationTimelineEntry]?) -> Void)) {
         // Call the handler with the timeline entries after to the given date
-        if  let context = ExtensionDelegate.shared().lastContext,
+        let entries: [CLKComplicationTimelineEntry]?
+
+        if  let context = ExtensionDelegate.shared().activeContext,
             let glucoseDate = context.glucoseDate,
             glucoseDate.timeIntervalSince(date) > 0,
             let template = CLKComplicationTemplate.templateForFamily(complication.family, from: context)
         {
             template.tintColor = UIColor.tintColor
-            handler([CLKComplicationTimelineEntry(date: glucoseDate, complicationTemplate: template)])
+            entries = [CLKComplicationTimelineEntry(date: glucoseDate, complicationTemplate: template)]
         } else {
-            handler(nil)
+            entries = nil
         }
+
+        handler(entries)
     }
 
     // MARK: - Placeholder Templates
@@ -84,6 +92,8 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
         let timeText = CLKRelativeDateTextProvider(date: Date(), style: .natural, units: .minute)
 
         switch complication.family {
+        case .graphicCorner, .graphicCircular, .graphicRectangular, .graphicBezel:
+            template = nil
         case .modularSmall:
             let modularSmall = CLKComplicationTemplateModularSmallStackText()
             modularSmall.line1TextProvider = glucoseText

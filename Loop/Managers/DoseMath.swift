@@ -7,9 +7,7 @@
 //
 
 import Foundation
-import CarbKit
 import HealthKit
-import InsulinKit
 import LoopKit
 
 
@@ -53,15 +51,15 @@ extension InsulinCorrection {
         
         // MB Aggressive
         var aggressiveTempRateDelta : Double
-        let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter()) ?? 0;
+        let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
         if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 140 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
-            DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.appGroup.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
+            DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.appGroup.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
         } else {
             aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
         
-        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
+        DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
         rate += aggressiveTempRateDelta
         //
         
@@ -75,7 +73,7 @@ extension InsulinCorrection {
         rate = Swift.min(maxBasalRate, Swift.max(0, rate))
         rate = round(rate * minimumProgrammableIncrementPerUnit) / minimumProgrammableIncrementPerUnit
         
-        DiagnosticLogger.shared?.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
+        DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
         
         return TempBasalRecommendation(
             unitsPerHour: rate,
@@ -123,19 +121,13 @@ extension InsulinCorrection {
 }
 
 
-struct TempBasalRecommendation {
+struct TempBasalRecommendation: Equatable {
     let unitsPerHour: Double
     let duration: TimeInterval
 
     /// A special command which cancels any existing temp basals
     static var cancel: TempBasalRecommendation {
         return self.init(unitsPerHour: 0, duration: 0)
-    }
-}
-
-extension TempBasalRecommendation: Equatable {
-    static func ==(lhs: TempBasalRecommendation, rhs: TempBasalRecommendation) -> Bool {
-        return lhs.unitsPerHour == rhs.unitsPerHour && lhs.duration == rhs.duration
     }
 }
 
@@ -171,14 +163,14 @@ extension TempBasalRecommendation {
             /// If the last temp basal has the same rate, and has more than `continuationInterval` of time remaining, don't set a new temp
             if matchesRate(lastTempBasal.unitsPerHour),
                 lastTempBasal.endDate.timeIntervalSince(date) > continuationInterval {
-                return nil
+                return self
             } else if matchesRate(scheduledBasalRate) {
                 // If our new temp matches the scheduled rate, cancel the current temp
-                return .cancel
+                return self
             }
         } else if matchesRate(scheduledBasalRate) {
             // If we recommend the in-progress scheduled basal rate, do nothing
-            return nil
+            return self
         }
   
         return self
@@ -509,7 +501,7 @@ extension Collection where Iterator.Element == GlucoseValue {
             to: correctionRange,
             at: date,
             // for boluses, initial threshold is below suspend threshold
-            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter(), doubleValue: 75),
+            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 75),
             suspendThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
             sensitivity: sensitivity.quantity(at: date),
             model: model

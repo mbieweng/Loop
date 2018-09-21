@@ -1,0 +1,9 @@
+/* Bundle name */
+"CFBundleName" = "$(PRODUCT_NAME)";
+
+/* Privacy - Health Share Usage Description */
+"NSHealthShareUsageDescription" = "アプリに入力された炭水化物の食事データは、健康データベースに保存されます。 グルコースデータはHealthKitに安全に保存されます";
+
+/* Privacy - Health Update Usage Description */
+"NSHealthUpdateUsageDescription" = "健康データベースからの食事データは、グルコース効果を決定するために使用される。 グルコースデータはグラフ作成と解析のためにHealthKitから検索されます";
+
