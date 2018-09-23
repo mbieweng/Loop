@@ -25,6 +25,7 @@
 		1F7FBE9D2130BB6E0088E3B3 /* NightscoutUploader+Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7FBE9B2130BB6D0088E3B3 /* NightscoutUploader+Profile.swift */; };
 		1F7FBE9E2130BB6E0088E3B3 /* UserDefaults+katie.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7FBE9C2130BB6D0088E3B3 /* UserDefaults+katie.swift */; };
 		2748CAA91F32DC9B00AD86A4 /* GarminConnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2748CAA81F32DC9B00AD86A4 /* GarminConnectManager.swift */; };
+		275C4F6121573ECE005B8F89 /* LogglyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4341F4EA1EDB92AC001C936B /* LogglyService.swift */; };
 		43027F0F1DFE0EC900C51989 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F526D5E1DF2459000A04910 /* HKUnit.swift */; };
 		4302F4E11D4E9C8900F0FCAF /* TextFieldTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E01D4E9C8900F0FCAF /* TextFieldTableViewController.swift */; };
 		4302F4E31D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E21D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift */; };
@@ -2076,6 +2077,7 @@
 				43C3B6ED20B884500026CAFA /* GlucoseThreshold.swift in Sources */,
 				43947D731F529FAA00A07D31 /* GlucoseRangeSchedule.swift in Sources */,
 				43E2D8DC1D20C049004DA55F /* DoseMath.swift in Sources */,
+				275C4F6121573ECE005B8F89 /* LogglyService.swift in Sources */,
 				43E2D8DB1D20C03B004DA55F /* NSTimeInterval.swift in Sources */,
 				43E2D8D41D20BF42004DA55F /* DoseMathTests.swift in Sources */,
 				C11C87DE1E21EAAD00BB71D3 /* HKUnit.swift in Sources */,
