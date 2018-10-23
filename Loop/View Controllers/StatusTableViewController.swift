@@ -935,8 +935,8 @@ final class StatusTableViewController: ChartsTableViewController {
             }
         }
         
-        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio!
-        carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay!
+        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 100.0
+        carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
         
        // RSS - Repeat for the fat and protein portion...
         guard let updatedFPEntry = carbVC.updatedFPCarbEntry else {
