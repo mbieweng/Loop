@@ -110,6 +110,14 @@ final class AnalyticsManager: IdentifiableClass {
         if newValue.suspendThreshold != oldValue.suspendThreshold {
             logEvent("Minimum BG Guard change")
         }
+        
+        if newValue.fpuRatio != oldValue.fpuRatio {
+            logEvent("FPU Ratio change")
+        }
+        
+        if newValue.fpuDelay != oldValue.fpuDelay {
+            logEvent("FPU Delay change")
+        }
 
         if newValue.dosingEnabled != oldValue.dosingEnabled {
             logEvent("Closed loop enabled change")
