@@ -1,4 +1,4 @@
-github "rsilvers129/LoopKit/LoopKit" "FPU-dev"
+github "rsilvers129/LoopKit" "FPU-dev"
 github "LoopKit/CGMBLEKit" "dev"
 github "i-schuetz/SwiftCharts" == 0.6.2
 github "LoopKit/dexcom-share-client-swift" "carthage-recursive"

@@ -18,7 +18,6 @@ private extension RefreshContext {
     static let all: Set<RefreshContext> = [.glucose, .carbs, .targets, .status]
 }
 
-
 final class CarbAbsorptionViewController: ChartsTableViewController, IdentifiableClass {
 
     override func viewDidLoad() {
@@ -82,6 +81,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     private var refreshContext = RefreshContext.all
 
     private var reloading = false
+    
+    var dataManager: DeviceDataManager! // RSS
 
     private var carbStatuses: [CarbStatus<StoredCarbEntry>] = []
 
@@ -510,12 +511,15 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     /// Unwind segue action from the CarbEntryEditViewController
     ///
     /// - parameter segue: The unwind segue
+    /// RSS - This triggers when you edit an existing carb value and hit save.
+    
     @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
         guard let editVC = segue.source as? CarbEntryEditViewController,
             let updatedEntry = editVC.updatedCarbEntry
         else {
             return
         }
+//<<<<<<< HEAD
 
         if #available(iOS 12.0, *), editVC.originalCarbEntry == nil {
             let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
@@ -525,6 +529,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 }
             }
         }
+//=======
+//>>>>>>> rsilvers FPU modifications
         deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
             DispatchQueue.main.async {
                 switch result {
@@ -540,6 +546,37 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 }
             }
         }
+        
+        // Now run a second time for the fat and protein...
+        guard let editFPUVC = segue.source as? CarbEntryEditViewController
+            else {
+                return
+            }
+        
+        editFPUVC.FPCaloriesRatio = dataManager.loopManager.settings.fpuRatio!
+        editFPUVC.onsetDelay = dataManager.loopManager.settings.fpuDelay!
+        
+        guard let updatedFPUEntry = editFPUVC.updatedFPCarbEntry
+            else {
+                return
+        }
+    
+        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPUEntry, replacing: editFPUVC.originalCarbEntry) { (result) in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let recommendation):
+                    if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
+                        self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
+                    }
+                case .failure(let error):
+                    // Ignore bolus wizard errors
+                    if error is CarbStore.CarbStoreError {
+                        self.presentAlertController(with: error)
+                    }
+                }
+            }
+        }
+        
     }
     
     @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {

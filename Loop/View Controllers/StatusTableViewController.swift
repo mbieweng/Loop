@@ -166,6 +166,8 @@ final class StatusTableViewController: ChartsTableViewController {
             refreshContext.update(with: .status)
         }
     }
+    
+    //var dataManager: DeviceDataManager! // RSS
 
     // Toggles the display mode based on the screen aspect ratio. Should not be updated outside of reloadData().
     private var landscapeMode = false
@@ -894,10 +896,13 @@ final class StatusTableViewController: ChartsTableViewController {
     /// Unwind segue action from the CarbEntryEditViewController
     ///
     /// - parameter segue: The unwind segue
+    /// RSS - This triggers when you enter carb and hit save.
+    
     @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
         guard let carbVC = segue.source as? CarbEntryEditViewController, let updatedEntry = carbVC.updatedCarbEntry else {
             return
         }
+//<<<<<<< HEAD
         
         // RSS - Do we need to do an addCarbEntry here for the Protain and Fat portion?
 
@@ -909,6 +914,8 @@ final class StatusTableViewController: ChartsTableViewController {
                 }
             }
         }
+//=======
+//>>>>>>> rsilvers FPU modifications
         deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry) { (result) -> Void in
             DispatchQueue.main.async {
                 switch result {
@@ -927,6 +934,34 @@ final class StatusTableViewController: ChartsTableViewController {
                 }
             }
         }
+        
+        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio!
+        carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay!
+        
+       // RSS - Repeat for the fat and protein portion...
+        guard let updatedFPEntry = carbVC.updatedFPCarbEntry else {
+            return
+        }
+        
+        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPEntry) { (result) -> Void in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let recommendation):
+                    if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
+                        self.bolusState = .recommended
+                        self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
+                    }
+                case .failure(let error):
+                    // Ignore bolus wizard errors
+                    if error is CarbStore.CarbStoreError {
+                        self.presentAlertController(with: error)
+                    } else {
+                        self.deviceManager.logger.addError(error, fromSource: "Bolus")
+                    }
+                }
+            }
+        }
+        
     }
 
     @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {
