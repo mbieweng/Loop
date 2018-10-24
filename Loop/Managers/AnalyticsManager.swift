@@ -5,6 +5,7 @@
 //  Created by Nathan Racklyeft on 4/28/16.
 //  Copyright © 2016 Nathan Racklyeft. All rights reserved.
 //
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import Foundation
 import Amplitude
