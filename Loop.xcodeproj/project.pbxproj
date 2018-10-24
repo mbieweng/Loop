@@ -1149,7 +1149,6 @@
 			children = (
 				7B4282D2217AD17900026DE1 /* FPUDelayTableViewController.swift */,
 				7B4282D1217AD17900026DE1 /* FPURatioTableViewController.swift */,
-				437CCADD1D2858FD0075D2C3 /* AuthenticationViewController.swift */,
 				43DBF04B1C93B8D700B3C386 /* BolusViewController.swift */,
 				43D2E8221F00425400AE5CBF /* BolusViewController+LoopDataManager.swift */,
 				43A51E1E1EB6D62A000736CC /* CarbAbsorptionViewController.swift */,
@@ -1874,7 +1873,6 @@
 				430B298A2041F54A00BA9F93 /* NSUserDefaults.swift in Sources */,
 				4315D28A1CA5F45E00589052 /* DiagnosticLogger+LoopKit.swift in Sources */,
 				7B4282D4217AD17900026DE1 /* FPUDelayTableViewController.swift in Sources */,
-				43C418B51CE0575200405B6A /* ShareGlucose+GlucoseKit.swift in Sources */,
 				4F2C15821E074FC600E160D4 /* NSTimeInterval.swift in Sources */,
 				4311FB9B1F37FE1B00D4C0A7 /* TitleSubtitleTextFieldTableViewCell.swift in Sources */,
 				430DA58E1D4AEC230097D1CA /* NSBundle.swift in Sources */,
