@@ -5,6 +5,7 @@
 //  Created by Robert Silvers on 10/17/18.
 //  Copyright © 2018 LoopKit Authors. All rights reserved.
 //
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import Foundation
 

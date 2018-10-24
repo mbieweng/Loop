@@ -4,6 +4,7 @@
 //
 //  Copyright © 2017 LoopKit Authors. All rights reserved.
 //
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import UIKit
 import HealthKit

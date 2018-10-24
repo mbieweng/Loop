@@ -4,6 +4,7 @@
 //
 //  Created by Nathan Racklyeft on 8/30/15.
 //  Copyright © 2015 Nathan Racklyeft. All rights reserved.
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 //
 
 import Foundation

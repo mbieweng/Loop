@@ -5,6 +5,7 @@
 //  Created by Nathan Racklyeft on 9/6/15.
 //  Copyright © 2015 Nathan Racklyeft. All rights reserved.
 //
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import UIKit
 import HealthKit
