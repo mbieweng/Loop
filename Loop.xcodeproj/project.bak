@@ -1,4 +1,4 @@
-$(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
+// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -2639,7 +2639,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				"OTHER_SWIFT_FLAGS[sdk=iphonesimulator*]" = "-D IOS_SIMULATOR";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER);
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -2655,7 +2655,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER);
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -2672,7 +2672,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/Carthage/Build/watchOS";
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).LoopWatch.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.LoopWatch.watchkitextension;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = watchos;
@@ -2693,7 +2693,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				FRAMEWORK_SEARCH_PATHS = "$(PROJECT_DIR)/Carthage/Build/watchOS";
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).LoopWatch.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.LoopWatch.watchkitextension;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = watchos;
@@ -2715,7 +2715,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				IBSC_MODULE = WatchApp_Extension;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).LoopWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.LoopWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = watchos;
@@ -2737,7 +2737,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				IBSC_MODULE = WatchApp_Extension;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).LoopWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.LoopWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = watchos;
@@ -2815,7 +2815,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).statuswidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.statuswidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -2834,7 +2834,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = $(MAIN_APP_BUNDLE_IDENTIFIER).statuswidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.5RLXQ74459.loopkit.Loop.statuswidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -2858,7 +2858,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				INFOPLIST_FILE = LoopUI/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(MAIN_APP_BUNDLE_IDENTIFIER)-exp.LoopUI";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.5RLXQ74459.loopkit.Loop-exp.LoopUI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -2885,7 +2885,7 @@ $(MAIN_APP_BUNDLE_IDENTIFIER)// !$*UTF8*$!
 				INFOPLIST_FILE = LoopUI/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(MAIN_APP_BUNDLE_IDENTIFIER)-exp.LoopUI";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.5RLXQ74459.loopkit.Loop-exp.LoopUI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
