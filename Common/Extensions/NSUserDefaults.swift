@@ -125,7 +125,6 @@ extension UserDefaults {
                     suspendThreshold: suspendThreshold,
                     fpuRatio: fpuRatio,
                     fpuDelay: fpuDelay,
-                    retrospectiveCorrectionEnabled: bool(forKey: "com.loudnate.Loop.RetrospectiveCorrectionEnabled")
                     retrospectiveCorrectionEnabled: bool(forKey: "com.loudnate.Loop.RetrospectiveCorrectionEnabled"),
                     integralRetrospectiveCorrectionEnabled: bool(forKey: "com.loopkit.Loop.IntegralRetrospectiveCorrectionEnabled")
                 )
