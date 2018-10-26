@@ -385,11 +385,6 @@ extension LoopDataManager {
     /// - Parameter timeZone: The time zone
     func setScheduleTimeZone(_ timeZone: TimeZone) {
         
-        // MB autosens
-        // UserDefaults.appGroup.carbRatioSchedule?.timeZone = timeZone
-        // UserDefaults.appGroup.insulinSensitivitySchedule?.timeZone = timeZone
-        
-        
         if timeZone != basalRateSchedule?.timeZone {
             AnalyticsManager.shared.punpTimeZoneDidChange()
             basalRateSchedule?.timeZone = timeZone
@@ -397,12 +392,19 @@ extension LoopDataManager {
 
         if timeZone != carbRatioSchedule?.timeZone {
             AnalyticsManager.shared.punpTimeZoneDidChange()
-            carbRatioSchedule?.timeZone = timeZone
+
+            // MB autosens
+            UserDefaults.appGroup.carbRatioSchedule?.timeZone = timeZone
+            // carbRatioSchedule?.timeZone = timeZone
+
         }
 
         if timeZone != insulinSensitivitySchedule?.timeZone {
             AnalyticsManager.shared.punpTimeZoneDidChange()
-            insulinSensitivitySchedule?.timeZone = timeZone
+            // MB autosens
+            UserDefaults.appGroup.insulinSensitivitySchedule?.timeZone = timeZone
+            // insulinSensitivitySchedule?.timeZone = timeZone
+            
         }
 
         if timeZone != settings.glucoseTargetRangeSchedule?.timeZone {
@@ -925,8 +927,10 @@ extension LoopDataManager {
                     defaultInsulinSensitivitySchedule.items.forEach{ item in
                         adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
                     }
-                    let adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
-                
+                    var adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
+                    if let timeZone = carbStore.insulinSensitivitySchedule?.timeZone {
+                        adjustedInsulinSensSched.timeZone  = timeZone
+                    }
                     carbStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
                     doseStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
                     DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Sensitivity now \(adjustedInsulinSensSched.debugDescription)")
@@ -940,8 +944,11 @@ extension LoopDataManager {
                     defaultCarbRatioSchedule.items.forEach{ item in
                         adjustedCarbItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
                     }
-                    let adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
+                    var adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
                     
+                    if let timeZone = carbStore.carbRatioSchedule?.timeZone {
+                        adjustedCarbRatioSchedule.timeZone  = timeZone
+                    }
                     carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
                     //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
                     DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Carb ratio now \(carbStore.carbRatioSchedule.debugDescription)")
