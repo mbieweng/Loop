@@ -248,7 +248,7 @@ final class SettingsTableViewController: UITableViewController {
                     configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
                 }
             case .fpRatio:
-                configCell.textLabel?.text = NSLocalizedString("FPU Ratio", comment: "The title text in settings")
+                configCell.textLabel?.text = NSLocalizedString("Fat-Protein Ratio", comment: "The title text in settings")
                 
                 if let fpuRatio = dataManager.loopManager.settings.fpuRatio {
                     let value = valueNumberFormatter.string(from: fpuRatio) ??  SettingsTableViewCell.TapToSetString
@@ -257,7 +257,7 @@ final class SettingsTableViewController: UITableViewController {
                     configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
                 }
             case .fpDelay: // This displays the value on the otions screen but not in the cell itself.
-                configCell.textLabel?.text = NSLocalizedString("FPU Delay", comment: "The title text in settings")
+                configCell.textLabel?.text = NSLocalizedString("Fat-Protein Delay", comment: "The title text in settings")
                 
                 if let fpuDelay = dataManager.loopManager.settings.fpuDelay {
                     let value = valueNumberFormatter.string(from: fpuDelay) ?? SettingsTableViewCell.TapToSetString

@@ -552,7 +552,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 return
             }
         
-        editFPUVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 100.0
+        editFPUVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0 // Safer default.
         editFPUVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
 
         guard let updatedFPUEntry = editFPUVC.updatedFPCarbEntry

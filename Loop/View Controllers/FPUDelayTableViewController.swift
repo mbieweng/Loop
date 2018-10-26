@@ -19,7 +19,7 @@ final class FPUDelayTableViewController: TextFieldTableViewController {
         
         super.init(style: .grouped)
         
-        placeholder = NSLocalizedString("Enter FPU Delay in minutes", comment: "The placeholder text instructing users to enter an FPU Delay")
+        placeholder = NSLocalizedString("Enter Fat-Protein Delay in minutes", comment: "The placeholder text instructing users to enter an FPU Delay")
         keyboardType = .decimalPad
         contextHelp = NSLocalizedString("When fat and/or protein is entered as part of a meal, equivilant carbohydrates will be stored starting at the current time if this delay is set to 0, or starting after the delay specified. Values from 0 to 120 minutes are typical.", comment: "Explanation of delay")
 
