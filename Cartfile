@@ -1,8 +1,7 @@
-#github "LoopKit/LoopKit" == 1.5.6
-github "kdisimone/LoopKit" "beta"
-github "LoopKit/CGMBLEKit" ~> 2.0
-github "i-schuetz/SwiftCharts" == 0.6.1
-github "mddub/dexcom-share-client-swift" == 0.4.1
-github "mddub/G4ShareSpy" == 0.3.3
-github "ps2/rileylink_ios" == 2.0.0
+github "rsilvers129/LoopKit" "FPU-dev"
+github "rsilvers129/CGMBLEKit" "dev"
+github "i-schuetz/SwiftCharts" == 0.6.2
+github "rsilvers129/dexcom-share-client-swift" "carthage-recursive"
+github "rsilvers129/G4ShareSpy" "fix-cartfile"
+github "rsilvers129/rileylink_ios" "FPU-dev"
 github "LoopKit/Amplitude-iOS" "decreepify"
