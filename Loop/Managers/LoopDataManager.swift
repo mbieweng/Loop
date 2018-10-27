@@ -21,7 +21,7 @@ final class LoopDataManager {
     }
 
     // MB AutoSens
-    var averageRetroError = 0.0
+    //var averageRetroError = 0.0
     var lastAutoSensUpdate : Date = Date.init(timeIntervalSince1970: 0)
     //
     
@@ -71,7 +71,7 @@ final class LoopDataManager {
         self.lastTempBasal = lastTempBasal
         self.settings = settings
         self.glucoseUpdated = false
-        self.overallRetrospectiveCorrection = HKQuantity(unit: HKUnit.milligramsPerDeciliter(), doubleValue: 0)
+        self.overallRetrospectiveCorrection = HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 0)
         self.integralRectrospectiveCorrectionIndicator = " "
 
         let healthStore = HKHealthStore()
@@ -767,33 +767,15 @@ extension LoopDataManager {
         checkAlerts()
         updateAutoSens();
         
-        if(self.carbsOnBoard?.quantity.doubleValue(for: HKUnit.gram()) ?? 0  > 60.0) {
-            self.carbStore.defaultAbsorptionTimes = (
-            fast: TimeInterval(hours: 1),
-            medium: TimeInterval(hours: 3),
-            slow: TimeInterval(hours: 5)
-            )
-        } else {
-            self.carbStore.defaultAbsorptionTimes = (
-                fast: TimeInterval(hours: 0.5),
-                medium: TimeInterval(hours: 2),
-                slow: TimeInterval(hours: 5)
-            )
-        }
-        //
     }
     
     // MB Autosens
     func updateAutoSens() {
         
-        let doNothingTolerance : Double = 0.0
-        //let lowTrendSensitivityIncrease : Double = 0.005
-        //let highTrendSensitivityDecrease : Double = 0.005
         let adjustmentFactor = 0.0005/10 // 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
-        let smoothingPoints : Double = 1
         
         var autoSensFactor = UserDefaults.appGroup.autoSensFactor
         
@@ -801,103 +783,87 @@ extension LoopDataManager {
             return
         }
        
-        let retroGlucose = retrospectivePredictedGlucose?.last
-        let currentGlucose = glucoseStore.latestGlucose
-        let unit = HKUnit.milligramsPerDeciliter()
-        if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
-            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
-               
-                if(-self.lastAutoSensUpdate.timeIntervalSinceNow > minWaitMinutes*60) {
-                    let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
-                    if(workoutmode && autoSensFactor > 1.0) {
-                        DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
-                    } else {
-                        //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
-                    }
-                    
-                    let currentAvg = averageRetroError.rawValue;
-                    averageRetroError = currentAvg * (smoothingPoints-1)/smoothingPoints + (currentVal-retroVal)/smoothingPoints
-                    let adjustment = Swift.abs(averageRetroError)*adjustmentFactor
-                    if(averageRetroError < -doNothingTolerance) {
-                        autoSensFactor = autoSensFactor + adjustment
-                    } else if(averageRetroError > doNothingTolerance) {
-                        autoSensFactor = autoSensFactor - adjustment
-                    }
-                    
-                    lastAutoSensUpdate = Date.init()
-                    autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
-                    UserDefaults.appGroup.autoSensFactor = autoSensFactor
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("AutoSens updated.  Current retro error:\(currentVal-retroVal), average:\(averageRetroError), ASF now: \(autoSensFactor)")
-                    
-                }
-                
-                
-                // Update Insulin Sensitivity
-                if let defaultInsulinSensitivitySchedule = UserDefaults.appGroup.insulinSensitivitySchedule {
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Default sensitivity \(defaultInsulinSensitivitySchedule.debugDescription)")
-                    
-                    var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
-                    defaultInsulinSensitivitySchedule.items.forEach{ item in
-                        adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
-                    }
-                    var adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
-                    if let timeZone = carbStore.insulinSensitivitySchedule?.timeZone {
-                        adjustedInsulinSensSched.timeZone  = timeZone
-                    }
-                    carbStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
-                    doseStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Sensitivity now \(adjustedInsulinSensSched.debugDescription)")
-                }
+        let unit = HKUnit.milligramsPerDeciliter
+        if let lastDiscrepancy =  retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
             
-                // Update Carb Ratio
-                if let defaultCarbRatioSchedule = UserDefaults.appGroup.carbRatioSchedule {
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Default carbratio \(defaultCarbRatioSchedule.debugDescription)")
-                    
-                    var adjustedCarbItems : [RepeatingScheduleValue<Double>] = []
-                    defaultCarbRatioSchedule.items.forEach{ item in
-                        adjustedCarbItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
-                    }
-                    var adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
-                    
-                    if let timeZone = carbStore.carbRatioSchedule?.timeZone {
-                        adjustedCarbRatioSchedule.timeZone  = timeZone
-                    }
-                    carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
-                    //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
-                    DiagnosticLogger.shared?.forCategory("MBAutoSens").debug("Carb ratio now \(carbStore.carbRatioSchedule.debugDescription)")
-                }
-                
-                
+            let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
+            if(workoutmode && autoSensFactor > 1.0) {
+                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
+            } else {
+                //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
             }
+            
+            let adjustment = -lastDiscrepancy*adjustmentFactor
+            autoSensFactor = autoSensFactor + adjustment
+            
+            lastAutoSensUpdate = Date.init()
+            autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
+            UserDefaults.appGroup.autoSensFactor = autoSensFactor
+            DiagnosticLogger.shared.forCategory("MBAutoSens").debug("AutoSens updated.  Current retro error:\(lastDiscrepancy), ASF now: \(autoSensFactor)")
+            
+            // Update Insulin Sensitivity
+            if let defaultInsulinSensitivitySchedule = UserDefaults.appGroup.insulinSensitivitySchedule {
+                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Default sensitivity \(defaultInsulinSensitivitySchedule.debugDescription)")
+                
+                var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
+                defaultInsulinSensitivitySchedule.items.forEach{ item in
+                    adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
+                }
+                var adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
+                if let timeZone = carbStore.insulinSensitivitySchedule?.timeZone {
+                    adjustedInsulinSensSched.timeZone  = timeZone
+                }
+                carbStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
+                doseStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
+                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Sensitivity now \(adjustedInsulinSensSched.debugDescription)")
+            }
+            
+            // Update Carb Ratio
+            if let defaultCarbRatioSchedule = UserDefaults.appGroup.carbRatioSchedule {
+                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Default carbratio \(defaultCarbRatioSchedule.debugDescription)")
+                
+                var adjustedCarbItems : [RepeatingScheduleValue<Double>] = []
+                defaultCarbRatioSchedule.items.forEach{ item in
+                    adjustedCarbItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
+                }
+                var adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
+                
+                if let timeZone = carbStore.carbRatioSchedule?.timeZone {
+                    adjustedCarbRatioSchedule.timeZone  = timeZone
+                }
+                carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
+                //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
+                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Carb ratio now \(carbStore.carbRatioSchedule.debugDescription)")
+            }
+            
+            
         }
     }
-    
+
+
     // MB Alerts
     private func checkAlerts() {
         
         NSLog("MB Custom alerts")
         // Prediction differential alert
-        let retroGlucose = retrospectivePredictedGlucose?.last
-        let currentGlucose = glucoseStore.latestGlucose
-        let unit = HKUnit.milligramsPerDeciliter()
-        if let retroVal = retroGlucose?.quantity.doubleValue(for: unit) {
-            if let currentVal = currentGlucose?.quantity.doubleValue(for: unit) {
-                if(abs(currentVal-retroVal) > 40) {
-                    //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
-                    NotificationManager.sendForecastErrorNotification(quantity: currentVal-retroVal);
-                } else {
-                    //NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
-                }
-                
+        let unit = HKUnit.milligramsPerDeciliter
+        if let lastDiscrepancy =  retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
+            if(abs(lastDiscrepancy) > 40) {
+                //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
+                NotificationManager.sendForecastErrorNotification(quantity: lastDiscrepancy);
+            } else {
+                //NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
             }
+            
         }
+    
         
         // High and low alerts
         if let glucose = predictedGlucose {
             
             // 45 min check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(45*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:80)
+                let lowAlertThreshold = GlucoseThreshold (unit: unit, value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit));
@@ -910,7 +876,7 @@ extension LoopDataManager {
 
             // one hour check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(60*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:60)
+                let lowAlertThreshold = GlucoseThreshold (unit: unit, value:60)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     //NSLog("MB Next hour low glucose alert: min %@ threshold %@", nextHourMinGlucose.quantity, lowAlertThreshold.quantity)
@@ -923,7 +889,7 @@ extension LoopDataManager {
             }
             
             // High glucose
-            let highAlertThreshold = GlucoseThreshold (unit: HKUnit.milligramsPerDeciliter(), value:220)
+            let highAlertThreshold = GlucoseThreshold (unit: unit, value:220)
             if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
                 if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
                     // alert
@@ -945,7 +911,7 @@ extension LoopDataManager {
                 if(bolusAmount > minAlertBolus) {
                     if (bolusAlertStartTime.timeIntervalSinceNow < -minTime ) {
                         NotificationManager.sendRecommendBolusNotification(quantity: bolusAmount)
-                        DiagnosticLogger.shared?.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
+                        DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
                         bolusAlertStartTime = Date.init();
                     } else {
                         //DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")

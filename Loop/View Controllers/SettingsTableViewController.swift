@@ -444,24 +444,14 @@ final class SettingsTableViewController: UITableViewController {
             let row = ConfigurationRow(rawValue: indexPath.row)!
             switch row {
             case .autoSensFactor:
-                let vc: LoopKit.TextFieldTableViewController
+                let vc: LoopKitUI.TextFieldTableViewController
                 vc = .autoSensFactor(UserDefaults.appGroup.autoSensFactor)
                 vc.title = sender?.textLabel?.text
                 vc.indexPath = indexPath
                 vc.delegate = self
                 show(vc, sender: indexPath)
 
-            case .basalRate:
-                let scheduleVC = SingleValueScheduleTableViewController()
 
-                if let profile = dataManager.loopManager.basalRateSchedule {
-                    scheduleVC.timeZone = profile.timeZone
-                    scheduleVC.scheduleItems = profile.items
-                }
-                scheduleVC.delegate = self
-                scheduleVC.title = NSLocalizedString("Basal Rates", comment: "The title of the basal rate profile screen")
-
-                show(scheduleVC, sender: sender)
             case .carbRatio:
                 let scheduleVC = DailyQuantityScheduleTableViewController()
 

@@ -67,6 +67,8 @@ final class ActionHUDController: HUDInterfaceController {
         case nil:
             preMealButtonGroup.turnOff()
             workoutButtonGroup.turnOff()
+        case .some(.remoteTempTarget):
+            break
         }
     }
 
@@ -75,6 +77,8 @@ final class ActionHUDController: HUDInterfaceController {
         case .preMeal:
             return preMealButtonGroup
         case .workout:
+            return workoutButtonGroup
+        case .remoteTempTarget:
             return workoutButtonGroup
         }
     }

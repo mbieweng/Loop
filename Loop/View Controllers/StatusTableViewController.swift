@@ -435,25 +435,14 @@ final class StatusTableViewController: ChartsTableViewController {
 
                 // MB Custom differential
                 self.deviceManager.loopManager.getLoopState { (manager, state) in
-                    let retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
-                    let retroGlucose = retrospectivePredictedGlucose?.last
-                    let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-                    var delta : Double = 0
-                    if let retroVal = retroGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                        if let currentVal = currentGlucose?.quantity.doubleValue(for: self.charts.glucoseUnit) {
-                            delta = currentVal-retroVal;
-                            /*
-                            if let sens = self.deviceManager.loopManager.insulinSensitivitySchedule?.quantity(at: Date.init()).doubleValue(for: self.charts.glucoseUnit) {
-                                self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: sens)
-                            }
-                            */
-                            self.hudView?.glucoseHUD.setGlucoseTrendValue(delta, unit: self.charts.glucoseUnit, sensitivity: 1/UserDefaults.appGroup.autoSensFactor-1)
-                            
-                            //self.deviceManager.loopManager.autoSensFactor
-                            //self.deviceManager.loopManager.insulinSensitivitySchedule?.quantity(at: Date.init())
-                            NSLog("MB Updating retro differential hud to \(delta)")
-                        }
+                    //let retroGlucose = retrospectivePredictedGlucose?.last
+                    //let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
+                    //var delta : Double = 0
+                    if let lastDiscrepancy = state.retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) {
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(lastDiscrepancy, unit: self.charts.glucoseUnit, sensitivity: 1/UserDefaults.appGroup.autoSensFactor-1)
+                            NSLog("MB Updating retro differential hud to \(lastDiscrepancy)")
                     }
+                    
                 }
                 // End MB Custom
             

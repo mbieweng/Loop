@@ -3,28 +3,23 @@
 
   ],
   "watchOS" : [
-
+    {
+      "name" : "LoopKit",
+      "hash" : "0d25babb7ab182798ddd5384a469aea973d24427af218865c4ff192d0bac744d"
+    }
   ],
   "tvOS" : [
 
   ],
-  "commitish" : "2e0698007fb1ac89a0a41fed9097207183c10f23",
+  "commitish" : "2af46f1abb42c49411f2f95023f878d0001768a3",
   "iOS" : [
     {
-      "name" : "GlucoseKit",
-      "hash" : "9cb7c6380df59f98b2468dd8dcfc9ca08903a75aa6d272040269821c3dd5f68e"
-    },
-    {
-      "name" : "InsulinKit",
-      "hash" : "b04d86c7dca82a40581680b4f65eb3adcbca55c79617ebf6858bc6f9a7c955c5"
+      "name" : "LoopKitUI",
+      "hash" : "eda53f89e62db88a46d6b9905d5b698c47506d72762e77c80f31bc146bcbffdd"
     },
     {
       "name" : "LoopKit",
-      "hash" : "239ac3bac1dcf0f1dd562908a0d6dd7eb0859418ea5721888f607708e78f412b"
-    },
-    {
-      "name" : "CarbKit",
-      "hash" : "fb3725db0cebe8300fc6baaedc20d3a5a4c8068603012980b30c12e44e5969d2"
+      "hash" : "f09e9b28f00d813f392a882fa38bb8d2d4547f84d1a988fa126bf85be57c699b"
     }
   ]
 }

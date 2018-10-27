@@ -1,22 +1,6 @@
 {
-<<<<<<< HEAD
-  "iOS" : [
-    {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "hash" : "3e0dd9f39e8115a319474f2e1a20f7ba6c7f055ab5428a449a9832fe19b605fc",
-=======
-      "hash" : "c83bf45abd5eb79c58f02f715e20cb5dbf3ec10fe446d4c038c59e7d15f62373",
->>>>>>> LoopKit/dev
-=======
-      "hash" : "e83858a7e795ec0283ff2f41aa3070b8956548d78bf043709544de1cd4665fc1",
->>>>>>> LoopKit/dev
-      "name" : "Amplitude"
-    }
-=======
   "Mac" : [
 
->>>>>>> LoopKit/dev
   ],
   "watchOS" : [
 
@@ -28,7 +12,7 @@
   "iOS" : [
     {
       "name" : "Amplitude",
-      "hash" : "5f7cea951cf973d78073e75b87cd222891b181a3879b081a42f057d983b7c389"
+      "hash" : "5e48d66f410b735f7fb4841afb6724385a15bdb0c76f02fc3448a792cccd18d5"
     }
   ]
 }
