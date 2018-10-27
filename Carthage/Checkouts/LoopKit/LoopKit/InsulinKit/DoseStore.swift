@@ -163,10 +163,6 @@ public final class DoseStore {
     /// Whether the pump generates events indicating the start of a scheduled basal rate after it had been interrupted.
     public var pumpRecordsBasalProfileStartEvents: Bool = false
 
-    /// The sync version used for new samples written to HealthKit
-    /// Choose a lower or higher sync version if the same sample might be written twice (e.g. from an extension and from an app) for deterministic conflict resolution
-    public let syncVersion: Int
-
     // MARK: -
 
     /// Initializes and configures a new store
@@ -178,26 +174,19 @@ public final class DoseStore {
     ///   - insulinModel: The model of insulin effect over time
     ///   - basalProfile: The daily schedule of basal insulin rates
     ///   - insulinSensitivitySchedule: The daily schedule of insulin sensitivity (ISF)
-    ///   - syncVersion: A version number for determining resolution in de-duplication
     public init(
         healthStore: HKHealthStore,
         cacheStore: PersistenceController,
         observationEnabled: Bool = true,
         insulinModel: InsulinModel?,
         basalProfile: BasalRateSchedule?,
-        insulinSensitivitySchedule: InsulinSensitivitySchedule?,
-        syncVersion: Int = 1
+        insulinSensitivitySchedule: InsulinSensitivitySchedule?
     ) {
-        self.insulinDeliveryStore = InsulinDeliveryStore(
-            healthStore: healthStore,
-            cacheStore: cacheStore,
-            observationEnabled: observationEnabled
-        )
+        self.insulinDeliveryStore = InsulinDeliveryStore(healthStore: healthStore, effectDuration: insulinModel?.effectDuration ?? .hours(6), observationEnabled: observationEnabled)
         self.lockedInsulinModel = Locked(insulinModel)
         self.lockedInsulinSensitivitySchedule = Locked(insulinSensitivitySchedule)
         self.lockedBasalProfile = Locked(basalProfile)
         self.persistenceController = cacheStore
-        self.syncVersion = syncVersion
 
         self.pumpEventQueryAfterDate = cacheStartDate
 
@@ -218,6 +207,9 @@ public final class DoseStore {
 
                 // Validate the state of the stored reservoir data.
                 self.validateReservoirContinuity()
+
+                // Warm the state of insulin delivery samples
+                self.insulinDeliveryStore.getLastBasalEndDate { (_) in }
             }
         }
     }
@@ -230,6 +222,8 @@ public final class DoseStore {
     public func resetPumpData(completion: ((_ error: DoseStoreError?) -> Void)? = nil) {
         log.info("Resetting all cached pump data")
         deleteAllPumpEvents { (error) in
+            // TODO: Backfill pump events from HealthKit
+
             self.deleteAllReservoirValues { (error) in
                 completion?(error)
             }
@@ -322,8 +316,8 @@ public final class DoseStore {
         get {
             if _lastRecordedPrimeEventDate == nil {
                 if  let pumpEvents = try? self.getPumpEventObjects(
-                        matching: NSPredicate(format: "type = %@", PumpEventType.prime.rawValue),
-                        chronological: false
+                    matching: NSPredicate(format: "type = %@", PumpEventType.prime.rawValue),
+                    chronological: false
                     ),
                     let firstEvent = pumpEvents.first
                 {
@@ -844,7 +838,7 @@ extension DoseStore {
                     return
                 }
 
-                self.insulinDeliveryStore.addReconciledDoses(doses, from: self.device, syncVersion: self.syncVersion) { (result) in
+                self.insulinDeliveryStore.addReconciledDoses(doses, from: self.device) { (result) in
                     switch result {
                     case .success:
                         completion(nil)
@@ -881,10 +875,7 @@ extension DoseStore {
                 return
             }
 
-            // If we haven't recorded a lastAddedPumpEvents date, use the current date.
-            let endingAt = start <= self.lastAddedPumpEvents ? self.lastAddedPumpEvents : Date()
-
-            let reconciledDoses = doses.overlayBasalSchedule(basalSchedule, startingAt: start, endingAt: endingAt, insertingBasalEntries: !self.pumpRecordsBasalProfileStartEvents)
+            let reconciledDoses = doses.overlayBasalSchedule(basalSchedule, startingAt: start, endingAt: self.lastAddedPumpEvents, insertingBasalEntries: !self.pumpRecordsBasalProfileStartEvents)
             completion(.success(reconciledDoses))
         }
     }
@@ -1054,27 +1045,22 @@ extension DoseStore {
     ///   - completion: A closure called once the entries have been retrieved
     ///   - result: An array of dose entries, in chronological order by startDate
     public func getNormalizedDoseEntries(start: Date, end: Date? = nil, completion: @escaping (_ result: DoseStoreResult<[DoseEntry]>) -> Void) {
-        insulinDeliveryStore.getCachedDoses(start: start, end: end, isChronological: true) { (insulinDeliveryDoses) in
-            let filteredStart = max(insulinDeliveryDoses.lastBasalEndDate ?? start, start)
-
-            self.persistenceController.managedObjectContext.perform {
-                do {
-                    let doses: [DoseEntry]
-                    // Reservoir data is used only if its continuous and we haven't seen pump events since the last reservoir reading
-                    if self.areReservoirValuesValid &&
-                        self.lastAddedPumpEvents.timeIntervalSince(self.lastStoredReservoirValue?.startDate ?? .distantPast) < 0 {
-                        let reservoirDoses = try self.getNormalizedReservoirDoseEntries(start: filteredStart, end: end)
-                        doses = insulinDeliveryDoses + reservoirDoses.map({ $0.trim(from: filteredStart) })
-                    } else {
-                        doses = insulinDeliveryDoses.appendedUnion(with: try self.getNormalizedPumpEventDoseEntries(start: filteredStart, end: end))
-                    }
-
-                    completion(.success(doses + self.mutablePumpEventDoses))
-                } catch let error as DoseStoreError {
-                    completion(.failure(error))
-                } catch {
-                    assertionFailure()
+        persistenceController.managedObjectContext.perform {
+            do {
+                let doses: [DoseEntry]
+                // Reservoir data is used only if its continuous and we haven't seen pump events since the last reservoir reading
+                if self.areReservoirValuesValid &&
+                    self.lastAddedPumpEvents.timeIntervalSince(self.lastStoredReservoirValue?.startDate ?? .distantPast) < 0 {
+                    doses = try self.getNormalizedReservoirDoseEntries(start: start, end: end)
+                } else {
+                    doses = try self.getNormalizedPumpEventDoseEntries(start: start, end: end)
                 }
+
+                completion(.success(doses + self.mutablePumpEventDoses))
+            } catch let error as DoseStoreError {
+                completion(.failure(error))
+            } catch {
+                assertionFailure()
             }
         }
     }

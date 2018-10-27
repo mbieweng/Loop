@@ -10,14 +10,14 @@ import HealthKit
 import CoreData
 @testable import LoopKit
 
-class CarbStoreTests: PersistenceControllerTestCase, CarbStoreSyncDelegate {
+class CarbStoreTests: XCTestCase, CarbStoreSyncDelegate {
 
     var carbStore: CarbStore!
     var healthStore: HKHealthStoreMock!
+    var cacheStore: PersistenceController!
 
     override func setUp() {
-        super.setUp()
-
+        cacheStore = PersistenceController(directoryURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true))
         healthStore = HKHealthStoreMock()
         carbStore = CarbStore(healthStore: healthStore, cacheStore: cacheStore)
         carbStore.testQueryStore = healthStore
@@ -25,16 +25,17 @@ class CarbStoreTests: PersistenceControllerTestCase, CarbStoreSyncDelegate {
     }
 
     override func tearDown() {
+        cacheStore.tearDown()
+
         carbStore.syncDelegate = nil
         carbStore = nil
         healthStore = nil
+        cacheStore = nil
 
         uploadMessages = []
         deleteMessages = []
         uploadHandler = nil
         deleteHandler = nil
-
-        super.tearDown()
     }
 
     // MARK: - CarbStoreSyncDelegate

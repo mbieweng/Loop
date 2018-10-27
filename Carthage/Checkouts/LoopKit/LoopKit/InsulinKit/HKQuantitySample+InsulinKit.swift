@@ -15,7 +15,7 @@ let MetadataKeyScheduledBasalRate = "com.loopkit.InsulinKit.MetadataKeyScheduled
 let MetadataKeyHasLoopKitOrigin = "HasLoopKitOrigin"
 
 extension HKQuantitySample {
-    convenience init?(type: HKQuantityType, unit: HKUnit, dose: DoseEntry, device: HKDevice?, syncVersion: Int = 1) {
+    convenience init?(type: HKQuantityType, unit: HKUnit, dose: DoseEntry, device: HKDevice?) {
         let units = dose.unitsRoundedToMinimedIncrements
 
         guard let syncIdentifier = dose.syncIdentifier else {
@@ -23,7 +23,7 @@ extension HKQuantitySample {
         }
 
         var metadata: [String: Any] = [
-            HKMetadataKeySyncVersion: syncVersion,
+            HKMetadataKeySyncVersion: 1,
             HKMetadataKeySyncIdentifier: syncIdentifier,
             MetadataKeyHasLoopKitOrigin: true
         ]
@@ -61,24 +61,12 @@ extension HKQuantitySample {
         )
     }
 
-    var hasLoopKitOrigin: Bool {
-        guard let hasLoopKitOrigin = metadata?[MetadataKeyHasLoopKitOrigin] as? Bool else {
-            return false
-        }
-
-        return hasLoopKitOrigin
-    }
-
     var insulinDeliveryReason: HKInsulinDeliveryReason? {
         guard let reason = metadata?[HKMetadataKeyInsulinDeliveryReason] as? HKInsulinDeliveryReason.RawValue else {
             return nil
         }
 
         return HKInsulinDeliveryReason(rawValue: reason)
-    }
-
-    var scheduledBasalRate: HKQuantity? {
-        return metadata?[MetadataKeyScheduledBasalRate] as? HKQuantity
     }
 
     /// Returns a DoseEntry representation of the sample.
@@ -89,7 +77,7 @@ extension HKQuantitySample {
         }
 
         let type: DoseType
-        let scheduledBasalRate = self.scheduledBasalRate
+        let scheduledBasalRate = metadata?[MetadataKeyScheduledBasalRate] as? HKQuantity
 
         switch reason {
         case .basal:
@@ -98,24 +86,22 @@ extension HKQuantitySample {
             } else {
                 type = .tempBasal
             }
-
-            // We can't properly trust non-LoopKit-provided basal insulin
-            guard hasLoopKitOrigin else {
-                return nil
-            }
         case .bolus:
             type = .bolus
         }
 
-        return DoseEntry(
+        var entry = DoseEntry(
             type: type,
             startDate: startDate,
             endDate: endDate,
             value: quantity.doubleValue(for: .internationalUnit()),
             unit: .units,
             description: nil,
-            syncIdentifier: metadata?[HKMetadataKeySyncIdentifier] as? String,
-            scheduledBasalRate: scheduledBasalRate
+            syncIdentifier: metadata?[HKMetadataKeySyncIdentifier] as? String
         )
+
+        entry.scheduledBasalRate = scheduledBasalRate
+
+        return entry
     }
 }
