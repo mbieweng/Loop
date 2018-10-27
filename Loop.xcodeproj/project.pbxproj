@@ -313,13 +313,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		432CF87C20D8B8990066B889 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 43776F841B8022E90074EA36 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 432CF87720D8B8380066B889;
-			remoteInfo = Cartfile;
-		};
 		432CF87E20D8BC3B0066B889 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 43776F841B8022E90074EA36 /* Project object */;
@@ -1487,7 +1480,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				432CF87D20D8B8990066B889 /* PBXTargetDependency */,
 				4F7528971DFE1ED400C322D6 /* PBXTargetDependency */,
 				43A943931B926B7B0051FA24 /* PBXTargetDependency */,
 				4F70C1E71DE8DCA7006380B7 /* PBXTargetDependency */,
@@ -2162,11 +2154,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		432CF87D20D8B8990066B889 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 432CF87720D8B8380066B889 /* Cartfile */;
-			targetProxy = 432CF87C20D8B8990066B889 /* PBXContainerItemProxy */;
-		};
 		432CF87F20D8BC3B0066B889 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 432CF87720D8B8380066B889 /* Cartfile */;
