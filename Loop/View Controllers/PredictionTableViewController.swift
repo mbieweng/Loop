@@ -67,7 +67,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
     // MARK: - State
 
-    private var retrospectivePredictedGlucose: [GlucoseValue]?
+    private var retrospectiveGlucoseDiscrepancies: [GlucoseChange]?
 
     private var refreshContext = RefreshContext.all
 
@@ -113,7 +113,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
         _ = self.refreshContext.remove(.status)
         reloadGroup.enter()
         self.deviceManager.loopManager.getLoopState { (manager, state) in
-            self.retrospectivePredictedGlucose = state.retrospectivePredictedGlucose
+            self.retrospectiveGlucoseDiscrepancies = state.retrospectiveGlucoseDiscrepancies
             self.charts.setPredictedGlucoseValues(state.predictedGlucose ?? [])
 
             do {
@@ -174,14 +174,14 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
         static let count = 3
     }
-
+    
     fileprivate enum SettingsRow: Int, CaseCountable {
         case retrospectiveCorrection
         case integralRetrospectiveCorrection
         
         static let count = 2
     }
-    
+
     private var eventualGlucoseDescription: String?
 
     private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
@@ -225,15 +225,15 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             return cell
         case .settings:
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
-
+            
             switch SettingsRow(rawValue: indexPath.row)! {
             case .retrospectiveCorrection:
                 cell.titleLabel?.text = NSLocalizedString("Retrospective Correction", comment: "Title of the switch which toggles retrospective correction effects")
                 cell.subtitleLabel?.text = NSLocalizedString("More agressively increase or decrease basal delivery when  glucose movement over past 30 min doesn't match the carbohydrate and insulin-based model.", comment: "The description of the switch which toggles retrospective correction effects")
                 cell.`switch`?.isOn = deviceManager.loopManager.settings.retrospectiveCorrectionEnabled
                 cell.`switch`?.addTarget(self, action: #selector(retrospectiveCorrectionSwitchChanged(_:)), for: .valueChanged)
-                
                 cell.contentView.layoutMargins.left = tableView.separatorInset.left
+                
             case .integralRetrospectiveCorrection:
                 cell.titleLabel?.text = NSLocalizedString("Integral Retrospective Correction", comment: "Title of the switch which toggles integral retrospective correction effects")
                 cell.subtitleLabel?.text = NSLocalizedString("Respond more aggressively to persistent discrepancies in glucose movement.", comment: "The description of the switch which toggles integral retrospective correction effects")
@@ -255,7 +255,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
         if let eventualGlucose = eventualGlucoseDescription {
             cell.titleLabel?.text = String(format: NSLocalizedString("Eventually %@", comment: "The subtitle format describing eventual glucose. (1: localized glucose value description)"), eventualGlucose)
         } else {
-            cell.titleLabel?.text = "–"
+            cell.titleLabel?.text = SettingsTableViewCell.NoValueString
         }
     }
 
@@ -272,47 +272,39 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
         var subtitleText = input.localizedDescription(forGlucoseUnit: charts.glucoseUnit) ?? ""
 
-        if input == .retrospection {
-            if deviceManager.loopManager.settings.retrospectiveCorrectionEnabled,
-                let startGlucose = retrospectivePredictedGlucose?.first,
-                let endGlucose = retrospectivePredictedGlucose?.last,
-                let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
-            {
-                let formatter = NumberFormatter.glucoseFormatter(for: charts.glucoseUnit)
-                let values = [startGlucose, endGlucose, currentGlucose].map { formatter.string(from: $0.quantity.doubleValue(for: charts.glucoseUnit)) ?? "?" }
-                let endGlucoseValue = endGlucose.quantity.doubleValue(for: charts.glucoseUnit)
-                let currentGlucoseValue = currentGlucose.quantity.doubleValue(for: charts.glucoseUnit)
-                let currentDiscrepancyValue = currentGlucoseValue - endGlucoseValue
-                let currentDiscrepancy = formatter.string(from: NSNumber(value: currentDiscrepancyValue))!
-                var integralEffect = "none"
-                var retrospectiveCorrection = "none"
-                if self.deviceManager.loopManager.overallRetrospectiveCorrection != nil {
-                    //Retrospective Correction effect included in glucose prediction
-                    let overallRetrospectiveCorrectionValue = self.deviceManager.loopManager.overallRetrospectiveCorrection!.doubleValue(for: charts.glucoseUnit)
-                    let integralEffectValue = overallRetrospectiveCorrectionValue - currentDiscrepancyValue
-                    integralEffect = formatter.string(from: NSNumber(value: integralEffectValue))!
-                    retrospectiveCorrection = formatter.string(from: NSNumber(value: overallRetrospectiveCorrectionValue))!
-                }
-                if !deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled {
-                    integralEffect = "disabled"
-                }
-                let retroComparison = String(
-                    format: NSLocalizedString("Last 30 min comparison: %1$@ → %2$@ vs %3$@", comment: "Format string describing retrospective glucose prediction comparison. (1: Previous glucose)(2: Predicted glucose)(3: Actual glucose)"),
-                    values[0], values[1], values[2])
-                let retroCorrection = String(
-                    format: NSLocalizedString("RC effect: %1$@, Integral effect: %2$@\nTotal glucose effect: %3$@", comment: "Format string describing retrospective correction. (1: Current discrepancy)(2: Integral retrospective correction effect)(3: Total retrospective correction effect)"), currentDiscrepancy, integralEffect, retrospectiveCorrection)
-                
-                subtitleText = String(format: "%@\n%@", retroComparison, retroCorrection)
-                
+        if input == .retrospection,
+            let lastDiscrepancy = retrospectiveGlucoseDiscrepancies?.last,
+            let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
+        {
+            let formatter = QuantityFormatter()
+            formatter.setPreferredNumberFormatter(for: charts.glucoseUnit)
+            let predicted = HKQuantity(unit: charts.glucoseUnit, doubleValue: currentGlucose.quantity.doubleValue(for: charts.glucoseUnit) - lastDiscrepancy.quantity.doubleValue(for: charts.glucoseUnit))
+            var values = [predicted, currentGlucose.quantity].map { formatter.string(from: $0, for: charts.glucoseUnit) ?? "?" }
+            formatter.numberFormatter.positivePrefix = formatter.numberFormatter.plusSign
+            values.append(formatter.string(from: lastDiscrepancy.quantity, for: charts.glucoseUnit) ?? "?" )
+
+            let retro = String(
+                format: NSLocalizedString("prediction-description-retrospective-correction", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
+                values[0], values[1], values[2]
+            )
+            if !deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled {
+                // Standard retrospective correction
+                subtitleText = String(format: "%@\n%@", subtitleText, retro)
             } else {
-                // Retrospective Correction disabled or not included in glucose prediction for other reasons
-                if deviceManager.loopManager.settings.retrospectiveCorrectionEnabled {
-                    let inactiveRetrospectiveCorrection = String(format: NSLocalizedString("Temporarily inactive due to recent calibration or missing data", comment: "Format string describing inactive retrospective correction."))
-                    subtitleText = String(format: "%@", inactiveRetrospectiveCorrection)
-                } else {
-                    let disabledRetrospectiveCorrection = String(format: NSLocalizedString("⚠️ Retrospective correction is disabled", comment: "Format string describing disabled retrospective correction."))
-                    subtitleText = String(format: "%@\n%@", subtitleText, disabledRetrospectiveCorrection)
+                // Integral retrospective correction
+                var integralEffectDisplay = "?"
+                var totalEffectDisplay = "?"
+                if let totalEffect = self.deviceManager.loopManager.totalRetrospectiveCorrection {
+                    let integralEffectValue = totalEffect.doubleValue(for: charts.glucoseUnit) - lastDiscrepancy.quantity.doubleValue(for: charts.glucoseUnit)
+                    let integralEffect = HKQuantity(unit: charts.glucoseUnit, doubleValue: integralEffectValue)
+                    integralEffectDisplay = formatter.string(from: integralEffect, for: charts.glucoseUnit) ?? "?"
+                    totalEffectDisplay = formatter.string(from: totalEffect, for: charts.glucoseUnit) ?? "?"
                 }
+                let integralRetro = String(
+                    format: NSLocalizedString("prediction-description-integral-retrospective-correction", comment: "Format string describing integral retrospective correction. (1: Integral glucose effect)(2: Total glucose effect)"),
+                    integralEffectDisplay, totalEffectDisplay
+                )
+                subtitleText = String(format: "%@\n%@", retro, integralRetro)
             }
         }
 
@@ -361,6 +353,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
     @objc private func retrospectiveCorrectionSwitchChanged(_ sender: UISwitch) {
         deviceManager.loopManager.settings.retrospectiveCorrectionEnabled = sender.isOn
+
         // if retrospective correction is disabled, integral retrospective correction must also be disabled
         if !sender.isOn {
             deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled = sender.isOn

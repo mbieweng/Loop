@@ -1,0 +1,2 @@
+github "mbieweng/LoopKit" "FPU-dev"
+github "mbieweng/dexcom-share-client-swift" "carthage-recursive"

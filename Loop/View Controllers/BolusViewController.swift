@@ -250,7 +250,6 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
     private func updateNotice() {
         if let notice = bolusRecommendation?.notice {
             noticeLabel?.text = "⚠ \(notice.description(using: glucoseUnit))"
-            
         } else {
             noticeLabel?.text = nil
         }

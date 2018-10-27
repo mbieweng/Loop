@@ -18,7 +18,6 @@ extension UserDefaults {
         if let shared = shared, standard.basalRateSchedule != nil && shared.basalRateSchedule == nil {
             shared.basalRateSchedule = standard.basalRateSchedule
             shared.carbRatioSchedule = standard.carbRatioSchedule
-            shared.cgm               = standard.cgm
             shared.loopSettings      = standard.loopSettings
             shared.insulinModelSettings = standard.insulinModelSettings
             shared.insulinSensitivitySchedule = standard.insulinSensitivitySchedule
@@ -30,6 +29,7 @@ extension UserDefaults {
         shared?.removeObject(forKey: "com.loopkit.Loop.PumpState")
         shared?.removeObject(forKey: "com.loopkit.Loop.PumpSettings")
         shared?.removeObject(forKey: "com.loudnate.Naterade.ConnectedPeripheralIDs")
+        shared?.removeObject(forKey: "com.loopkit.Loop.cgmSettings")
 
         return shared ?? standard
     }()
@@ -39,10 +39,6 @@ extension UserDefaults {
 extension UserDefaults {
     private enum Key: String {
         case pumpManagerState = "com.loopkit.Loop.PumpManagerState"
-        
-        // MB Extensions
-        case autoSensFactor = "com.loopkit.Loop.autoSensFactor"
-        //
     }
 
     var pumpManager: PumpManager? {
@@ -57,23 +53,25 @@ extension UserDefaults {
             set(newValue?.rawValue, forKey: Key.pumpManagerState.rawValue)
         }
     }
-    
-    // MB Extensions
-    var autoSensFactor : Double {
+
+    var isCGMManagerValidPumpManager: Bool {
+        guard let rawValue = cgmManagerState else {
+            return false
+        }
+
+        return PumpManagerTypeFromRawValue(rawValue) != nil
+    }
+
+    var cgmManager: CGMManager? {
         get {
-            let value : Double = double(forKey:Key.autoSensFactor.rawValue)
-            if(value != 0)  {
-                return value
-            } else {
-                return 1.0
+            guard let rawValue = cgmManagerState else {
+                return nil
             }
+
+            return CGMManagerFromRawValue(rawValue)
         }
         set {
-            set(newValue.rawValue, forKey: Key.autoSensFactor.rawValue)
+            cgmManagerState = newValue?.rawValue
         }
     }
 }
-
-
-
-

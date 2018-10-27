@@ -1,0 +1,21 @@
+{
+  "Mac" : [
+
+  ],
+  "watchOS" : [
+
+  ],
+  "tvOS" : [
+    {
+      "name" : "SwiftCharts",
+      "hash" : "69c2865171a47b9873f4c1cd58b11f49366f4348dc26a013446d7b86758e9698"
+    }
+  ],
+  "commitish" : "0.6.2",
+  "iOS" : [
+    {
+      "name" : "SwiftCharts",
+      "hash" : "08c9e3c4824d76b1096269e737fd42ab16f55c8e0fb45b6a06d4c7053c2e3027"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ struct WatchHistoricalGlucose {
 
     init(with samples: [StoredGlucoseSample]) {
         self.samples = samples.map {
-            NewGlucoseSample(date: $0.startDate, quantity: $0.quantity, isDisplayOnly: false, syncIdentifier: $0.syncIdentifier)
+            NewGlucoseSample(date: $0.startDate, quantity: $0.quantity, isDisplayOnly: false, syncIdentifier: $0.syncIdentifier, syncVersion: 0)
         }
     }
 }
@@ -28,7 +28,7 @@ extension WatchHistoricalGlucose: RawRepresentable {
     var rawValue: RawValue {
         return [
             "d": samples.map { $0.date },
-            "v": samples.map { UInt16($0.quantity.doubleValue(for: .milligramsPerDeciliter)) },
+            "v": samples.map { Int16($0.quantity.doubleValue(for: .milligramsPerDeciliter)) },
             "id": samples.map { $0.syncIdentifier }
         ]
     }
@@ -36,7 +36,7 @@ extension WatchHistoricalGlucose: RawRepresentable {
     init?(rawValue: RawValue) {
         guard
             let dates = rawValue["d"] as? [Date],
-            let values = rawValue["v"] as? [UInt16],
+            let values = rawValue["v"] as? [Int16],
             let syncIdentifiers = rawValue["id"] as? [String],
             dates.count == values.count,
             dates.count == syncIdentifiers.count
@@ -45,7 +45,7 @@ extension WatchHistoricalGlucose: RawRepresentable {
         }
 
         self.samples = (0..<dates.count).map {
-            NewGlucoseSample(date: dates[$0], quantity: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: Double(values[$0])), isDisplayOnly: false, syncIdentifier: syncIdentifiers[$0])
+            NewGlucoseSample(date: dates[$0], quantity: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: Double(values[$0])), isDisplayOnly: false, syncIdentifier: syncIdentifiers[$0], syncVersion: 0)
         }
     }
 }

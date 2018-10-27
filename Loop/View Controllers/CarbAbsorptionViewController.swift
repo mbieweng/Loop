@@ -4,9 +4,12 @@
 //
 //  Copyright © 2017 LoopKit Authors. All rights reserved.
 //
+//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import UIKit
 import HealthKit
+import Intents
+import os.log
 
 import LoopKit
 import LoopKitUI
@@ -15,7 +18,6 @@ import LoopKitUI
 private extension RefreshContext {
     static let all: Set<RefreshContext> = [.glucose, .carbs, .targets, .status]
 }
-
 
 final class CarbAbsorptionViewController: ChartsTableViewController, IdentifiableClass {
 
@@ -80,6 +82,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     private var refreshContext = RefreshContext.all
 
     private var reloading = false
+    
+    var dataManager: DeviceDataManager! // RSS
 
     private var carbStatuses: [CarbStatus<StoredCarbEntry>] = []
 
@@ -117,7 +121,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         charts.startDate = chartStartDate
 
         let midnight = Calendar.current.startOfDay(for: Date())
-        let listStart = min(midnight, chartStartDate)
+        let listStart = min(midnight, chartStartDate, Date(timeIntervalSinceNow: -deviceManager.loopManager.carbStore.maximumAbsorptionTimeInterval))
 
         let reloadGroup = DispatchGroup()
         let shouldUpdateGlucose = currentContext.contains(.glucose)
@@ -130,7 +134,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
 
         // TODO: Don't always assume currentContext.contains(.status)
         reloadGroup.enter()
-        self.deviceManager.loopManager.getLoopState { (manager, state) in
+        deviceManager.loopManager.getLoopState { (manager, state) in
             if shouldUpdateGlucose || shouldUpdateCarbs {
                 let insulinCounteractionEffects = state.insulinCounteractionEffects
                 self.charts.setInsulinCounteractionEffects(state.insulinCounteractionEffects.filterDateRange(chartStartDate, nil))
@@ -150,7 +154,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 }
 
                 reloadGroup.enter()
-                manager.carbStore.getGlucoseEffects(start:  chartStartDate, effectVelocities: manager.settings.dynamicCarbAbsorptionEnabled ? insulinCounteractionEffects : nil) { (result) in
+                manager.carbStore.getGlucoseEffects(start: chartStartDate, effectVelocities: manager.settings.dynamicCarbAbsorptionEnabled ? insulinCounteractionEffects : nil) { (result) in
                     switch result {
                     case .success(let effects):
                         carbEffects = effects
@@ -172,7 +176,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
 
         if shouldUpdateCarbs {
             reloadGroup.enter()
-            self.deviceManager.loopManager.carbStore.getTotalCarbs(since: midnight) { (result) in
+            deviceManager.loopManager.carbStore.getTotalCarbs(since: midnight) { (result) in
                 switch result {
                 case .success(let total):
                     carbTotal = total
@@ -467,6 +471,15 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
 
     // MARK: - Navigation
 
+    override func restoreUserActivityState(_ activity: NSUserActivity) {
+        switch activity.activityType {
+        case NSUserActivity.newCarbEntryActivityType:
+            performSegue(withIdentifier: CarbEntryEditViewController.className, sender: activity)
+        default:
+            break
+        }
+    }
+
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         super.prepare(for: segue, sender: sender)
 
@@ -485,6 +498,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         case let vc as CarbEntryEditViewController:
             if let selectedCell = sender as? UITableViewCell, let indexPath = tableView.indexPath(for: selectedCell), indexPath.row < carbStatuses.count {
                 vc.originalCarbEntry = carbStatuses[indexPath.row].entry
+            } else if let activity = sender as? NSUserActivity {
+                vc.restoreUserActivityState(activity)
             }
 
             vc.defaultAbsorptionTimes = deviceManager.loopManager.carbStore.defaultAbsorptionTimes
@@ -497,20 +512,60 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     /// Unwind segue action from the CarbEntryEditViewController
     ///
     /// - parameter segue: The unwind segue
+    /// RSS - This triggers when you edit an existing carb value and hit save.
+    
     @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
-        guard let editVC = segue.source as? CarbEntryEditViewController,
-            let updatedEntry = editVC.updatedCarbEntry
-        else {
-            return
+        guard let editVC = segue.source as? CarbEntryEditViewController
+            else {
+                return
         }
+        
+        if let updatedEntry = editVC.updatedCarbEntry { // Had some carb else else this returns nil
+            if #available(iOS 12.0, *), editVC.originalCarbEntry == nil {
+                let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
+                interaction.donate { (error) in
+                    if let error = error {
+                        os_log(.error, "Failed to donate intent: %{public}@", String(describing: error))
+                    }
+                }
+            }
+            deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let recommendation):
+                        if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
+                            self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
+                        }
+                    case .failure(let error):
+                        // Ignore bolus wizard errors
+                        if error is CarbStore.CarbStoreError {
+                            self.presentAlertController(with: error)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Now run a second time for the fat and protein...
+        guard let editFPUVC = segue.source as? CarbEntryEditViewController
+            else {
+                return
+            }
+        
+        editFPUVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0 // Safer default.
+        editFPUVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
 
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
+        guard let updatedFPUEntry = editFPUVC.updatedFPCarbEntry
+            else {
+                return
+        }
+    
+        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPUEntry, replacing: editFPUVC.originalCarbEntry) { (result) in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let recommendation):
-                    if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
-                        self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
-                    }
+                case .success:
+                    // Never give bolus for fat and protein.
+                    print("Not recommending bolus for fat or protein.")
                 case .failure(let error):
                     // Ignore bolus wizard errors
                     if error is CarbStore.CarbStoreError {
@@ -519,6 +574,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 }
             }
         }
+        
     }
     
     @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {

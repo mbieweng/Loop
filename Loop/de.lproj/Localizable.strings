@@ -67,9 +67,6 @@
 /* The string format describing active insulin. (1: localized insulin value description) */
 "Active Insulin: %@" = "Aktives Insulin: %@";
 
-/* The title of the button to add the credentials for a service */
-"Add Account" = "Konto hinzufügen";
-
 /* The label of the carb entry button */
 "Add Meal" = "Mahlzeit hinzufügen";
 
@@ -140,7 +137,7 @@
 "Check your CGM data source" = "Überprüfen Sie Ihre CGM-Datenquelle";
 
 /* The title text for the looping enabled switch cell */
-"Closed Loop" = "Closed Loop";
+"Closed Loop" = "Geschlossene Loop";
 
 /* The title of the configuration section in settings */
 "Configuration" = "Konfiguration";
@@ -170,9 +167,6 @@
 /* Title text for delivery limits */
 "Delivery Limits" = "Verabreichungslimits";
 
-/* The title of the Dexcom Share service */
-"Dexcom Share" = "Dexcom Share";
-
 /* The action hint of the workout mode toggle button when enabled */
 "Disables" = "Deaktiviert";
 
@@ -198,7 +192,7 @@
 "Fiasp" = "Fiasp";
 
 /* The format string used to describe a finite workout targets duration */
-"For %1$@" = "für %1$@";
+"For %1$@" = "Für %1$@";
 
 /* The short unit display string for grams */
 "g" = "g";
@@ -215,9 +209,6 @@
 /* The error message when glucose data is too old to be used. (1: glucose data age in minutes) */
 "Glucose data is %1$@ old" = "Glukosedaten sind %1$@ alt";
 
-/* Error description for unreliable state */
-"Glucose data is unavailable" = "Glukosedaten sind nicht verfügbar";
-
 /* Description of error when glucose data is missing */
 "Glucose data not available" = "Glukosedaten sind nicht verfügbar";
 
@@ -228,7 +219,7 @@
 "https://mysite.azurewebsites.net" = "https://mysite.azurewebsites.net";
 
 /* The title of a target alert action specifying an indefinitely long workout targets duration */
-"Indefinitely" = "für unendlich";
+"Indefinitely" = "Unendlich";
 
 /* Title of the prediction input effect for insulin */
 "Insulin" = "Insulin";
@@ -256,9 +247,6 @@
 /* The title text for the issue report cell */
 "Issue Report" = "Problembericht";
 
-/* Format string describing retrospective glucose prediction comparison. (1: Previous glucose)(2: Predicted glucose)(3: Actual glucose) */
-"Last comparison: %1$@ → %2$@ vs %3$@" = "Letzter Vergleich: %1$@ → %2$@ vs %3$@";
-
 /* Glucose HUD accessibility hint */
 "Launches CGM app" = "Startet die CGM-App";
 
@@ -272,10 +260,7 @@
 "Loop Failure" = "Loop Fehler";
 
 /* The notification alert describing a long-lasting loop failure. The substitution parameter is the time interval since the last loop */
-"Loop has not completed successfully in %@" = "Loop funktionert nicht mehr erfolgreich seit %@";
-
-/* The description of a low G5/G6 transmitter battery with a leading space */
-"Low Battery" = "Niedriger Batteriestatus";
+"Loop has not completed successfully in %@" = "Loop wurde nicht erfolgreich abgeschlossen um %@";
 
 /* The short unit display string for milligrams of glucose per decilter */
 "mg/dL" = "mg/dL";
@@ -297,15 +282,6 @@
 
 /* The error message displayed for device connection errors. */
 "No connected devices, or failure during device connection" = "Keine angeschlossenen Geräte oder Fehler während der Geräteverbindung";
-
-/* Sensor state description for the valid state */
-"OK" = "OK";
-
-/* Outside US share server option title */
-"Outside US" = "Außerhalb der USA";
-
-/* The title of the Dexcom share password credential */
-"Password" = "Passwort";
 
 /* The label of the pre-meal mode toggle button */
 "Pre-Meal Targets" = "Ziele vor dem Essen";
@@ -344,13 +320,10 @@
 "Recommendation expired: %1$@ old" = "Empfehlung abgelaufen: %1$@ alt";
 
 /* The title of the cell displaying a recommended temp basal value */
-"Recommended Basal" = "Empfohlene Basalrate";
+"Recommended Basal" = "Empfohlen Basal";
 
 /* Accessibility hint describing recommended bolus units */
 "Recommended Bolus: %@ Units" = "Empfohlener Bolus: %@ Einheiten";
-
-/* The default placeholder string for a credential */
-"Required" = "Erforderlich";
 
 /* Details for missing data error when reservoir data is missing */
 "Reservoir" = "Reservoir";
@@ -360,24 +333,6 @@
 
 /* The title of the notification action to retry a bolus command */
 "Retry" = "Wiederholen";
-
-/* The description of sensor calibration state when sensor calibration is ok. */
-"Sensor calibration is OK" = "Sensorkalibrierung ist OK";
-
-/* The description of sensor calibration state when raw value is unknown. (1: missing data details) */
-"Sensor is in unknown state %1$d" = "Sensor ist in unbekanntem Zustand %1$d";
-
-/* The description of sensor calibration state when sensor sensor is stopped. */
-"Sensor is stopped" = "Sensor ist gestoppt";
-
-/* The description of sensor calibration state when sensor sensor is warming up. */
-"Sensor is warming up" = "Sensor erwärmt sich";
-
-/* The description of sensor calibration state when sensor needs calibration. */
-"Sensor needs calibration" = "Sensor benötigt Kalibrierung";
-
-/* The title of the Dexcom share server URL credential */
-"Server" = "Server";
 
 /* The title of the services section in settings */
 "Services" = "Services";
@@ -415,23 +370,11 @@
 /* The description of the switch which toggles retrospective correction effects */
 "This will more aggresively increase or decrease basal delivery when glucose movement doesn't match the carbohydrate and insulin-based model." = "Dies wird die basale Abgabe aggressiver erhöhen oder verringern, wenn die Glukosebewegung nicht mit dem Kohlenhydrat- und Insulin-basierten Modell übereinstimmt.";
 
-/* The title text for the Dexcom G5/G6 transmitter ID config value */
-"Transmitter ID" = "Sender-ID";
-
 /* The short unit display string for international units of insulin */
 "U" = "E";
 
-/* U.S. share server option title */
-"US" = "US";
-
 /* The title of the alert controller used to select a duration for workout targets */
-"Use Workout Glucose Targets" = "Training Glukose-Ziel aktivieren";
-
-/* The title of the Dexcom share username credential */
-"Username" = "Nutzername";
-
-/* Label indicating validation is occurring */
-"Verifying" = "Überprüfen";
+"Use Workout Glucose Targets" = "Verwenden Training Glucose Targets";
 
 /* Title of insulin model setting */
 "Walsh" = "Walsh"; 

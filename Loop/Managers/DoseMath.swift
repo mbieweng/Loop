@@ -51,6 +51,7 @@ extension InsulinCorrection {
         
         // MB Aggressive
         var aggressiveTempRateDelta : Double
+
         let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
         if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 130 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
@@ -163,14 +164,14 @@ extension TempBasalRecommendation {
             /// If the last temp basal has the same rate, and has more than `continuationInterval` of time remaining, don't set a new temp
             if matchesRate(lastTempBasal.unitsPerHour),
                 lastTempBasal.endDate.timeIntervalSince(date) > continuationInterval {
-                return self
+                return nil
             } else if matchesRate(scheduledBasalRate) {
                 // If our new temp matches the scheduled rate, cancel the current temp
-                return self
+                return .cancel
             }
         } else if matchesRate(scheduledBasalRate) {
             // If we recommend the in-progress scheduled basal rate, do nothing
-            return self
+            return nil
         }
   
         return self
@@ -272,7 +273,7 @@ private func targetGlucoseValue(percentEffectDuration: Double,
 }
 
 
-extension Collection where Iterator.Element == GlucoseValue {
+extension Collection where Element == GlucoseValue {
 
     /// For a collection of glucose prediction, determine the least amount of insulin delivered at
     /// `date` to correct the predicted glucose to the middle of `correctionRange` at the time of prediction.
