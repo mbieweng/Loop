@@ -912,6 +912,8 @@ final class StatusTableViewController: ChartsTableViewController {
                 }
             }
         }
+
+        // RSS - This is were carb is entered for a new entry.
         deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry) { (result) -> Void in
             DispatchQueue.main.async {
                 switch result {
@@ -931,7 +933,7 @@ final class StatusTableViewController: ChartsTableViewController {
             }
         }
         
-        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 100.0
+        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0
         carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
         
        // RSS - Repeat for the fat and protein portion...
@@ -955,7 +957,6 @@ final class StatusTableViewController: ChartsTableViewController {
                 }
             }
         }
-        
     }
 
     @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {

@@ -19,3 +19,6 @@
 [submodule "Carthage/Checkouts/LoopKit"]
 	path = Carthage/Checkouts/LoopKit
 	url = https://github.com/rsilvers129/LoopKit.git
+[submodule "Carthage/Checkouts/spike-client-swift-master"]
+	path = Carthage/Checkouts/spike-client-swift-master
+	url = https://github.com/rsilvers129/spike-client-swift-master.git
