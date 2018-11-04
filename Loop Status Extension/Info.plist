@@ -19,11 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
-<<<<<<< HEAD
-	<string>1.9.4 dev</string>
-=======
-	<string>1.9.3-FPU-IRC-1.6</string>
->>>>>>> 997a389a... Bump
+	<string>1.9.4-FPU-IRC-1.6</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>MainAppBundleIdentifier</key>
