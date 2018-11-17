@@ -522,15 +522,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
             return
         }
 
-        if #available(iOS 12.0, *), editVC.originalCarbEntry == nil {
-            let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
-            interaction.donate { (error) in
-                if let error = error {
-                    os_log(.error, "Failed to donate intent: %{public}@", String(describing: error))
-                }
-            }
-            
-            deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
+        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let recommendation):
@@ -543,7 +535,6 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                             self.presentAlertController(with: error)
                         }
                     }
-                }
             }
         }
         
