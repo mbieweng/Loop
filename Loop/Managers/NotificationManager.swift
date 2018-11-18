@@ -118,19 +118,20 @@ struct NotificationManager {
         UNUserNotificationCenter.current().add(request)
     }
     
-    static func sendLowGlucoseNotification(quantity: Double) {
+    static func sendLowGlucoseNotification(quantity: Double, time:Date, currentGlucose:Double) {
        
         if(-self.lastLowBGAlertTime.timeIntervalSinceNow < 8*60)  {
             NSLog("Only %f min since last low glucose alert...snoozing", -self.lastLowBGAlertTime.timeIntervalSinceNow/60)
             return
         }
         
+        let minutes = time.timeIntervalSinceNow.minutes
         let notification = UNMutableNotificationContent()
         
-        notification.title = NSLocalizedString("Low BG", comment: "The notification title for a predicted low glucose")
+        notification.title = NSLocalizedString("Low", comment: "The notification title for a predicted low glucose")
         
         //notification.body = NSLocalizedString("Low BG expected within 1 hour", comment: "The notification alert describing a low glucose")
-        notification.body = String(format: NSLocalizedString("Low bg %.0f expected", comment: "The notification alert describing a low glucose"), quantity)
+        notification.body = String(format: NSLocalizedString("%.0f in %.0f min (%.0f now)", comment: "The notification alert describing a low glucose"), quantity, minutes, currentGlucose)
 
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.lowGluc.rawValue
@@ -146,18 +147,19 @@ struct NotificationManager {
         self.lastLowBGAlertTime = Date.init();
     }
     
-    static func sendHighGlucoseNotification(quantity: Double) {
+    static func sendHighGlucoseNotification(quantity: Double, time:Date, currentGlucose:Double) {
         
         if(-self.lastHighBGAlertTime.timeIntervalSinceNow < 60*60)  {
             NSLog("Only %f min since last high glucose alert...snoozing", -self.lastHighBGAlertTime.timeIntervalSinceNow/60)
             return
         }
-        
+       
+        let minutes = time.timeIntervalSinceNow.minutes
         let notification = UNMutableNotificationContent()
         
-        notification.title = NSLocalizedString("High BG", comment: "The notification title for a predicted high glucose")
+        notification.title = NSLocalizedString("High", comment: "The notification title for a predicted high glucose")
         
-        notification.body = String(format: NSLocalizedString("High bg %.0f expected", comment: "The notification alert describing a high glucose"), quantity)
+        notification.body = String(format: NSLocalizedString("%.0f in %.0f min (%.0f now)", comment: "The notification alert describing a high glucose"), quantity, minutes, currentGlucose)
         
         notification.sound = UNNotificationSound.default()
         notification.categoryIdentifier = Category.highGluc.rawValue
