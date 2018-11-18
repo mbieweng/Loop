@@ -772,7 +772,7 @@ extension LoopDataManager {
     // MB Autosens
     func updateAutoSens() {
         
-        let adjustmentFactor = 0.0005/10 // 0.002/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.00005/10 // 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
@@ -793,7 +793,7 @@ extension LoopDataManager {
                 //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
             }
             
-            let adjustment = -lastDiscrepancy*adjustmentFactor
+            let adjustment = pow(lastDiscrepancy,2)*adjustmentFactor*(lastDiscrepancy < 0 ? 1.0 : -1.0)
             autoSensFactor = autoSensFactor + adjustment
             
             lastAutoSensUpdate = Date.init()
