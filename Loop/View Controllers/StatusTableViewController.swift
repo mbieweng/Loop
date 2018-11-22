@@ -382,7 +382,7 @@ final class StatusTableViewController: ChartsTableViewController {
             if currentContext.contains(.targets) {
                 self.charts.targetGlucoseSchedule = self.deviceManager.loopManager.settings.glucoseTargetRangeSchedule
             }
-            self.charts.suspendThresholdValue = self.deviceManager.loopManager.settings.suspendThreshold?.quantity.doubleValue(for: self.charts.glucoseUnit)
+            self.charts.suspendThresholdValue = self.deviceManager.loopManager.currentSuspendThreshold().doubleValue(for: self.charts.glucoseUnit) // settings.suspendThreshold?.quantity.doubleValue(for: self.charts.glucoseUnit)
 
             // Active Insulin
             if let iobValues = iobValues {
