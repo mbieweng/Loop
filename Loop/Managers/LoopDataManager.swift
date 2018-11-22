@@ -772,7 +772,7 @@ extension LoopDataManager {
     // MB Autosens
     func updateAutoSens() {
         
-        let adjustmentFactor = 0.00005/10 // 0.002/10 // 0.2% per 10 mg/dL
+        let adjustmentFactor = 0.00002/10 // 0.002/10 // 0.2% per 10 mg/dL
         let minLimit : Double = 0.90
         let maxLimit : Double = 3.00
         let minWaitMinutes  : Double = 4.0
@@ -783,8 +783,10 @@ extension LoopDataManager {
             return
         }
        
+        
         let unit = HKUnit.milligramsPerDeciliter
-        if let lastDiscrepancy =  retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
+        
+        if let lastDiscrepancy = retrospectiveGlucoseDiscrepanciesSummed?.last?.quantity.doubleValue(for: unit) { //} retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
             
             let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
             if(workoutmode && autoSensFactor > 1.0) {
@@ -847,12 +849,12 @@ extension LoopDataManager {
         NSLog("MB Custom alerts")
         // Prediction differential alert
         let unit = HKUnit.milligramsPerDeciliter
-        if let lastDiscrepancy =  retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
+        if let lastDiscrepancy = retrospectiveGlucoseDiscrepanciesSummed?.last?.quantity.doubleValue(for: unit) { // retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
             if(abs(lastDiscrepancy) > 40) {
                 //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
                 NotificationManager.sendForecastErrorNotification(quantity: lastDiscrepancy);
             } else {
-                //NSLog("MB Prediction error ok %.0f", currentVal-retroVal)
+                NSLog("MB Prediction error ok %.0f", lastDiscrepancy)
             }
             
         }
@@ -1159,7 +1161,6 @@ extension LoopDataManager {
             return
         }
         
-
         let tempBasal = predictedGlucose.recommendedTempBasal(
             to: glucoseTargetRange,
             suspendThreshold: settings.suspendThreshold?.quantity,
