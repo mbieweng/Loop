@@ -504,7 +504,7 @@ extension Collection where Element == GlucoseValue {
             to: correctionRange,
             at: date,
             // for boluses, initial threshold is below suspend threshold
-            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 75),
+            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 80),
             suspendThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
             sensitivity: sensitivity.quantity(at: date),
             model: model

@@ -1161,9 +1161,22 @@ extension LoopDataManager {
             return
         }
         
+        var activeSuspend = settings.suspendThreshold?.quantity ?? HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:80)
+        let workoutmode = self.settings.glucoseTargetRangeSchedule?.overrideEnabledForContext(.workout) ?? false;
+        
+        if (workoutmode) {
+            let currentValue = activeSuspend.doubleValue(for: HKUnit.milligramsPerDeciliter)
+            let workoutSuspendQuantity = HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:max(currentValue, glucoseTargetRange.minQuantity(at: Date()).doubleValue(for:HKUnit.milligramsPerDeciliter) - 20.0))
+            activeSuspend = workoutSuspendQuantity
+            NSLog("Workout mode, suspend threshold \(activeSuspend)")
+        } else {
+            NSLog("Suspend threshold \(activeSuspend)")
+
+        }
+        
         let tempBasal = predictedGlucose.recommendedTempBasal(
             to: glucoseTargetRange,
-            suspendThreshold: settings.suspendThreshold?.quantity,
+            suspendThreshold: activeSuspend, // settings.suspendThreshold?.quantity,
             sensitivity: insulinSensitivity,
             model: model,
             basalRates: basalRates,
@@ -1182,7 +1195,7 @@ extension LoopDataManager {
 
         let recommendation = predictedGlucose.recommendedBolus(
             to: glucoseTargetRange,
-            suspendThreshold: settings.suspendThreshold?.quantity,
+            suspendThreshold: activeSuspend,  // settings.suspendThreshold?.quantity,
             sensitivity: insulinSensitivity,
             model: model,
             pendingInsulin: pendingInsulin,
