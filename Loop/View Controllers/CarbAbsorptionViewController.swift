@@ -512,24 +512,17 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     /// Unwind segue action from the CarbEntryEditViewController
     ///
     /// - parameter segue: The unwind segue
+    ///
     /// RSS - This triggers when you edit an existing carb value and hit save.
     
     @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
-        guard let editVC = segue.source as? CarbEntryEditViewController
+        guard let editVC = segue.source as? CarbEntryEditViewController,
+            let updatedEntry = editVC.updatedCarbEntry
             else {
                 return
         }
-        
-        if let updatedEntry = editVC.updatedCarbEntry { // Had some carb else else this returns nil
-            if #available(iOS 12.0, *), editVC.originalCarbEntry == nil {
-                let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
-                interaction.donate { (error) in
-                    if let error = error {
-                        os_log(.error, "Failed to donate intent: %{public}@", String(describing: error))
-                    }
-                }
-            }
-            deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
+
+        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let recommendation):
@@ -542,7 +535,6 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                             self.presentAlertController(with: error)
                         }
                     }
-                }
             }
         }
         
