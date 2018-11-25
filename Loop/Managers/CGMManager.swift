@@ -9,7 +9,7 @@ import LoopKit
 import CGMBLEKit
 import G4ShareSpy
 import ShareClient
-//import SpikeClient
+//import SpikeClient // Add in dabear Spike support.
 
 
 let allCGMManagers: [CGMManager.Type] = [

@@ -40,10 +40,6 @@ final class LoopDataManager {
     weak var delegate: LoopDataManagerDelegate?
 
     private let logger: CategoryLogger
-    
-    var glucoseUpdated: Bool // flag used to decide if integral RC should be updated or not
-    var overallRetrospectiveCorrection: HKQuantity // value used to display overall RC effect to the user
-    var integralRectrospectiveCorrectionIndicator: String // display integral RC status
 
     // References to registered notification center observers
     private var notificationObservers: [Any] = []
@@ -70,9 +66,6 @@ final class LoopDataManager {
         self.lockedLastLoopCompleted = Locked(lastLoopCompleted)
         self.lastTempBasal = lastTempBasal
         self.settings = settings
-        self.glucoseUpdated = false
-        self.overallRetrospectiveCorrection = HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 0)
-        self.integralRectrospectiveCorrectionIndicator = " "
 
         let healthStore = HKHealthStore()
         let cacheStore = PersistenceController.controllerInAppGroupDirectory()
