@@ -53,11 +53,11 @@ extension InsulinCorrection {
         var aggressiveTempRateDelta : Double
 
         let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
-        if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 130 ) {
+        if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 140 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
             DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.appGroup.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
         } else {
-            aggressiveTempRateDelta = 2 * Swift.min(rate, scheduledBasalRate)
+            aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
         
         DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
