@@ -16,6 +16,12 @@ struct LoopSettings: Equatable {
 
     var glucoseTargetRangeSchedule: GlucoseRangeSchedule?
 
+    var preMealTargetRange: DoubleRange?
+
+    var overridePresets: [TemporaryScheduleOverridePreset] = []
+
+    var scheduleOverride: TemporaryScheduleOverride?
+
     var maximumBasalRatePerHour: Double?
 
     var maximumBolus: Double?
@@ -46,6 +52,62 @@ struct LoopSettings: Equatable {
     let statusChartMinimumHistoryDisplay: TimeInterval = .hours(1)
 }
 
+extension LoopSettings {
+    var glucoseTargetRangeScheduleApplyingOverrideIfActive: GlucoseRangeSchedule? {
+        if let override = scheduleOverride, override.isActive() {
+            return glucoseTargetRangeSchedule?.applyingOverride(override)
+        } else {
+            return glucoseTargetRangeSchedule
+        }
+    }
+
+    func scheduleOverrideEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.isActive(at: date)
+    }
+
+    func nonPreMealOverrideEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.context != .preMeal && override.isActive(at: date)
+    }
+
+    func preMealTargetEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.context == .preMeal && override.isActive(at: date)
+    }
+
+    func futureOverrideEnabled(relativeTo date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.startDate > date
+    }
+
+    mutating func enablePreMealOverride(at date: Date = Date(), for duration: TimeInterval) {
+        scheduleOverride = preMealOverride(beginningAt: date, for: duration)
+    }
+
+    func preMealOverride(beginningAt date: Date = Date(), for duration: TimeInterval) -> TemporaryScheduleOverride? {
+        guard let premealTargetRange = preMealTargetRange else {
+            return nil
+        }
+        return TemporaryScheduleOverride(
+            context: .preMeal,
+            settings: TemporaryScheduleOverrideSettings(targetRange: premealTargetRange),
+            startDate: date,
+            duration: .finite(duration)
+        )
+    }
+
+    mutating func clearOverride(matching context: TemporaryScheduleOverride.Context? = nil) {
+        guard let override = scheduleOverride else { return }
+        if let context = context {
+            if override.context == context {
+                scheduleOverride = nil
+            }
+        } else {
+            scheduleOverride = nil
+        }
+    }
+}
 
 extension LoopSettings: RawRepresentable {
     typealias RawValue = [String: Any]
@@ -63,8 +125,26 @@ extension LoopSettings: RawRepresentable {
             self.dosingEnabled = dosingEnabled
         }
 
-        if let rawValue = rawValue["glucoseTargetRangeSchedule"] as? GlucoseRangeSchedule.RawValue {
-            self.glucoseTargetRangeSchedule = GlucoseRangeSchedule(rawValue: rawValue)
+        if let glucoseRangeScheduleRawValue = rawValue["glucoseTargetRangeSchedule"] as? GlucoseRangeSchedule.RawValue {
+            self.glucoseTargetRangeSchedule = GlucoseRangeSchedule(rawValue: glucoseRangeScheduleRawValue)
+
+            // Migrate the pre-meal target
+            if let overrideRangesRawValue = glucoseRangeScheduleRawValue["overrideRanges"] as? [String: DoubleRange.RawValue],
+                let preMealTargetRawValue = overrideRangesRawValue["preMeal"] {
+                self.preMealTargetRange = DoubleRange(rawValue: preMealTargetRawValue)
+            }
+        }
+
+        if let rawPreMealTargetRange = rawValue["preMealTargetRange"] as? DoubleRange.RawValue {
+            self.preMealTargetRange = DoubleRange(rawValue: rawPreMealTargetRange)
+        }
+
+        if let rawPresets = rawValue["overridePresets"] as? [TemporaryScheduleOverridePreset.RawValue] {
+            self.overridePresets = rawPresets.compactMap(TemporaryScheduleOverridePreset.init(rawValue:))
+        }
+
+        if let rawOverride = rawValue["scheduleOverride"] as? TemporaryScheduleOverride.RawValue {
+            self.scheduleOverride = TemporaryScheduleOverride(rawValue: rawOverride)
         }
 
         self.maximumBasalRatePerHour = rawValue["maximumBasalRatePerHour"] as? Double
@@ -93,10 +173,13 @@ extension LoopSettings: RawRepresentable {
             "version": LoopSettings.version,
             "dosingEnabled": dosingEnabled,
             "retrospectiveCorrectionEnabled": retrospectiveCorrectionEnabled,
-            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled
+            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled,
+            "overridePresets": overridePresets.map { $0.rawValue }
         ]
 
         raw["glucoseTargetRangeSchedule"] = glucoseTargetRangeSchedule?.rawValue
+        raw["preMealTargetRange"] = preMealTargetRange?.rawValue
+        raw["scheduleOverride"] = scheduleOverride?.rawValue
         raw["maximumBasalRatePerHour"] = maximumBasalRatePerHour
         raw["maximumBolus"] = maximumBolus
         raw["minimumBGGuard"] = suspendThreshold?.rawValue

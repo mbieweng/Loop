@@ -124,3 +124,23 @@ extension LoopDataManager {
         return true
     }
 }
+
+extension LoopDataManager {
+    func generateChartData(completion: @escaping (GlucoseChartData?) -> Void) {
+        guard let activeContext = activeContext else {
+            completion(nil)
+            return
+        }
+
+        glucoseStore.getCachedGlucoseSamples(start: .earliestGlucoseCutoff) { samples in
+            let chartData = GlucoseChartData(
+                unit: activeContext.preferredGlucoseUnit,
+                correctionRange: self.settings.glucoseTargetRangeSchedule,
+                scheduleOverride: self.settings.scheduleOverride,
+                historicalGlucose: samples,
+                predictedGlucose: activeContext.predictedGlucose?.values
+            )
+            completion(chartData)
+        }
+    }
+}
