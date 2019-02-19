@@ -22,6 +22,14 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		27D4692B221BA31D002A494C /* UserDefaults+mbieweng.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D4692A221BA31D002A494C /* UserDefaults+mbieweng.swift */; };
+		27D4692E221BA3AE002A494C /* GarminConnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D4692C221BA3AD002A494C /* GarminConnectManager.swift */; };
+		27D4692F221BA3AE002A494C /* IntegralRetrospectiveCorrection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D4692D221BA3AD002A494C /* IntegralRetrospectiveCorrection.swift */; };
+		27D46931221BA3E1002A494C /* ConnectIQ.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D46930221BA3E1002A494C /* ConnectIQ.framework */; };
+		27D46934221BA618002A494C /* FPUDelayTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D46932221BA618002A494C /* FPUDelayTableViewController.swift */; };
+		27D46935221BA618002A494C /* FPURatioTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D46933221BA618002A494C /* FPURatioTableViewController.swift */; };
+		27D46937221BAE82002A494C /* ConnectIQ.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 27D46930221BA3E1002A494C /* ConnectIQ.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		27D46938221BAEF2002A494C /* ConnectIQ.framework in Resources */ = {isa = PBXBuildFile; fileRef = 27D46930221BA3E1002A494C /* ConnectIQ.framework */; };
 		43027F0F1DFE0EC900C51989 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F526D5E1DF2459000A04910 /* HKUnit.swift */; };
 		4302F4E11D4E9C8900F0FCAF /* TextFieldTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E01D4E9C8900F0FCAF /* TextFieldTableViewController.swift */; };
 		4302F4E31D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4302F4E21D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift */; };
@@ -411,6 +419,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				4F2C159A1E0C9E5600E160D4 /* LoopUI.framework in Embed Frameworks */,
+				27D46937221BAE82002A494C /* ConnectIQ.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -449,6 +458,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		27D4692A221BA31D002A494C /* UserDefaults+mbieweng.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "UserDefaults+mbieweng.swift"; path = "Loop/Extensions/UserDefaults+mbieweng.swift"; sourceTree = SOURCE_ROOT; };
+		27D4692C221BA3AD002A494C /* GarminConnectManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GarminConnectManager.swift; sourceTree = "<group>"; };
+		27D4692D221BA3AD002A494C /* IntegralRetrospectiveCorrection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrection.swift; sourceTree = "<group>"; };
+		27D46930221BA3E1002A494C /* ConnectIQ.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ConnectIQ.framework; sourceTree = "<group>"; };
+		27D46932221BA618002A494C /* FPUDelayTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FPUDelayTableViewController.swift; sourceTree = "<group>"; };
+		27D46933221BA618002A494C /* FPURatioTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FPURatioTableViewController.swift; sourceTree = "<group>"; };
 		4302F4E01D4E9C8900F0FCAF /* TextFieldTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextFieldTableViewController.swift; sourceTree = "<group>"; };
 		4302F4E21D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InsulinDeliveryTableViewController.swift; sourceTree = "<group>"; };
 		430B29892041F54A00BA9F93 /* NSUserDefaults.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSUserDefaults.swift; sourceTree = "<group>"; };
@@ -869,6 +884,7 @@
 			files = (
 				4F7528941DFE1E9500C322D6 /* LoopUI.framework in Frameworks */,
 				434FB6461D68F1CD007B9C70 /* Amplitude.framework in Frameworks */,
+				27D46931221BA3E1002A494C /* ConnectIQ.framework in Frameworks */,
 				43A8EC6F210E622700A81379 /* CGMBLEKitUI.framework in Frameworks */,
 				438A95A81D8B9B24009D12E1 /* CGMBLEKit.framework in Frameworks */,
 				43C246A81D89990F0031F8D1 /* Crypto.framework in Frameworks */,
@@ -1164,6 +1180,8 @@
 		43F5C2CE1B92A2A0003EB13D /* View Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				27D46932221BA618002A494C /* FPUDelayTableViewController.swift */,
+				27D46933221BA618002A494C /* FPURatioTableViewController.swift */,
 				43DBF04B1C93B8D700B3C386 /* BolusViewController.swift */,
 				43D2E8221F00425400AE5CBF /* BolusViewController+LoopDataManager.swift */,
 				43A51E1E1EB6D62A000736CC /* CarbAbsorptionViewController.swift */,
@@ -1203,6 +1221,8 @@
 		43F5C2E41B93C5D4003EB13D /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				27D4692C221BA3AD002A494C /* GarminConnectManager.swift */,
+				27D4692D221BA3AD002A494C /* IntegralRetrospectiveCorrection.swift */,
 				439897361CD2F80600223065 /* AnalyticsManager.swift */,
 				439BED291E76093C00B0AED5 /* CGMManager.swift */,
 				43DBF0521C93EC8200B3C386 /* DeviceDataManager.swift */,
@@ -1367,6 +1387,7 @@
 		4FF4D0FC1E1834CC00846527 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				27D4692A221BA31D002A494C /* UserDefaults+mbieweng.swift */,
 				4372E48A213CB5F00068E043 /* Double.swift */,
 				4F526D5E1DF2459000A04910 /* HKUnit.swift */,
 				43C513181E864C4E001547C7 /* GlucoseRangeSchedule.swift */,
@@ -1410,6 +1431,7 @@
 		968DCD53F724DE56FFE51920 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				27D46930221BA3E1002A494C /* ConnectIQ.framework */,
 				892FB4D02204BF0C005293EC /* LoopKitUI.framework */,
 				434FB6451D68F1CD007B9C70 /* Amplitude.framework */,
 				4344628420A7A3BE00C4BE6F /* CGMBLEKit.framework */,
@@ -1717,6 +1739,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27D46938221BAEF2002A494C /* ConnectIQ.framework in Resources */,
 				43FCBBC21E51710B00343C1B /* LaunchScreen.storyboard in Resources */,
 				7D70764F1FE06EE1004AC8EA /* InfoPlist.strings in Resources */,
 				43776F991B8022E90074EA36 /* Assets.xcassets in Resources */,
@@ -1893,6 +1916,7 @@
 				434F54571D287FDB002A9274 /* NibLoadable.swift in Sources */,
 				43441A9C1EDB34810087958C /* StatusExtensionContext+LoopKit.swift in Sources */,
 				4FF4D1001E18374700846527 /* WatchContext.swift in Sources */,
+				27D4692F221BA3AE002A494C /* IntegralRetrospectiveCorrection.swift in Sources */,
 				430B298A2041F54A00BA9F93 /* NSUserDefaults.swift in Sources */,
 				4315D28A1CA5F45E00589052 /* DiagnosticLogger+LoopKit.swift in Sources */,
 				4F2C15821E074FC600E160D4 /* NSTimeInterval.swift in Sources */,
@@ -1918,6 +1942,7 @@
 				43F64DD91D9C92C900D24DC6 /* TitleSubtitleTableViewCell.swift in Sources */,
 				C15713821DAC6983005BC4D2 /* MealBolusNightscoutTreatment.swift in Sources */,
 				435400321C9F745500D5819C /* BolusSuggestionUserInfo.swift in Sources */,
+				27D4692B221BA31D002A494C /* UserDefaults+mbieweng.swift in Sources */,
 				43E3449F1B9D68E900C85C07 /* StatusTableViewController.swift in Sources */,
 				43DBF0531C93EC8200B3C386 /* DeviceDataManager.swift in Sources */,
 				43E2D8C81D208D5B004DA55F /* KeychainManager+Loop.swift in Sources */,
@@ -1947,6 +1972,7 @@
 				4328E0351CFC0AE100E199AA /* WatchDataManager.swift in Sources */,
 				43D381621EBD9759007F8C8F /* HeaderValuesTableViewCell.swift in Sources */,
 				43BFF0C51E465A2D00FF19A9 /* UIColor+HIG.swift in Sources */,
+				27D46935221BA618002A494C /* FPURatioTableViewController.swift in Sources */,
 				43785E982120E7060057DED1 /* Intents.intentdefinition in Sources */,
 				4302F4E31D4EA54200F0FCAF /* InsulinDeliveryTableViewController.swift in Sources */,
 				4374B5F4209D89A900D17AA8 /* TextFieldTableViewCell.swift in Sources */,
@@ -1973,6 +1999,7 @@
 				4F11D3C220DD80B3006E072C /* WatchHistoricalGlucose.swift in Sources */,
 				435CB6231F37967800C320C7 /* InsulinModelSettingsViewController.swift in Sources */,
 				431E73481FF95A900069B5F7 /* PersistenceController.swift in Sources */,
+				27D4692E221BA3AE002A494C /* GarminConnectManager.swift in Sources */,
 				4372E490213CFCE70068E043 /* LoopSettingsUserInfo.swift in Sources */,
 				43F78D261C8FC000002152D1 /* DoseMath.swift in Sources */,
 				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
@@ -1986,6 +2013,7 @@
 				43A51E211EB6DBDD000736CC /* ChartsTableViewController.swift in Sources */,
 				438849EE1D2A1EBB003B3F23 /* MLabService.swift in Sources */,
 				438D42FB1D7D11A4003244B0 /* PredictionInputEffectTableViewCell.swift in Sources */,
+				27D46934221BA618002A494C /* FPUDelayTableViewController.swift in Sources */,
 				43F4EF1D1BA2A57600526CE1 /* DiagnosticLogger.swift in Sources */,
 				432E73CB1D24B3D6009AD15D /* RemoteDataManager.swift in Sources */,
 				43DE92591C5479E4001FFDE1 /* CarbEntryUserInfo.swift in Sources */,
@@ -2662,6 +2690,10 @@
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = JWS46GTGXX;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				"OTHER_SWIFT_FLAGS[sdk=iphonesimulator*]" = "-D IOS_SIMULATOR";
@@ -2679,6 +2711,10 @@
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = JWS46GTGXX;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = Loop/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(MAIN_APP_BUNDLE_IDENTIFIER)";
