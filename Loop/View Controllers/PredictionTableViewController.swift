@@ -177,9 +177,10 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
     }
     
     fileprivate enum SettingsRow: Int, CaseCountable {
+        case retrospectiveCorrection
         case integralRetrospectiveCorrection
         
-        static let count = 1
+        static let count = 2
     }
     
     private var eventualGlucoseDescription: String?
@@ -227,6 +228,13 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             let cell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
             
             switch SettingsRow(rawValue: indexPath.row)! {
+            case .retrospectiveCorrection:
+                cell.titleLabel?.text = NSLocalizedString("Retrospective Correction", comment: "Title of the switch which toggles retrospective correction effects")
+                cell.subtitleLabel?.text = NSLocalizedString("More agressively increase or decrease basal delivery when  glucose movement over past 30 min doesn't match the carbohydrate and insulin-based model.", comment: "The description of the switch which toggles retrospective correction effects")
+                cell.`switch`?.isOn = deviceManager.loopManager.settings.retrospectiveCorrectionEnabled
+                cell.`switch`?.addTarget(self, action: #selector(retrospectiveCorrectionSwitchChanged(_:)), for: .valueChanged)
+                cell.contentView.layoutMargins.left = tableView.separatorInset.left
+                
             case .integralRetrospectiveCorrection:
                 cell.titleLabel?.text = NSLocalizedString("Integral Retrospective Correction", comment: "Title of the switch which toggles integral retrospective correction effects")
                 cell.subtitleLabel?.text = NSLocalizedString("Respond more aggressively to persistent discrepancies between observed glucose movement and predictions based on carbohydrate and insulin models.", comment: "The description of the switch which toggles integral retrospective correction effects")
