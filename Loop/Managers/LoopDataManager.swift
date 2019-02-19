@@ -38,6 +38,12 @@ final class LoopDataManager {
     let glucoseStore: GlucoseStore
 
     weak var delegate: LoopDataManagerDelegate?
+    
+    private let standardCorrectionEffectDuration = TimeInterval.minutes(60.0)
+    
+    private let integralRC: IntegralRetrospectiveCorrection
+    
+    private let standardRC: StandardRetrospectiveCorrection
 
     private let logger: CategoryLogger
 
@@ -94,6 +100,10 @@ final class LoopDataManager {
 
         glucoseStore = GlucoseStore(healthStore: healthStore, cacheStore: cacheStore, cacheLength: .hours(24))
 
+        integralRC = IntegralRetrospectiveCorrection(standardCorrectionEffectDuration)
+        
+        standardRC = StandardRetrospectiveCorrection(standardCorrectionEffectDuration)
+        
         cacheStore.delegate = self
 
         // Observe changes
@@ -1034,77 +1044,41 @@ extension LoopDataManager {
 
         return prediction
     }
-
-    /// Generates an effect based on how large the discrepancy is between the current glucose and its predicted value.
+    
+    /// Generates a correction effect based on how large the discrepancy is between the current glucose and its model predicted value. If integral retrospective correction is enabled, the retrospective correction effect is based on a timeline of past discrepancies.
     ///
-    /// - Parameter effectDuration: The length of time to extend the effect
     /// - Throws: LoopError.missingDataError
-    private func updateRetrospectiveGlucoseEffect(effectDuration: TimeInterval = TimeInterval(minutes: 60)) throws {
+    private func updateRetrospectiveGlucoseEffect() throws {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
+        // Get carb effects, otherwise clear effect and throw error
         guard let carbEffects = self.carbEffect else {
             retrospectiveGlucoseDiscrepancies = nil
             retrospectiveGlucoseEffect = []
             totalRetrospectiveCorrection = nil
             throw LoopError.missingDataError(.carbEffect)
         }
-
-        // Timeline of glucose discrepancies
-        retrospectiveGlucoseDiscrepancies = insulinCounteractionEffects.subtracting(carbEffects, withUniformInterval: carbStore.delta)
-
-        // Our last change should be recent, otherwise clear the effects
-        let currentDate = Date()
-        guard let currentDiscrepancy = retrospectiveGlucoseDiscrepanciesSummed?.last,
-            currentDate.timeIntervalSince(currentDiscrepancy.endDate) <= settings.recencyInterval
-        else {
-            retrospectiveGlucoseEffect = []
-            totalRetrospectiveCorrection = nil
-            return
-        }
-
-        // Most recent glucose
-        guard let latestGlucose = self.glucoseStore.latestGlucose else {
+        
+        // Get most recent glucose, otherwise clear effect and throw error
+        guard let glucose = self.glucoseStore.latestGlucose else {
             retrospectiveGlucoseEffect = []
             totalRetrospectiveCorrection = nil
             throw LoopError.missingDataError(.glucose)
         }
 
-        let unit = HKUnit.milligramsPerDeciliter // do all math in mg/dL
-
-        // Standard retrospective correction
-        let currentDiscrepancyValue = currentDiscrepancy.quantity.doubleValue(for: unit)
-        var correctionEffectDuration = effectDuration
-        var scaledCorrection = currentDiscrepancyValue
-        self.totalRetrospectiveCorrection = HKQuantity(unit: unit, doubleValue: currentDiscrepancyValue)
+        // Get timeline of glucose discrepancies
+        retrospectiveGlucoseDiscrepancies = insulinCounteractionEffects.subtracting(carbEffects, withUniformInterval: carbStore.delta)
         
-        // If enabled, calculate integral retrospective correction
+        // Calculate retrospective correction
         if settings.integralRetrospectiveCorrectionEnabled {
-            
-            /// Calculate integral retrospective correction if user settings and past discrepancies over integration interval are available
-            if  let correctionRange = settings.glucoseTargetRangeSchedule,
-                let insulinSensitivity = insulinSensitivitySchedule,
-                let basalRates = basalRateSchedule,
-                let pastDiscrepancies = retrospectiveGlucoseDiscrepanciesSummed?.filterDateRange(currentDate.addingTimeInterval(-settings.retrospectiveCorrectionIntegrationInterval), currentDate) {
-                
-                let integralRC = IntegralRetrospectiveCorrection(effectDuration, settings, correctionRange, insulinSensitivity, basalRates)
-                
-                // Calculate overall retrospective correction effect and effect duration
-                let (totalRC, integralCorrectionDuration) = integralRC.updateIntegralRetrospectiveCorrection(currentDate,                                                                                                   currentDiscrepancy, latestGlucose, pastDiscrepancies)
-                
-                self.totalRetrospectiveCorrection = totalRC
-                correctionEffectDuration = integralCorrectionDuration
-                
-                // correction value scaled to account for extended effect duration
-                scaledCorrection = totalRC.doubleValue(for: unit) * effectDuration.minutes / integralCorrectionDuration.minutes
-            }
-            
+            // Integral retrospective correction, if enabled
+            retrospectiveGlucoseEffect = integralRC.updateRetrospectiveCorrectionEffect(glucose, retrospectiveGlucoseDiscrepanciesSummed)
+            totalRetrospectiveCorrection = integralRC.totalGlucoseCorrectionEffect
+        } else {
+            // Standard retrospective correction
+            retrospectiveGlucoseEffect = standardRC.updateRetrospectiveCorrectionEffect(glucose, retrospectiveGlucoseDiscrepanciesSummed)
+            totalRetrospectiveCorrection = standardRC.totalGlucoseCorrectionEffect
         }
-        
-        let retrospectionTimeInterval = currentDiscrepancy.endDate.timeIntervalSince(currentDiscrepancy.startDate)
-        let discrepancyTime = max(retrospectionTimeInterval, settings.retrospectiveCorrectionGroupingInterval)
-        let velocity = HKQuantity(unit: unit.unitDivided(by: .second()), doubleValue: scaledCorrection / discrepancyTime)
-
-        retrospectiveGlucoseEffect = latestGlucose.decayEffect(atRate: velocity, for: correctionEffectDuration)
     }
 
     /// Runs the glucose prediction on the latest effect data.
@@ -1238,6 +1212,26 @@ extension LoopDataManager {
     }
 }
 
+/// Describes retrospective correction interface
+protocol RetrospectiveCorrection {
+    /// Standard effect duration, nominally set to 60 min
+    var standardEffectDuration: TimeInterval { get }
+    
+    /// Overall retrospective correction effect
+    var totalGlucoseCorrectionEffect: HKQuantity? { get }
+    
+    /**
+     Calculates overall correction effect based on timeline of discrepancies, and updates glucoseCorrectionEffect
+     
+     - Parameters:
+        - glucose: Most recent glucose
+        - retrospectiveGlucoseDiscrepanciesSummed: Timeline of past discepancies
+     
+     - Returns:
+        - retrospectiveGlucoseEffect: Glucose correction effects
+     */
+    func updateRetrospectiveCorrectionEffect(_ glucose: GlucoseValue, _ retrospectiveGlucoseDiscrepanciesSummed: [GlucoseChange]?) -> [GlucoseEffect]
+}
 
 /// Describes a view into the loop state
 protocol LoopState {
@@ -1409,7 +1403,9 @@ extension LoopDataManager {
                 "]",
 
                 "glucoseMomentumEffect: \(manager.glucoseMomentumEffect ?? [])",
+                "",
                 "retrospectiveGlucoseEffect: \(manager.retrospectiveGlucoseEffect)",
+                "",
                 "recommendedTempBasal: \(String(describing: state.recommendedTempBasal))",
                 "recommendedBolus: \(String(describing: state.recommendedBolus))",
                 "lastBolus: \(String(describing: manager.lastRequestedBolus))",
@@ -1421,6 +1417,11 @@ extension LoopDataManager {
                 "cacheStore: \(String(reflecting: self.glucoseStore.cacheStore))",
                 "",
             ]
+
+            self.integralRC.generateDiagnosticReport { (report) in
+                entries.append(report)
+                entries.append("")
+            }
 
             self.glucoseStore.generateDiagnosticReport { (report) in
                 entries.append(report)
