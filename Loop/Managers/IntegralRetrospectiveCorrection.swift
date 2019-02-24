@@ -34,7 +34,7 @@ class IntegralRetrospectiveCorrection : RetrospectiveCorrection {
      - maximumCorrectionEffectDuration: Maximum duration of the correction effect in glucose prediction
     */
     static let currentDiscrepancyGain: Double = 1.0
-    static let persistentDiscrepancyGain: Double = 5.0
+    static let persistentDiscrepancyGain: Double = 4.0
     static let correctionTimeConstant: TimeInterval = TimeInterval(minutes: 90.0)
     static let differentialGain: Double = 2.0
     static let delta: TimeInterval = TimeInterval(minutes: 5.0)

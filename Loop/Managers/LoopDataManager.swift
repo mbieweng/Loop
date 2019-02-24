@@ -988,9 +988,9 @@ extension LoopDataManager {
 
         if let lastTempBasal = lastTempBasal, lastTempBasal.endDate > date {
             let normalBasalRate = basalRates.value(at: date)
-            let remainingTime = lastTempBasal.endDate.timeIntervalSince(date)
+            let remainingTime = min(lastTempBasal.endDate.timeIntervalSince(date), TimeInterval.minutes(5))  // MB Exlude pending basal except for about 5 min (1 loop) worth
             let remainingUnits = (lastTempBasal.unitsPerHour - normalBasalRate) * remainingTime.hours
-
+            
             pendingTempBasalInsulin = max(0, remainingUnits)
         } else {
             pendingTempBasalInsulin = 0

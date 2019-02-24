@@ -212,7 +212,7 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
     // WARNING: code not tested for Loop operating in mmol/L
     // values in the lines 199-203 may be customized
     
-    let Aggressiveness = 0.3 // choose between 0 (no super bolus) to 1 (max super bolus)
+    let Aggressiveness = 0.4 // choose between 0 (no super bolus) to 1 (max super bolus)
     let BasalRate = 0.50 // set to minimum daily basal rate in [U/h]
     let InsulinSensitivity = 40.0 // set to minimum daily ISF in [(mg/dL)/U]
     let td = 360.0 // set to td = DIA = 360 min nominally for exponential curves
@@ -246,8 +246,8 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //and only if current bg is above a high threshold (set to 180 mg/dL below)
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
-    if initialValue < minValue && glucoseValue > 120 && UserDefaults.appGroup.autoSensFactor < 1.15 {
-    //if initialValue < minValue && glucoseValue > 120.0 && {
+    //if initialValue < minValue && glucoseValue > 120 && UserDefaults.appGroup.autoSensFactor < 1.15 {
+    if initialValue < minValue && glucoseValue > 120.0  {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
     }
