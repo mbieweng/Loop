@@ -1,4 +1,4 @@
-    //
+//
 //  PredictionTableViewController.swift
 //  Loop
 //
@@ -18,20 +18,20 @@ private extension RefreshContext {
 
 
 class PredictionTableViewController: ChartsTableViewController, IdentifiableClass {
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.cellLayoutMarginsFollowReadableWidth = true
-        
+
         charts.glucoseDisplayRange = (
             min: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 60),
             max: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 200)
         )
-        
+
         let notificationCenter = NotificationCenter.default
-        
+
         notificationObservers += [
             notificationCenter.addObserver(forName: .LoopDataUpdated, object: deviceManager.loopManager, queue: nil) { [weak self] note in
                 let context = note.userInfo?[LoopDataManager.LoopUpdateContextKey] as! LoopDataManager.LoopUpdateContext.RawValue
@@ -369,5 +369,9 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
     
     @objc private func integralRetrospectiveCorrectionSwitchChanged(_ sender: UISwitch) {
         deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled = sender.isOn
+        // if integral retrospective correction is enabled, retrospective correction must also be enabled
+        if sender.isOn {
+            deviceManager.loopManager.settings.retrospectiveCorrectionEnabled = sender.isOn
+        }
     }
 }
