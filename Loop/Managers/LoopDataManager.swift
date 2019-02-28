@@ -85,8 +85,12 @@ final class LoopDataManager {
                 slow: TimeInterval(hours: 3)
             ),
             carbRatioSchedule: carbRatioSchedule,
-            insulinSensitivitySchedule: insulinSensitivitySchedule
+            insulinSensitivitySchedule: insulinSensitivitySchedule,
+            absorptionTimeOverrun: 1.3 // MB
+            
         )
+        
+        
         
         totalRetrospectiveCorrection = nil
         
