@@ -212,8 +212,8 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
     // WARNING: code not tested for Loop operating in mmol/L
     // values in the lines 199-203 may be customized
     
-    let Aggressiveness = 0.4 // choose between 0 (no super bolus) to 1 (max super bolus)
-    let BasalRate = 0.50 // set to minimum daily basal rate in [U/h]
+    let Aggressiveness = 0.3 // choose between 0 (no super bolus) to 1 (max super bolus)
+    let BasalRate = 0.70 // set to minimum daily basal rate in [U/h]
     let InsulinSensitivity = 40.0 // set to minimum daily ISF in [(mg/dL)/U]
     let td = 360.0 // set to td = DIA = 360 min nominally for exponential curves
     let tp = 55.0 // set to peak insulin action, Novolog = 75 min, FIASP = 55 min for exp curves
