@@ -80,13 +80,13 @@ final class LoopDataManager {
             healthStore: healthStore,
             cacheStore: cacheStore,
             defaultAbsorptionTimes: (
-                fast: TimeInterval(hours: 0.5),
-                medium: TimeInterval(hours: 1.5),
+                fast: TimeInterval(hours: 1),
+                medium: TimeInterval(hours: 2),
                 slow: TimeInterval(hours: 3)
             ),
             carbRatioSchedule: carbRatioSchedule,
             insulinSensitivitySchedule: insulinSensitivitySchedule,
-            absorptionTimeOverrun: 1.3 // MB
+            absorptionTimeOverrun: 1.5 // MB
             
         )
         

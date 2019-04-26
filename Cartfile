@@ -5,7 +5,7 @@ github "mbieweng/CGMBLEKit" "FPU-dev"
 #github "LoopKit/CGMBLEKit" == 3.0
 
 
-github "i-schuetz/SwiftCharts" == 0.6.2
+github "i-schuetz/SwiftCharts" == 0.6.5
 
 
 github "mbieweng/dexcom-share-client-swift" "carthage-recursive"
