@@ -148,8 +148,27 @@ extension LoopSettings: RawRepresentable {
             self.dosingEnabled = dosingEnabled
         }
 
-        if let rawValue = rawValue["glucoseTargetRangeSchedule"] as? GlucoseRangeSchedule.RawValue {
-            self.glucoseTargetRangeSchedule = GlucoseRangeSchedule(rawValue: rawValue)
+        if let glucoseRangeScheduleRawValue = rawValue["glucoseTargetRangeSchedule"] as? GlucoseRangeSchedule.RawValue {
+            self.glucoseTargetRangeSchedule = GlucoseRangeSchedule(rawValue: glucoseRangeScheduleRawValue)
+            
+            // Migrate the pre-meal target
+            if let overrideRangesRawValue = glucoseRangeScheduleRawValue["overrideRanges"] as? [String: DoubleRange.RawValue],
+                let preMealTargetRawValue = overrideRangesRawValue["preMeal"] {
+                self.preMealTargetRange = DoubleRange(rawValue: preMealTargetRawValue)
+            }
+        }
+        
+        
+        if let rawPreMealTargetRange = rawValue["preMealTargetRange"] as? DoubleRange.RawValue {
+            self.preMealTargetRange = DoubleRange(rawValue: rawPreMealTargetRange)
+        }
+        
+        if let rawPresets = rawValue["overridePresets"] as? [TemporaryScheduleOverridePreset.RawValue] {
+            self.overridePresets = rawPresets.compactMap(TemporaryScheduleOverridePreset.init(rawValue:))
+        }
+        
+        if let rawOverride = rawValue["scheduleOverride"] as? TemporaryScheduleOverride.RawValue {
+            self.scheduleOverride = TemporaryScheduleOverride(rawValue: rawOverride)
         }
 
         self.maximumBasalRatePerHour = rawValue["maximumBasalRatePerHour"] as? Double
@@ -164,6 +183,10 @@ extension LoopSettings: RawRepresentable {
             self.suspendThreshold = GlucoseThreshold(rawValue: rawThreshold)
         }
         
+        if let retrospectiveCorrectionEnabled = rawValue["retrospectiveCorrectionEnabled"] as? Bool {
+            self.retrospectiveCorrectionEnabled = retrospectiveCorrectionEnabled
+        }
+
         if let integralRetrospectiveCorrectionEnabled = rawValue["integralRetrospectiveCorrectionEnabled"] as? Bool {
             self.integralRetrospectiveCorrectionEnabled = integralRetrospectiveCorrectionEnabled
         }
@@ -173,10 +196,14 @@ extension LoopSettings: RawRepresentable {
         var raw: RawValue = [
             "version": LoopSettings.version,
             "dosingEnabled": dosingEnabled,
-            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled
+            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled,
+            "retrospectiveCorrectionEnabled": retrospectiveCorrectionEnabled,
+            "overridePresets": overridePresets.map { $0.rawValue }
         ]
 
         raw["glucoseTargetRangeSchedule"] = glucoseTargetRangeSchedule?.rawValue
+        raw["preMealTargetRange"] = preMealTargetRange?.rawValue
+        raw["scheduleOverride"] = scheduleOverride?.rawValue
         raw["maximumBasalRatePerHour"] = maximumBasalRatePerHour
         raw["maximumBolus"] = maximumBolus
         raw["minimumBGGuard"] = suspendThreshold?.rawValue
