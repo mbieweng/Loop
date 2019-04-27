@@ -1,22 +1,7 @@
-github "mbieweng/LoopKit" "FPU-dev"
-#github "tidepool-org/LoopKit" "override-mode" 
-
-github "mbieweng/CGMBLEKit" "FPU-dev"
-#github "LoopKit/CGMBLEKit" == 3.0
-
-
-github "i-schuetz/SwiftCharts" == 0.6.5
-
-
-github "mbieweng/dexcom-share-client-swift" "carthage-recursive"
-#github "LoopKit/dexcom-share-client-swift" == 1.0
-
-
-github "mbieweng/G4ShareSpy" "fix-cartfile"
-#github "LoopKit/G4ShareSpy" == 1.0
-
-
-github "mbieweng/rileylink_ios" "FPU-dev"
-#github "ps2/rileylink_ios" == 2.1.0
-
+github "mbieweng/LoopKit" "mb"
+github "mbieweng/CGMBLEKit" "mb"
+github "mbieweng/dexcom-share-client-swift" "mb"
+github "mbieweng/G4ShareSpy" "mb" 
+github "mbieweng/rileylink_ios" "mb"
 github "LoopKit/Amplitude-iOS" "decreepify"
+github "i-schuetz/SwiftCharts" == 0.6.5
