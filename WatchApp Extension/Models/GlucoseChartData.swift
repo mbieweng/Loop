@@ -56,7 +56,7 @@ struct GlucoseChartData {
             max = Swift.max(max, correction.value.upperBound.doubleValue(for: unit))
         }
 
-        if let override = activeOverrideQuantityRange {
+        if let override = correctionRange?.activeOverride?.quantityRange {
             min = Swift.min(min, override.lowerBound.doubleValue(for: unit))
             max = Swift.max(max, override.upperBound.doubleValue(for: unit))
         }
@@ -116,9 +116,9 @@ private extension HKUnit {
 
     var lowWatermark: Double {
         if self == .milligramsPerDeciliter {
-            return 50.0
+            return 75
         } else {
-            return 3.0
+            return 3
         }
     }
 }

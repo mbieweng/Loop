@@ -5,3 +5,5 @@ github "mbieweng/G4ShareSpy" "mb"
 github "mbieweng/rileylink_ios" "mb"
 github "LoopKit/Amplitude-iOS" "decreepify"
 github "i-schuetz/SwiftCharts" == 0.6.5
+github "maxkonovalov/MKRingProgressView" ~> 2.2
+

@@ -38,14 +38,15 @@ extension InsulinCorrection {
     ///   - scheduledBasalRate: The scheduled basal rate at the time the correction is delivered
     ///   - maxBasalRate: The maximum allowed basal rate
     ///   - duration: The duration of the temporary basal
-    ///   - minimumProgrammableIncrementPerUnit: The smallest fraction of a unit supported in basal delivery
+    ///   - rateRounder: The smallest fraction of a unit supported in basal delivery
     /// - Returns: A temp basal recommendation
     fileprivate func asTempBasal(
         scheduledBasalRate: Double,
         maxBasalRate: Double,
         duration: TimeInterval,
-        minimumProgrammableIncrementPerUnit: Double,
+        rateRounder: ((Double) -> Double)?,   
         currentGlucose: GlucoseValue?
+
     ) -> TempBasalRecommendation {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
         
@@ -72,10 +73,11 @@ extension InsulinCorrection {
         }
         
         rate = Swift.min(maxBasalRate, Swift.max(0, rate))
-        rate = round(rate * minimumProgrammableIncrementPerUnit) / minimumProgrammableIncrementPerUnit
+
+        rate = rateRounder?(rate) ?? rate
         
         DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
-        
+
         return TempBasalRecommendation(
             unitsPerHour: rate,
             duration: duration
@@ -102,16 +104,16 @@ extension InsulinCorrection {
     /// - Parameters:
     ///   - pendingInsulin: The number of units expected to be delivered, but not yet reflected in the correction
     ///   - maxBolus: The maximum allowable bolus value in units
-    ///   - minimumProgrammableIncrementPerUnit: The smallest fraction of a unit supported in bolus delivery
+    ///   - volumeRounder: The smallest fraction of a unit supported in bolus delivery
     /// - Returns: A bolus recommendation
     fileprivate func asBolus(
         pendingInsulin: Double,
         maxBolus: Double,
-        minimumProgrammableIncrementPerUnit: Double
+        volumeRounder: ((Double) -> Double)?
     ) -> BolusRecommendation {
         var units = self.units - pendingInsulin
         units = Swift.min(maxBolus, Swift.max(0, units))
-        units = round(units * minimumProgrammableIncrementPerUnit) / minimumProgrammableIncrementPerUnit
+        units = volumeRounder?(units) ?? units
 
         return BolusRecommendation(
             amount: units,
@@ -342,7 +344,7 @@ extension Collection where Element == GlucoseValue {
                 percentEffectDuration: time / model.effectDuration,
                 initialValue: initialThresholdValue,
                 minValue: suspendThresholdValue,
-                maxValue: correctionRange.value(at: prediction.startDate).averageValue,
+                maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit)
                 glucoseValue: currentGlucose!
             )
 
@@ -373,23 +375,20 @@ extension Collection where Element == GlucoseValue {
         }
 
         // Choose either the minimum glucose or eventual glocse as the correction delta
-        let minGlucoseTargets = correctionRange.value(at: min.startDate)
-        let eventualGlucoseTargets = correctionRange.value(at: eventual.startDate)
-
-        let minGlucoseValue = min.quantity.doubleValue(for: unit)
-        let eventualGlucoseValue = eventual.quantity.doubleValue(for: unit)
+        let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
+        let eventualGlucoseTargets = correctionRange.quantityRange(at: eventual.startDate)
 
         // Treat the mininum glucose when both are below range
-        if minGlucoseValue < minGlucoseTargets.minValue &&
-            eventual.quantity.doubleValue(for: unit) < eventualGlucoseTargets.minValue
+        if min.quantity < minGlucoseTargets.lowerBound &&
+            eventual.quantity < eventualGlucoseTargets.lowerBound
         {
             let time = min.startDate.timeIntervalSince(date)
             // For time = 0, assume a small amount effected. This will result in large (negative) unit recommendation rather than no recommendation at all.
             let percentEffected = Swift.max(.ulpOfOne, 1 - model.percentEffectRemaining(at: time))
 
             guard let units = insulinCorrectionUnits(
-                fromValue: minGlucoseValue,
-                toValue: minGlucoseTargets.averageValue,
+                fromValue: min.quantity.doubleValue(for: unit),
+                toValue: minGlucoseTargets.averageValue(for: unit),
                 effectedSensitivity: sensitivityValue * percentEffected
             ) else {
                 return nil
@@ -397,16 +396,16 @@ extension Collection where Element == GlucoseValue {
 
             return .entirelyBelowRange(
                 correcting: min,
-                minTarget: HKQuantity(unit: unit, doubleValue: minGlucoseTargets.minValue),
+                minTarget: minGlucoseTargets.lowerBound,
                 units: units
             )
-        } else if eventualGlucoseValue > eventualGlucoseTargets.maxValue,
+        } else if eventual.quantity > eventualGlucoseTargets.upperBound,
             let minCorrectionUnits = minCorrectionUnits, let correctingGlucose = correctingGlucose
         {
             return .aboveRange(
                 min: min,
                 correcting: correctingGlucose,
-                minTarget: HKQuantity(unit: unit, doubleValue: eventualGlucoseTargets.minValue),
+                minTarget: eventualGlucoseTargets.lowerBound,
                 units: minCorrectionUnits
             )
         } else {
@@ -427,9 +426,8 @@ extension Collection where Element == GlucoseValue {
     ///   - basalRates: The schedule of basal rates
     ///   - maxBasalRate: The maximum allowed basal rate
     ///   - lastTempBasal: The previously set temp basal
-    ///   - isBasalRateScheduleOverrideActive: A flag describing whether a basal rate schedule override is in progress
+    ///   - rateRounder: Closure that rounds recommendation to nearest supported rate. If nil, no rounding is performed
     ///   - duration: The duration of the temporary basal
-    ///   - minimumProgrammableIncrementPerUnit: The smallest fraction of a unit supported in basal delivery
     ///   - continuationInterval: The duration of time before an ongoing temp basal should be continued with a new command
     /// - Returns: The recommended temporary basal rate and duration
     func recommendedTempBasal(
@@ -442,17 +440,16 @@ extension Collection where Element == GlucoseValue {
         maxBasalRate: Double,
         lastTempBasal: DoseEntry?,
         isBasalRateScheduleOverrideActive: Bool = false,
+        rateRounder: ((Double) -> Double)? = nil,
         duration: TimeInterval = .minutes(30),
-        minimumProgrammableIncrementPerUnit: Double = 40,
         continuationInterval: TimeInterval = .minutes(11)
     ) -> TempBasalRecommendation? {
         
         let correction = self.insulinCorrection(
             to: correctionRange,
             at: date,
-            // for temps, initial threshold equals suspend threshold
             initialThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
-            suspendThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
+            suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
             sensitivity: sensitivity.quantity(at: date),
             model: model
         )
@@ -474,6 +471,7 @@ extension Collection where Element == GlucoseValue {
             duration: duration,
             minimumProgrammableIncrementPerUnit: minimumProgrammableIncrementPerUnit,
             currentGlucose: self.first
+            rateRounder: rateRounder
         )
 
         return temp?.ifNecessary(
@@ -495,7 +493,7 @@ extension Collection where Element == GlucoseValue {
     ///   - model: The insulin absorption model
     ///   - pendingInsulin: The number of units expected to be delivered, but not yet reflected in the correction
     ///   - maxBolus: The maximum bolus to return
-    ///   - minimumProgrammableIncrementPerUnit: The smallest fraction of a unit supported in bolus delivery
+    ///   - volumeRounder: Closure that rounds recommendation to nearest supported bolus volume. If nil, no rounding is performed
     /// - Returns: A bolus recommendation
     func recommendedBolus(
         to correctionRange: GlucoseRangeSchedule,
@@ -505,14 +503,13 @@ extension Collection where Element == GlucoseValue {
         model: InsulinModel,
         pendingInsulin: Double,
         maxBolus: Double,
-        minimumProgrammableIncrementPerUnit: Double = 40
+        volumeRounder: ((Double) -> Double)? = nil
     ) -> BolusRecommendation {
         guard let correction = self.insulinCorrection(
             to: correctionRange,
             at: date,
-            // for boluses, initial threshold is below suspend threshold
             initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 80),
-            suspendThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
+            suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
             sensitivity: sensitivity.quantity(at: date),
             model: model
         ) else {
@@ -522,13 +519,13 @@ extension Collection where Element == GlucoseValue {
         var bolus = correction.asBolus(
             pendingInsulin: pendingInsulin,
             maxBolus: maxBolus,
-            minimumProgrammableIncrementPerUnit: minimumProgrammableIncrementPerUnit
+            volumeRounder: volumeRounder
         )
 
         // Handle the "current BG below target" notice here
         // TODO: Don't assume in the future that the first item in the array is current BG
         if case .predictedGlucoseBelowTarget? = bolus.notice,
-            let first = first, first.quantity < correctionRange.minQuantity(at: first.startDate)
+            let first = first, first.quantity < correctionRange.quantityRange(at: first.startDate).lowerBound
         {
             bolus.notice = .currentGlucoseBelowTarget(glucose: first)
         }
