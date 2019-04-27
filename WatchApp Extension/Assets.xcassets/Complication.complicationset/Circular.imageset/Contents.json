@@ -20,13 +20,6 @@
       "idiom" : "watch",
       "scale" : "2x",
       "screen-width" : ">183"
-    },
-    {
-      "idiom" : "watch",
-      "filename" : "Icon-Complication-18x18@2x.png",
-      "unassigned" : true,
-      "screen-width" : ">161",
-      "scale" : "2x"
     }
   ],
   "info" : {

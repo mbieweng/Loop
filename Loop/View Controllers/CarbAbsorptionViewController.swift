@@ -533,7 +533,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                     case .failure(let error):
                         // Ignore bolus wizard errors
                         if error is CarbStore.CarbStoreError {
-                            self.presentAlertController(with: error)
+                             self.present(UIAlertController(with: error), animated: true)
+            
                         }
                     }
             }

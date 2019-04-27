@@ -306,7 +306,7 @@ final class StatusTableViewController: ChartsTableViewController {
 
             // Net basal rate HUD
             let date = state.lastTempBasal?.startDate ?? Date()
-            if let scheduledBasal = manager.basalRateScheduleApplyingOverrideIfActive?.between(start: date, end: date).first {
+            if let scheduledBasal = manager.basalRateScheduleApplyingOverrideHistory?.between(start: date, end: date).first {
                 netBasal = NetBasal(
                     lastTempBasal: state.lastTempBasal,
                     maxBasal: manager.settings.maximumBasalRatePerHour,
@@ -469,7 +469,7 @@ final class StatusTableViewController: ChartsTableViewController {
                     //let currentGlucose = self.deviceManager.loopManager.glucoseStore.latestGlucose
                     //var delta : Double = 0
                     if let lastDiscrepancy = state.retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) {
-                            self.hudView?.glucoseHUD.setGlucoseTrendValue(lastDiscrepancy, unit: self.charts.glucoseUnit, sensitivity: 1/UserDefaults.appGroup.autoSensFactor-1)
+                            self.hudView?.glucoseHUD.setGlucoseTrendValue(lastDiscrepancy, unit: self.charts.glucoseUnit)
                             NSLog("MB Updating retro differential hud to \(lastDiscrepancy)")
                     }
                     
@@ -573,14 +573,16 @@ final class StatusTableViewController: ChartsTableViewController {
             statusRowMode = .pumpSuspended(resuming: false)
         } else if self.basalDeliveryState == .resuming {
             statusRowMode = .pumpSuspended(resuming: true)
+        } else if case .inProgress(let dose) = bolusState, dose.endDate.timeIntervalSinceNow > 0 {
+            statusRowMode = .bolusing(dose: dose)
+        } else if let (recommendation: tempBasal, date: date) = recommendedTempBasal {
+            statusRowMode = .recommendedTempBasal(tempBasal: tempBasal, at: date, enacting: false)
+        } else if let scheduleOverride = deviceManager.loopManager.settings.scheduleOverride,
+            scheduleOverride.context != .preMeal, !scheduleOverride.hasFinished()
+        {
+            statusRowMode = .scheduleOverrideEnabled(scheduleOverride)
         } else {
-            if case .inProgress(let dose) = bolusState, dose.endDate.timeIntervalSinceNow > 0 {
-                statusRowMode = .bolusing(dose: dose)
-            } else if let (recommendation: tempBasal, date: date) = recommendedTempBasal {
-                statusRowMode = .recommendedTempBasal(tempBasal: tempBasal, at: date, enacting: false)
-            } else {
-                statusRowMode = .hidden
-            }
+            statusRowMode = .hidden
         }
 
         return statusRowMode
@@ -806,7 +808,9 @@ final class StatusTableViewController: ChartsTableViewController {
                     } else {
                         cell.accessoryView = nil
                     }
+                    return cell
                 case .scheduleOverrideEnabled(let override):
+                    let cell = getTitleSubtitleCell()
                     switch override.context {
                     case .preMeal:
                         assertionFailure("Pre-Meal mode should not produce a status row")
@@ -974,11 +978,6 @@ final class StatusTableViewController: ChartsTableViewController {
                             }
                         }
                     }
-                case .scheduleOverrideEnabled(let override):
-                    let vc = AddEditOverrideTableViewController(glucoseUnit: charts.glucoseUnit)
-                    vc.inputMode = .editOverride(override)
-                    vc.delegate = self
-                    show(vc, sender: tableView.cellForRow(at: indexPath))
                 case .pumpSuspended(let resuming) where !resuming:
                     self.updateHUDandStatusRows(statusRowMode: .pumpSuspended(resuming: true) , newSize: nil, animated: true)
                     self.deviceManager.pumpManager?.resumeDelivery() { (error) in
@@ -994,6 +993,11 @@ final class StatusTableViewController: ChartsTableViewController {
                             }
                         }
                     }
+                case .scheduleOverrideEnabled(let override):
+                    let vc = AddEditOverrideTableViewController(glucoseUnit: charts.glucoseUnit)
+                    vc.inputMode = .editOverride(override)
+                    vc.delegate = self
+                    show(vc, sender: tableView.cellForRow(at: indexPath))
                 case .bolusing:
                     self.updateHUDandStatusRows(statusRowMode: .cancelingBolus, newSize: nil, animated: true)
                     self.deviceManager.pumpManager?.cancelBolus() { (result) in
@@ -1140,31 +1144,6 @@ final class StatusTableViewController: ChartsTableViewController {
                     // Ignore bolus wizard errors
                     if error is CarbStore.CarbStoreError {
                         self.present(UIAlertController(with: error), animated: true)
-                    } else {
-                        self.deviceManager.logger.addError(error, fromSource: "Bolus")
-                    }
-                }
-            }
-        }
-        
-        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0
-        carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
-        
-       // RSS - Repeat for the fat and protein portion...
-        guard let updatedFPEntry = carbVC.updatedFPCarbEntry else {
-            return
-        }
-        
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPEntry) { (result) -> Void in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    // Never give bolus for fat and protein.
-                    print("Not recommending bolus for fat or protein.")
-                case .failure(let error):
-                    // Ignore bolus wizard errors
-                    if error is CarbStore.CarbStoreError {
-                        self.presentAlertController(with: error)
                     } else {
                         self.deviceManager.logger.addError(error, fromSource: "Bolus")
                     }
@@ -1335,25 +1314,6 @@ extension StatusTableViewController: CompletionDelegate {
     }
 }
 
-extension StatusTableViewController: OverrideSelectionViewControllerDelegate {
-    func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didConfirmOverride override: TemporaryScheduleOverride) {
-        deviceManager.loopManager.settings.scheduleOverride = override
-    }
-
-    func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didCancelOverride override: TemporaryScheduleOverride) {
-        deviceManager.loopManager.settings.scheduleOverride = nil
-    }
-}
-
-extension StatusTableViewController: AddEditOverrideTableViewControllerDelegate {
-    func addEditOverrideTableViewController(_ vc: AddEditOverrideTableViewController, didSaveOverride override: TemporaryScheduleOverride) {
-        deviceManager.loopManager.settings.scheduleOverride = override
-    }
-
-    func addEditOverrideTableViewController(_ vc: AddEditOverrideTableViewController, didCancelOverride override: TemporaryScheduleOverride) {
-        deviceManager.loopManager.settings.scheduleOverride = nil
-    }
-}
 extension StatusTableViewController: PumpManagerStatusObserver {
     func pumpManager(_ pumpManager: PumpManager, didUpdate status: PumpManagerStatus) {
         DispatchQueue.main.async {
@@ -1379,3 +1339,22 @@ extension StatusTableViewController: DoseProgressObserver {
     }
 }
 
+extension StatusTableViewController: OverrideSelectionViewControllerDelegate {
+    func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didConfirmOverride override: TemporaryScheduleOverride) {
+        deviceManager.loopManager.settings.scheduleOverride = override
+    }
+
+    func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didCancelOverride override: TemporaryScheduleOverride) {
+        deviceManager.loopManager.settings.scheduleOverride = nil
+    }
+}
+
+extension StatusTableViewController: AddEditOverrideTableViewControllerDelegate {
+    func addEditOverrideTableViewController(_ vc: AddEditOverrideTableViewController, didSaveOverride override: TemporaryScheduleOverride) {
+        deviceManager.loopManager.settings.scheduleOverride = override
+    }
+
+    func addEditOverrideTableViewController(_ vc: AddEditOverrideTableViewController, didCancelOverride override: TemporaryScheduleOverride) {
+        deviceManager.loopManager.settings.scheduleOverride = nil
+    }
+}

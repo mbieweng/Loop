@@ -126,15 +126,8 @@ public final class GlucoseHUDView: BaseHUDView {
         accessibilityValue = accessibilityStrings.joined(separator: ", ")
     }
     
-    public func setGlucoseTrendValue(_ glucoseQuantity: Double, unit: HKUnit, sensitivity: Double) {
+    public func setGlucoseTrendValue(_ glucoseQuantity: Double, unit: HKUnit) {
         var unitStrings = [""] // [unit.glucoseUnitDisplayString]
-        
-        let sensFormatter = NumberFormatter.init();
-        sensFormatter.numberStyle = .percent
-        
-        if let sensString = sensFormatter.string(from: NSNumber(value: sensitivity)) {
-            unitStrings.append(String(format: NSLocalizedString("%1$@", comment: "Insulin sensitivity"), sensString))
-        }
         
         let valueFormatter = NumberFormatter.glucoseFormatter(for: unit)
         valueFormatter.positiveFormat = "+0"
@@ -154,5 +147,19 @@ public final class GlucoseHUDView: BaseHUDView {
 
         return formatter
     }()
+    
+    private func timeAgoString(date: Date) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.maximumUnitCount = 1
+        formatter.unitsStyle = .short
+        
+        let ago = abs(min(0, date.timeIntervalSinceNow))
+        if let timeString = formatter.string(from: ago) {
+            return String(format: NSLocalizedString("%@ ago", comment: "Format string describing the time interval since now. (1: The localized date components"), timeString)
+        } else {
+            return String("—")
+        }
+    }
 
 }

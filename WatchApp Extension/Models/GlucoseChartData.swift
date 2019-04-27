@@ -56,7 +56,7 @@ struct GlucoseChartData {
             max = Swift.max(max, correction.value.upperBound.doubleValue(for: unit))
         }
 
-        if let override = correctionRange?.activeOverride?.quantityRange {
+        if let override = activeOverrideQuantityRange {
             min = Swift.min(min, override.lowerBound.doubleValue(for: unit))
             max = Swift.max(max, override.upperBound.doubleValue(for: unit))
         }

@@ -56,7 +56,6 @@ extension ChartPoint {
         return maxPoints + minPoints.reversed()
     }
 
-    /*
     static func pointsForGlucoseRangeScheduleOverride(_ override: TemporaryScheduleOverride, unit: HKUnit, xAxisValues: [ChartAxisValue], extendEndDateToChart: Bool = false) -> [ChartPoint] {
         guard let targetRange = override.settings.targetRange else {
             return []
@@ -69,22 +68,10 @@ extension ChartPoint {
             extendEndDateToChart: extendEndDateToChart
         )
     }
-    */
+    
     
     private static func pointsForGlucoseRangeScheduleOverride(range: DoubleRange, activeInterval: DateInterval, unit: HKUnit, xAxisValues: [ChartAxisValue], extendEndDateToChart: Bool) -> [ChartPoint] {
         guard let lastXAxisValue = xAxisValues.last as? ChartAxisValueDate else {
-    static func pointsForGlucoseRangeScheduleOverride(_ glucoseRangeSchedule: GlucoseRangeSchedule, unit: HKUnit, xAxisValues: [ChartAxisValue], extendEndDateToChart: Bool = false) -> [ChartPoint] {
-        guard let override = glucoseRangeSchedule.override else {
-            return []
-        }
-
-        let range = override.quantityRange.doubleRangeWithMinimumIncrement(in: unit)
-        let startDate = Date()
-        let endDate = override.end
-
-        guard endDate.timeIntervalSince(startDate) > 0,
-            let lastXAxisValue = xAxisValues.last as? ChartAxisValueDate
-        else {
             return []
         }
 
@@ -123,6 +110,21 @@ private extension Range where Bound == HKQuantity {
 
         var minValue = self.lowerBound.doubleValue(for: unit)
         var maxValue = self.upperBound.doubleValue(for: unit)
+
+        if (maxValue - minValue) < .ulpOfOne {
+            minValue -= increment
+            maxValue += increment
+        }
+
+        return DoubleRange(minValue: minValue, maxValue: maxValue)
+    }
+}
+
+
+private extension DoubleRange {
+    func rangeWithMinimumIncremement(_ increment: Double) -> DoubleRange {
+        var minValue = self.minValue
+        var maxValue = self.maxValue
 
         if (maxValue - minValue) < .ulpOfOne {
             minValue -= increment

@@ -54,14 +54,15 @@ extension InsulinCorrection {
         var aggressiveTempRateDelta : Double
 
         let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
-        if(UserDefaults.appGroup.autoSensFactor > 1.15 || glucVal < 140 ) {
+        if( glucVal < 140 ) {
             aggressiveTempRateDelta = Swift.min(rate, 0)
-            DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("Sens factor \(UserDefaults.appGroup.autoSensFactor), current glucose \(glucVal) aggressive high temp disabled")
+            //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("Current glucose \(glucVal) aggressive high temp disabled")
         } else {
             aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
         
-        DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
+        
+        //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
         rate += aggressiveTempRateDelta
         //
         
@@ -344,7 +345,7 @@ extension Collection where Element == GlucoseValue {
                 percentEffectDuration: time / model.effectDuration,
                 initialValue: initialThresholdValue,
                 minValue: suspendThresholdValue,
-                maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit)
+                maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit),
                 glucoseValue: currentGlucose!
             )
 
@@ -427,6 +428,7 @@ extension Collection where Element == GlucoseValue {
     ///   - maxBasalRate: The maximum allowed basal rate
     ///   - lastTempBasal: The previously set temp basal
     ///   - rateRounder: Closure that rounds recommendation to nearest supported rate. If nil, no rounding is performed
+    ///   - isBasalRateScheduleOverrideActive: A flag describing whether a basal rate schedule override is in progress
     ///   - duration: The duration of the temporary basal
     ///   - continuationInterval: The duration of time before an ongoing temp basal should be continued with a new command
     /// - Returns: The recommended temporary basal rate and duration
@@ -439,8 +441,8 @@ extension Collection where Element == GlucoseValue {
         basalRates: BasalRateSchedule,
         maxBasalRate: Double,
         lastTempBasal: DoseEntry?,
-        isBasalRateScheduleOverrideActive: Bool = false,
         rateRounder: ((Double) -> Double)? = nil,
+        isBasalRateScheduleOverrideActive: Bool = false,
         duration: TimeInterval = .minutes(30),
         continuationInterval: TimeInterval = .minutes(11)
     ) -> TempBasalRecommendation? {
@@ -469,9 +471,8 @@ extension Collection where Element == GlucoseValue {
             scheduledBasalRate: scheduledBasalRate,
             maxBasalRate: maxBasalRate,
             duration: duration,
-            minimumProgrammableIncrementPerUnit: minimumProgrammableIncrementPerUnit,
+            rateRounder: rateRounder,
             currentGlucose: self.first
-            rateRounder: rateRounder
         )
 
         return temp?.ifNecessary(

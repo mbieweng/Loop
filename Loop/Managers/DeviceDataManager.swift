@@ -11,7 +11,7 @@ import LoopKit
 import LoopKitUI
 import LoopCore
 import LoopTestingKit
-
+import UserNotifications
 
 final class DeviceDataManager {
 
@@ -67,6 +67,8 @@ final class DeviceDataManager {
             UserDefaults.appGroup?.cgmManager = cgmManager
         }
     }
+
+    private var lastBLEDrivenUpdate = Date.distantPast
 
     private let lockedPumpManagerStatus: Locked<PumpManagerStatus?> = Locked(nil)
 
@@ -176,6 +178,29 @@ extension DeviceDataManager: RemoteDataManagerDelegate {
     }
 }
 
+// MARK: - DeviceManagerDelegate
+extension DeviceDataManager: DeviceManagerDelegate {
+    func scheduleNotification(for manager: DeviceManager,
+                              identifier: String,
+                              content: UNNotificationContent,
+                              trigger: UNNotificationTrigger?) {
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+
+        DispatchQueue.main.async {
+            UNUserNotificationCenter.current().add(request)
+        }
+    }
+
+    func clearNotification(for manager: DeviceManager, identifier: String) {
+        DispatchQueue.main.async {
+            UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
+        }
+    }
+}
 
 // MARK: - CGMManagerDelegate
 extension DeviceDataManager: CGMManagerDelegate {
@@ -242,6 +267,13 @@ extension DeviceDataManager: PumpManagerDelegate {
 
     func pumpManagerBLEHeartbeatDidFire(_ pumpManager: PumpManager) {
         log.default("PumpManager:\(type(of: pumpManager)) did fire BLE heartbeat")
+
+        let bleHeartbeatUpdateInterval = TimeInterval(minutes: 4.5)
+        guard lastBLEDrivenUpdate.timeIntervalSinceNow < -bleHeartbeatUpdateInterval else {
+            log.default("Skipping ble heartbeat")
+            return
+        }
+        lastBLEDrivenUpdate = Date()
 
         cgmManager?.fetchNewDataIfNeeded { (result) in
             if case .newData = result {

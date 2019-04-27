@@ -17,6 +17,12 @@ public struct LoopSettings: Equatable {
 
     public var glucoseTargetRangeSchedule: GlucoseRangeSchedule?
 
+    public var preMealTargetRange: DoubleRange?
+
+    public var overridePresets: [TemporaryScheduleOverridePreset] = []
+
+    public var scheduleOverride: TemporaryScheduleOverride?
+
     public var maximumBasalRatePerHour: Double?
 
     public var maximumBolus: Double?
@@ -69,6 +75,62 @@ public struct LoopSettings: Equatable {
     }
 }
 
+extension LoopSettings {
+    public var glucoseTargetRangeScheduleApplyingOverrideIfActive: GlucoseRangeSchedule? {
+        if let override = scheduleOverride, override.isActive() {
+            return glucoseTargetRangeSchedule?.applyingOverride(override)
+        } else {
+            return glucoseTargetRangeSchedule
+        }
+    }
+
+    public func scheduleOverrideEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.isActive(at: date)
+    }
+
+    public func nonPreMealOverrideEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.context != .preMeal && override.isActive(at: date)
+    }
+
+    public func preMealTargetEnabled(at date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.context == .preMeal && override.isActive(at: date)
+    }
+
+    public func futureOverrideEnabled(relativeTo date: Date = Date()) -> Bool {
+        guard let override = scheduleOverride else { return false }
+        return override.startDate > date
+    }
+
+    public mutating func enablePreMealOverride(at date: Date = Date(), for duration: TimeInterval) {
+        scheduleOverride = preMealOverride(beginningAt: date, for: duration)
+    }
+
+    public func preMealOverride(beginningAt date: Date = Date(), for duration: TimeInterval) -> TemporaryScheduleOverride? {
+        guard let premealTargetRange = preMealTargetRange else {
+            return nil
+        }
+        return TemporaryScheduleOverride(
+            context: .preMeal,
+            settings: TemporaryScheduleOverrideSettings(targetRange: premealTargetRange),
+            startDate: date,
+            duration: .finite(duration)
+        )
+    }
+
+    public mutating func clearOverride(matching context: TemporaryScheduleOverride.Context? = nil) {
+        guard let override = scheduleOverride else { return }
+        if let context = context {
+            if override.context == context {
+                scheduleOverride = nil
+            }
+        } else {
+            scheduleOverride = nil
+        }
+    }
+}
 
 extension LoopSettings: RawRepresentable {
     public typealias RawValue = [String: Any]

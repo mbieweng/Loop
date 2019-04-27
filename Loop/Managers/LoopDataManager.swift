@@ -20,11 +20,6 @@ final class LoopDataManager {
         case preferences
         case tempBasal
     }
-
-    // MB AutoSens
-    //var averageRetroError = 0.0
-    var lastAutoSensUpdate : Date = Date.init(timeIntervalSince1970: 0)
-    //
     
     // MB Alerts
     var bolusAlertStartTime = Date.init()
@@ -67,12 +62,14 @@ final class LoopDataManager {
         carbRatioSchedule: CarbRatioSchedule? = UserDefaults.appGroup?.carbRatioSchedule,
         insulinModelSettings: InsulinModelSettings? = UserDefaults.appGroup?.insulinModelSettings,
         insulinSensitivitySchedule: InsulinSensitivitySchedule? = UserDefaults.appGroup?.insulinSensitivitySchedule,
-        settings: LoopSettings = UserDefaults.appGroup?.loopSettings ?? LoopSettings()
+        settings: LoopSettings = UserDefaults.appGroup?.loopSettings ?? LoopSettings(),
+        overrideHistory: TemporaryScheduleOverrideHistory = UserDefaults.appGroup?.overrideHistory ?? .init()
     ) {
         self.logger = DiagnosticLogger.shared.forCategory("LoopDataManager")
         self.lockedLastLoopCompleted = Locked(lastLoopCompleted)
         self.lastTempBasal = lastTempBasal
         self.settings = settings
+        self.overrideHistory = overrideHistory
 
         let healthStore = HKHealthStore()
         let cacheStore = PersistenceController.controllerInAppGroupDirectory()
@@ -83,6 +80,7 @@ final class LoopDataManager {
             defaultAbsorptionTimes: LoopSettings.defaultCarbAbsorptionTimes,
             carbRatioSchedule: carbRatioSchedule,
             insulinSensitivitySchedule: insulinSensitivitySchedule,
+            overrideHistory: overrideHistory,
             absorptionTimeOverrun: 1.5 // MB
             
         )
@@ -96,7 +94,8 @@ final class LoopDataManager {
             cacheStore: cacheStore,
             insulinModel: insulinModelSettings?.model,
             basalProfile: basalRateSchedule,
-            insulinSensitivitySchedule: insulinSensitivitySchedule
+            insulinSensitivitySchedule: insulinSensitivitySchedule,
+            overrideHistory: overrideHistory
         )
 
         glucoseStore = GlucoseStore(healthStore: healthStore, cacheStore: cacheStore, cacheLength: .hours(24))
@@ -105,6 +104,7 @@ final class LoopDataManager {
         
         standardRC = StandardRetrospectiveCorrection(standardCorrectionEffectDuration)
         
+        overrideHistory.delegate = self
         cacheStore.delegate = self
 
         // Observe changes
@@ -144,18 +144,20 @@ final class LoopDataManager {
     var settings: LoopSettings {
         didSet {
             if settings.scheduleOverride != oldValue.scheduleOverride {
-                doseStore.scheduleOverride = settings.scheduleOverride
-                carbStore.scheduleOverride = settings.scheduleOverride
+                overrideHistory.recordOverride(settings.scheduleOverride)
+
                 // Invalidate cached effects affected by the override
                 self.carbEffect = nil
                 self.carbsOnBoard = nil
                 self.insulinEffect = nil
             }
-            UserDefaults.appGroup.loopSettings = settings
+            UserDefaults.appGroup?.loopSettings = settings
             notify(forChange: .preferences)
             AnalyticsManager.shared.didChangeLoopSettings(from: oldValue, to: settings)
         }
     }
+
+    let overrideHistory: TemporaryScheduleOverrideHistory
 
     // MARK: - Calculation state
 
@@ -269,6 +271,14 @@ extension LoopDataManager: PersistenceControllerDelegate {
     }
 }
 
+
+// MARK: Override history tracking
+extension LoopDataManager: TemporaryScheduleOverrideHistoryDelegate {
+    func temporaryScheduleOverrideHistoryDidUpdate(_ history: TemporaryScheduleOverrideHistory) {
+        UserDefaults.appGroup?.overrideHistory = history
+    }
+}
+
 // MARK: - Preferences
 extension LoopDataManager {
 
@@ -288,9 +298,9 @@ extension LoopDataManager {
         }
     }
 
-    /// The basal rate schedule, applying the most recently enabled override if active
-    var basalRateScheduleApplyingOverrideIfActive: BasalRateSchedule? {
-        return doseStore.basalProfileApplyingOverrideIfActive
+    /// The basal rate schedule, applying recent overrides relative to the current moment in time.
+    var basalRateScheduleApplyingOverrideHistory: BasalRateSchedule? {
+        return doseStore.basalProfileApplyingOverrideHistory
     }
 
     /// The daily schedule of carbs-to-insulin ratios
@@ -311,9 +321,9 @@ extension LoopDataManager {
         }
     }
 
-    /// The carb ratio schedule, applying the most recently enabled override if active
-    var carbRatioScheduleApplyingOverrideIfActive: CarbRatioSchedule? {
-        return carbStore.carbRatioScheduleApplyingOverrideIfActive
+    /// The carb ratio schedule, applying recent overrides relative to the current moment in time.
+    var carbRatioScheduleApplyingOverrideHistory: CarbRatioSchedule? {
+        return carbStore.carbRatioScheduleApplyingOverrideHistory
     }
 
     /// The length of time insulin has an effect on blood glucose
@@ -362,32 +372,10 @@ extension LoopDataManager {
             }
         }
     }
-    
-    // MB Autosens
-    /// The daily schedule of insulin sensitivity (also known as ISF)
-    /// This is measured in <blood glucose>/Unit
-    var autoSensFactor: Double {
-        get {
-            return UserDefaults.appGroup.autoSensFactor
-        }
-        set {
-            UserDefaults.appGroup.autoSensFactor = Swift.min(3.0, Swift.max(0.9, newValue))
-            self.updateAutoSens()
-            /*dataAccessQueue.async {
-                // Invalidate cached effects based on this schedule
-                self.carbEffect = nil
-                self.carbsOnBoard = nil
-                self.insulinEffect = nil
-                
-                self.notify(forChange: .preferences)
-            }
-            */
-        }
-    }
 
-    /// The insulin sensitivity schedule, applying the most recently enabled override if active
-    var insulinSensitivityScheduleApplyingOverrideIfActive: InsulinSensitivitySchedule? {
-        return carbStore.insulinSensitivityScheduleApplyingOverrideIfActive
+    /// The insulin sensitivity schedule, applying recent overrides relative to the current moment in time.
+    var insulinSensitivityScheduleApplyingOverrideHistory: InsulinSensitivitySchedule? {
+        return carbStore.insulinSensitivityScheduleApplyingOverrideHistory
     }
 
     /// Sets a new time zone for a the schedule-based settings
@@ -779,83 +767,10 @@ extension LoopDataManager {
         
         // MB Custom
         checkAlerts()
-        updateAutoSens();
-        
+       
     }
     
-    // MB Autosens
-    func updateAutoSens() {
-        
-        let adjustmentFactor = 0.0 // 0.0005/10 0.5% per 10 mg/dL
-        let minLimit : Double = 0.90
-        let maxLimit : Double = 3.00
-        let minWaitMinutes  : Double = 4.0
-        
-        var autoSensFactor = UserDefaults.appGroup.autoSensFactor
-        
-        if(-self.lastAutoSensUpdate.timeIntervalSinceNow < minWaitMinutes*60) {
-            return
-        }
-       
-        
-        let unit = HKUnit.milligramsPerDeciliter
-        
-        if let lastDiscrepancy = retrospectiveGlucoseDiscrepanciesSummed?.last?.quantity.doubleValue(for: unit) { //} retrospectiveGlucoseDiscrepancies?.last?.quantity.doubleValue(for: unit) {
-            
-            let workoutmode = self.settings.scheduleOverrideEnabled()
-            if(workoutmode && autoSensFactor > 1.0) {
-                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("AutoSens decay paused due to workout mode and asf > 1")
-            } else {
-                //autoSensFactor = pow(autoSensFactor, 0.995) // Trend to zero
-            }
-            
-            let adjustment = -lastDiscrepancy*adjustmentFactor
-            autoSensFactor = autoSensFactor + adjustment
-            
-            lastAutoSensUpdate = Date.init()
-            autoSensFactor = Swift.max(minLimit, Swift.min(maxLimit, autoSensFactor))
-            UserDefaults.appGroup.autoSensFactor = autoSensFactor
-            DiagnosticLogger.shared.forCategory("MBAutoSens").debug("AutoSens updated.  Current retro error:\(lastDiscrepancy), ASF now: \(autoSensFactor)")
-            
-            // Update Insulin Sensitivity
-            if let defaultInsulinSensitivitySchedule = UserDefaults.appGroup.insulinSensitivitySchedule {
-                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Default sensitivity \(defaultInsulinSensitivitySchedule.debugDescription)")
-                
-                var adjustedInsulinItems : [RepeatingScheduleValue<Double>] = []
-                defaultInsulinSensitivitySchedule.items.forEach{ item in
-                    adjustedInsulinItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
-                }
-                var adjustedInsulinSensSched : InsulinSensitivitySchedule = InsulinSensitivitySchedule.init( unit:defaultInsulinSensitivitySchedule.unit, dailyItems:adjustedInsulinItems)!
-                if let timeZone = carbStore.insulinSensitivitySchedule?.timeZone {
-                    adjustedInsulinSensSched.timeZone  = timeZone
-                }
-                carbStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
-                doseStore.insulinSensitivitySchedule = adjustedInsulinSensSched;
-                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Sensitivity now \(adjustedInsulinSensSched.debugDescription)")
-            }
-            
-            // Update Carb Ratio
-            if let defaultCarbRatioSchedule = UserDefaults.appGroup.carbRatioSchedule {
-                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Default carbratio \(defaultCarbRatioSchedule.debugDescription)")
-                
-                var adjustedCarbItems : [RepeatingScheduleValue<Double>] = []
-                defaultCarbRatioSchedule.items.forEach{ item in
-                    adjustedCarbItems.append(RepeatingScheduleValue<Double>.init(startTime: item.startTime, value: item.value*autoSensFactor))
-                }
-                var adjustedCarbRatioSchedule : CarbRatioSchedule = CarbRatioSchedule.init( unit:defaultCarbRatioSchedule.unit, dailyItems:adjustedCarbItems)!
-                
-                if let timeZone = carbStore.carbRatioSchedule?.timeZone {
-                    adjustedCarbRatioSchedule.timeZone  = timeZone
-                }
-                carbStore.carbRatioSchedule = adjustedCarbRatioSchedule;
-                //doseStore.carbRatioSchedule = adjustedCarbRatioSchedule;
-                DiagnosticLogger.shared.forCategory("MBAutoSens").debug("Carb ratio now \(carbStore.carbRatioSchedule.debugDescription)")
-            }
-            
-            
-        }
-    }
-
+  
     public func currentSuspendThreshold() -> HKQuantity {
         
         var activeSuspend = settings.suspendThreshold?.quantity ?? HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:80)
@@ -981,7 +896,7 @@ extension LoopDataManager {
     private func getPendingInsulin() throws -> Double {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
-        guard let basalRates = basalRateScheduleApplyingOverrideIfActive else {
+        guard let basalRates = basalRateScheduleApplyingOverrideHistory else {
             throw LoopError.configurationError(.basalRateSchedule)
         }
 
@@ -1133,8 +1048,8 @@ extension LoopDataManager {
         guard
             let maxBasal = settings.maximumBasalRatePerHour,
             let glucoseTargetRange = settings.glucoseTargetRangeScheduleApplyingOverrideIfActive,
-            let insulinSensitivity = insulinSensitivityScheduleApplyingOverrideIfActive,
-            let basalRates = basalRateScheduleApplyingOverrideIfActive,
+            let insulinSensitivity = insulinSensitivityScheduleApplyingOverrideHistory,
+            let basalRates = basalRateScheduleApplyingOverrideHistory,
             let maxBolus = settings.maximumBolus,
             let model = insulinModelSettings?.model
         else {
@@ -1163,8 +1078,8 @@ extension LoopDataManager {
             basalRates: basalRates,
             maxBasalRate: maxBasal,
             lastTempBasal: lastTempBasal,
+            rateRounder: rateRounder,
             isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
-            rateRounder: rateRounder
         )
         
         if let temp = tempBasal {

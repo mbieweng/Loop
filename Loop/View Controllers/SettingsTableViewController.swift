@@ -316,21 +316,6 @@ final class SettingsTableViewController: UITableViewController {
                     configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
                 }
                 
-            case .autoSensFactor:
-                configCell.textLabel?.text = NSLocalizedString("AutoSens Factor", comment: "The title text for the autosens factor value")
-                
-                let asf = UserDefaults.appGroup.autoSensFactor
-                configCell.detailTextLabel?.text = "\(valueNumberFormatter.string(from: NSNumber(value: asf))!) x"
-            /*case .autoSensEnable
-                let configCell = tableView.dequeueReusableCell(withIdentifier: ConfigCellIdentifier, for: indexPath)
-                let autoSensEnable = dataManager.shareService
-                
-                configCell.textLabel?.text = shareService.title
-                configCell.detailTextLabel?.text = shareService.username ?? TapToSetString
-                
-                return configCell
-              */
-                
             case .overridePresets:
                 configCell.textLabel?.text = NSLocalizedString("Override Presets", comment: "The title text for the override presets")
                 let maxPreviewSymbolCount = 3
@@ -492,14 +477,6 @@ final class SettingsTableViewController: UITableViewController {
         case .configuration:
             let row = ConfigurationRow(rawValue: indexPath.row)!
             switch row {
-            case .autoSensFactor:
-                let vc: LoopKitUI.TextFieldTableViewController
-                vc = .autoSensFactor(UserDefaults.appGroup.autoSensFactor)
-                vc.title = sender?.textLabel?.text
-                vc.indexPath = indexPath
-                vc.delegate = self
-                show(vc, sender: indexPath)
-
 
             case .carbRatio:
                 let scheduleVC = DailyQuantityScheduleTableViewController()
@@ -508,9 +485,7 @@ final class SettingsTableViewController: UITableViewController {
                 scheduleVC.title = NSLocalizedString("Carb Ratios", comment: "The title of the carb ratios schedule screen")
                 scheduleVC.unit = .gram()
 
-                // MB Show defaults instead of autosens adjusted values
-                if let schedule = UserDefaults.appGroup.carbRatioSchedule {
-                //if let schedule = dataManager.loopManager.carbRatioSchedule {
+                if let schedule = dataManager.loopManager.carbRatioSchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
                     scheduleVC.unit = schedule.unit
@@ -525,9 +500,7 @@ final class SettingsTableViewController: UITableViewController {
                 scheduleVC.delegate = self
                 scheduleVC.title = NSLocalizedString("Insulin Sensitivities", comment: "The title of the insulin sensitivities schedule screen")
 
-                // MB Show defaults instead of autosens adjusted values
-                if let schedule = UserDefaults.appGroup.insulinSensitivitySchedule {
-                //if let schedule = dataManager.loopManager.insulinSensitivitySchedule {
+                if let schedule = dataManager.loopManager.insulinSensitivitySchedule {
                     scheduleVC.timeZone = schedule.timeZone
                     scheduleVC.scheduleItems = schedule.items
                     scheduleVC.unit = schedule.unit
@@ -938,6 +911,16 @@ extension SettingsTableViewController: DeliveryLimitSettingsTableViewControllerD
         tableView.reloadRows(at: [[Section.configuration.rawValue, ConfigurationRow.deliveryLimits.rawValue]], with: .none)
     }
 }
+
+
+extension SettingsTableViewController: OverridePresetTableViewControllerDelegate {
+    func overridePresetTableViewControllerDidUpdatePresets(_ vc: OverridePresetTableViewController) {
+        dataManager.loopManager.settings.overridePresets = vc.presets
+
+        tableView.reloadRows(at: [[Section.configuration.rawValue, ConfigurationRow.overridePresets.rawValue]], with: .none)
+    }
+}
+
 
 private extension UIAlertController {
     convenience init(pumpDataDeletionHandler handler: @escaping () -> Void) {
