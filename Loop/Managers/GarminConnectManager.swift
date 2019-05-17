@@ -34,10 +34,10 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
         NSLog("Garmin setup")
         self.restoreDevicesFromFileSystem()
         registerDevices()
-        if(self.devices.count == 0) {
+          if(self.devices.count == 0) {
             ConnectIQ.sharedInstance().showDeviceSelection()
         }
-        
+        NSLog("Garmin setup done")
     }
     
     func processDeviceUrl(url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
@@ -179,7 +179,7 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
     }
 
     func saveDevicesToFileSystem() {
-        print("Saving known devices to \(self.devicesFilePath())")
+        print("Garmin Saving known devices to \(self.devicesFilePath())")
         if !NSKeyedArchiver.archiveRootObject(devices, toFile: self.devicesFilePath()) {
             print("Failed to save devices file.")
         }
@@ -187,19 +187,19 @@ final class GarminConnectManager : NSObject, IQDeviceEventDelegate, IQAppMessage
 
     func restoreDevicesFromFileSystem() {
         guard let restoredDevices = NSKeyedUnarchiver.unarchiveObject(withFile: self.devicesFilePath()) as? [IQDevice] else {
-            print("No device restoration file found.")
+            print("Garmin No device restoration file found.")
             return
         }
         
         if restoredDevices.count > 0 {
-            print("Restored saved devices:")
+            print("Garmin Restored saved devices:")
             for device in restoredDevices {
                 print("\(device)")
             }
             self.devices = restoredDevices
         }
         else {
-            print("No saved devices to restore.")
+            print("Garmin No saved devices to restore.")
             self.devices.removeAll()
         }
         //self.delegate!.devicesChanged()
