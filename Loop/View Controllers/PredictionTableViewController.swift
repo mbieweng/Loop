@@ -185,9 +185,9 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
     }
     
     private var eventualGlucoseDescription: String?
-    
-    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
-    
+
+    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection, .zeroTemp]
+
     private var selectedInputs = PredictionInputEffect.all
     
     override func numberOfSections(in tableView: UITableView) -> Int {

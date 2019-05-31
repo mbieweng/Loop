@@ -378,8 +378,90 @@ struct NotificationManager {
         UNUserNotificationCenter.current().add(request)
     }
     
+    static func sendCarbCorrectionNotification(_ carbCorrectionNotification: CarbCorrectionNotification) {
+        let notification = UNMutableNotificationContent()
+        let gramsSuggested = carbCorrectionNotification.grams
+        let gramsRemaining = carbCorrectionNotification.gramsRemaining
+        let lowPredictedIn = carbCorrectionNotification.lowPredictedIn
+        let correctionType = carbCorrectionNotification.type
+        let imminentLowTimeInterval = TimeInterval(minutes: 15)
+        
+        notification.title = NSLocalizedString("Carb Correction", comment: "The notification title for carb correction")
+        
+        let gramsString = NumberFormatter.localizedString(from: NSNumber(value: gramsSuggested), number: .none)
+        let gramsRemainingString = NumberFormatter.localizedString(from: NSNumber(value: gramsRemaining), number: .none)
+        
+        let intervalFormatter = DateComponentsFormatter()
+        intervalFormatter.allowedUnits = [.hour, .minute]
+        intervalFormatter.maximumUnitCount = 1
+        intervalFormatter.unitsStyle = .full
+        intervalFormatter.includesApproximationPhrase = false
+        intervalFormatter.includesTimeRemainingPhrase = false
+        
+        var lowPredictedInString: String = "-"
+        if let timeString = intervalFormatter.string(from: lowPredictedIn) {
+            lowPredictedInString = timeString
+        }
+        
+        switch correctionType {
+        case .noCorrection:
+            notification.body = String(format: NSLocalizedString("-", comment: "No carb correction needed format string."))
+        case .correction:
+            if lowPredictedIn < imminentLowTimeInterval {
+                notification.body = String(format: NSLocalizedString("%1$@ g Recommended", comment: "Carb correction for imminent low alert format string. (1: Recommended correction grams)"), gramsString)
+            } else {
+                notification.body = String(format: NSLocalizedString("%1$@ g Recommended to Treat Low Predicted in %2$@", comment: "Carb correction and time to predicted low alert format string. (1: Recommended correction grams)(2: Time to predicted low)"), gramsString, lowPredictedInString)
+            }
+        case .warning:
+            notification.body = String(format: NSLocalizedString("Warning: Slow Absorbing Carbs (%1$@ g Remaining)", comment: "Slow carb absorption warning format string. (1: Correction needed if remaining carbs expire)"), gramsRemainingString)
+        case .correctionPlusWarning:
+            if lowPredictedIn < imminentLowTimeInterval {
+                notification.body = String(format: NSLocalizedString("%1$@ g Recommended, Warning: Slow Absorbing Carbs (%2$@ g Remaining)", comment: "Carb correction for imminent low alert format string. (1: Recommended correction grams)(2: Correction needed if remaining carbs expire)"), gramsString, gramsRemainingString)
+            } else {
+                notification.body = String(format: NSLocalizedString("%1$@ g Recommended to Treat Low Predicted in %2$@. Warning: Slow Absorbing Carbs (%3$@ g Remaining)", comment: "Carb correction with time to predicted low alert format string. (1: Recommended correction grams)(2: Time to predicted low)(3: Correction needed if remaining carbs expire)"), gramsString, lowPredictedInString, gramsRemainingString)
+            }
+        default:
+            notification.body = String(format: NSLocalizedString("--", comment: "Error format string"))
+        }
+        
+        notification.sound = UNNotificationSound.default()
+        notification.categoryIdentifier = Category.carbCorrectionRecommended.rawValue
+        notification.badge = NSNumber(value: gramsSuggested)
+        
+        let request = UNNotificationRequest(
+            identifier: Category.carbCorrectionRecommended.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
     
+    static func clearCarbCorrectionNotification() {
+        let notification = UNMutableNotificationContent()
+        notification.categoryIdentifier = Category.carbCorrectionRecommended.rawValue
+        notification.badge = NSNumber(value: 0)
+        notification.sound = nil
+        let clearBadge = UNNotificationRequest(
+            identifier: Category.carbCorrectionRecommended.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(clearBadge)
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [Category.carbCorrectionRecommended.rawValue])
+    }
     
-    
+    static func sendCarbCorrectionNotificationBadge(_ grams: Int) {
+        let notification = UNMutableNotificationContent()
+        notification.categoryIdentifier = Category.carbCorrectionRecommended.rawValue
+        notification.badge = NSNumber(value: grams)
+        notification.sound = nil
+        let setBadge = UNNotificationRequest(
+            identifier: Category.carbCorrectionRecommended.rawValue,
+            content: notification,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(setBadge)
+    }
     
 }

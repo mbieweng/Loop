@@ -459,6 +459,7 @@ extension Collection where Element == GlucoseValue {
         let scheduledBasalRate = basalRates.value(at: date)
         let maxBasalRate = maxBasalRate
 
+        /* dm61 allo high temping when bg below min target
         // TODO: Allow `highBasalThreshold` to be a configurable setting
         // (dm61 commented out lines bellow to allow high temping below minTarget but above suspend threshold)
         // if case .aboveRange(min: let min, correcting: _, minTarget: let highBasalThreshold, units: _)? = correction,
@@ -467,6 +468,9 @@ extension Collection where Element == GlucoseValue {
         //    maxBasalRate = scheduledBasalRate
         //}
         
+        
+        */
+
         let temp = correction?.asTempBasal(
             scheduledBasalRate: scheduledBasalRate,
             maxBasalRate: maxBasalRate,
