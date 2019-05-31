@@ -38,7 +38,6 @@ extension ExponentialInsulinModelPreset {
             return .minutes(55)
         }
     }
-
     var initialDelay: TimeInterval {
         switch self {
         case .humalogNovologAdult:

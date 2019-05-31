@@ -41,7 +41,7 @@ public struct LoopSettings: Equatable {
     public let retrospectiveCorrectionGroupingInterval = TimeInterval(minutes: 30)
 
     /// The maximum duration over which to integrate retrospective correction changes
-    public let retrospectiveCorrectionIntegrationInterval = TimeInterval(minutes: 30)
+    public let retrospectiveCorrectionIntegrationInterval = TimeInterval(minutes: 180)
 
     /// The amount of time since a given date that data should be considered valid
     public let recencyInterval = TimeInterval(minutes: 15)
