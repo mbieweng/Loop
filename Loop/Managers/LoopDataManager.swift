@@ -112,10 +112,11 @@ final class LoopDataManager {
 
         standardRC = StandardRetrospectiveCorrection(standardCorrectionEffectDuration)
         
-        overrideHistory.delegate = self
-
+        
         let carbCorrectionAbsorptionTime: TimeInterval = carbStore.defaultAbsorptionTimes.fast * carbStore.absorptionTimeOverrun
         carbCorrection = CarbCorrection(carbCorrectionAbsorptionTime)
+
+        overrideHistory.delegate = self
 
         cacheStore.delegate = self
 
@@ -936,6 +937,7 @@ extension LoopDataManager {
         
         NSLog("MB End custom alerts")
         // End MB Custom Alerts
+        
         // dm61 carb correction recommendation
         if suggestedCarbCorrection == nil {
             carbCorrection.insulinEffect = insulinEffect
@@ -1856,6 +1858,7 @@ extension LoopDataManager {
     }
     
     
+    
     /// Generates a parameter estimation report
     ///
     /// This operation is performed asynchronously and the completion will be executed on an arbitrary background queue.
@@ -1989,6 +1992,8 @@ private extension TemporaryScheduleOverride {
         }
         return abs(basalRateMultiplier - 1.0) >= .ulpOfOne
     }
+}
+
 // dm61 parameter estimation wip
 class AbsorbedCarbs {
     var startDate: Date
@@ -2067,6 +2072,7 @@ class AbsorbedCarbs {
         self.carbSensitivityMultiplier = isfMultiplier / crMultiplier
     }
 }
+
 
 // dm61 parameter estimation wip
 class NoCarbs {

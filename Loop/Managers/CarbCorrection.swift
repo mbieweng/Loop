@@ -228,7 +228,7 @@ class CarbCorrection {
         // carb correction notification, no warning
         if ( carbCorrectionNotification.grams >= carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining < carbCorrectionThreshold) {
             carbCorrectionNotification.type = .correction
-            if timeSinceLastNotification > notificationSnoozeTime {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                     lastNotificationDate = Date()
             }
@@ -238,7 +238,7 @@ class CarbCorrection {
         // warning slow absorbing carbs
         if (carbCorrectionNotification.grams < carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining >= carbCorrectionThreshold) {
             carbCorrectionNotification.type = .warning
-            if timeSinceLastNotification > notificationSnoozeTime {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                 lastNotificationDate = Date()
             }
@@ -248,7 +248,7 @@ class CarbCorrection {
         // correction notification and warning
         if ( carbCorrectionNotification.grams >= carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining >= carbCorrectionThreshold) {
             carbCorrectionNotification.type = .correctionPlusWarning
-            if timeSinceLastNotification > notificationSnoozeTime {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                 lastNotificationDate = Date()
             }

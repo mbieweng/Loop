@@ -204,6 +204,7 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
 }
 
 
+/*
 /// dm61 function required for dynamic super bolus calculation
 /// Computes effect of zero temping on predicted bg at percentEffectDuration
 ///
@@ -230,6 +231,7 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
 
     return Scale * ( component1 + component2 )
 }
+*/
 
 
 /// Computes a target glucose value for a correction, at a given time during the insulin effect duration
@@ -250,12 +252,13 @@ private func targetGlucoseValue(percentEffectDuration: Double,
     //WARNING: not tested for Loop operating in mmol/dL
     var BGzeroTempEffect = 0.0
     //if initialValue < minValue && glucoseValue > 120 && UserDefaults.appGroup.autoSensFactor < 1.15 {
-    if initialValue < minValue && glucoseValue > 120.0  {
+/*    if initialValue < minValue && glucoseValue > 120.0  {
         let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
         BGzeroTempEffect = BGzeroTemp
     }
     //DiagnosticLogger.shared.forCategory("MBSuperBolus").debug("Superbolus glucose \(glucoseValue), zerotemp effect at \(percentEffectDuration) = \(BGzeroTempEffect)")
-
+*/
+    
     // The inflection point in time: before it we use minValue, after it we linearly blend from minValue to maxValue
     let useMinValueUntilPercent = 0.20
 
