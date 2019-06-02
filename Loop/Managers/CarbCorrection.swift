@@ -228,7 +228,7 @@ class CarbCorrection {
         // carb correction notification, no warning
         if ( carbCorrectionNotification.grams >= carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining < carbCorrectionThreshold) {
             carbCorrectionNotification.type = .correction
-            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 60.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                     lastNotificationDate = Date()
             }
@@ -238,7 +238,7 @@ class CarbCorrection {
         // warning slow absorbing carbs
         if (carbCorrectionNotification.grams < carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining >= carbCorrectionThreshold) {
             carbCorrectionNotification.type = .warning
-            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 60.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                 lastNotificationDate = Date()
             }
@@ -248,7 +248,7 @@ class CarbCorrection {
         // correction notification and warning
         if ( carbCorrectionNotification.grams >= carbCorrectionThreshold && carbCorrectionNotification.gramsRemaining >= carbCorrectionThreshold) {
             carbCorrectionNotification.type = .correctionPlusWarning
-            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 45.0 {
+            if timeSinceLastNotification > notificationSnoozeTime && carbCorrectionNotification.lowPredictedIn.minutes < 60.0 {
                 NotificationManager.sendCarbCorrectionNotification(carbCorrectionNotification)
                 lastNotificationDate = Date()
             }
@@ -279,7 +279,7 @@ class CarbCorrection {
         // Get settings, otherwise throw error
         guard
             let insulinActionDuration = insulinModelSettings?.model.effectDuration,
-            let suspendThreshold = settings.suspendThreshold?.quantity.doubleValue(for: .milligramsPerDeciliter),
+            let suspendThreshold = Optional(80.0), // settings.suspendThreshold?.quantity.doubleValue(for: .milligramsPerDeciliter),
             let sensitivity = insulinSensitivitySchedule?.averageValue(),
             let carbRatio = carbRatioSchedule?.averageValue()
             else {

@@ -1389,7 +1389,7 @@ extension LoopDataManager {
         let zeroTemp = DoseEntry(type: .tempBasal, startDate: startZeroTempDose, endDate: endZeroTempDose, value: 0.0, unit: DoseUnit.unitsPerHour)
         zeroTempEffect = zeroTemp.tempBasalGlucoseEffects(insulinModel: insulinModel, insulinSensitivity: insulinSensitivity, basalRateSchedule: basalRateSchedule).filterDateRange(startZeroTempDose, endZeroTempDose)
         
-        let hyperLoopAgressiveness = 0.75
+        let hyperLoopAgressiveness = 0.0
         fractionalZeroTempEffect = zeroTempEffectFraction(glucoseEffect: zeroTempEffect, fraction: hyperLoopAgressiveness)
         remainingZeroTempEffect = zeroTempEffectFraction(glucoseEffect: zeroTempEffect, fraction: 1.0 - hyperLoopAgressiveness)
     }
