@@ -77,7 +77,7 @@ extension InsulinCorrection {
 
         rate = rateRounder?(rate) ?? rate
         
-        DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
+        //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
 
         return TempBasalRecommendation(
             unitsPerHour: rate,
@@ -241,45 +241,26 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
 ///   - minValue: The minimum (starting) target value
 ///   - maxValue: The maximum (eventual) target value
 /// - Returns: A target value somewhere between the minimum and maximum
-private func targetGlucoseValue(percentEffectDuration: Double,
-                                initialValue: Double,
-                                minValue: Double, maxValue: Double,
-                                glucoseValue: Double) -> Double {
-    
-    //bg effect of zero temping shifts bg target down, which results in a calculated super bolus
-    //super bolus dosing only if initialValue less than minValue, i.e. only for bolus dosing, not for temps
-    //and only if current bg is above a high threshold (set to 180 mg/dL below)
-    //WARNING: not tested for Loop operating in mmol/dL
-    var BGzeroTempEffect = 0.0
-    //if initialValue < minValue && glucoseValue > 120 && UserDefaults.appGroup.autoSensFactor < 1.15 {
-    if initialValue < minValue && glucoseValue > 120.0  {
-        let BGzeroTemp = zeroTempEffect(percentEffectDuration: percentEffectDuration)
-        BGzeroTempEffect = BGzeroTemp
-    }
-    //DiagnosticLogger.shared.forCategory("MBSuperBolus").debug("Superbolus glucose \(glucoseValue), zerotemp effect at \(percentEffectDuration) = \(BGzeroTempEffect)")
-
-    
+private func targetGlucoseValue(percentEffectDuration: Double, minValue: Double, maxValue: Double) -> Double {
     // The inflection point in time: before it we use minValue, after it we linearly blend from minValue to maxValue
-    let useMinValueUntilPercent = 0.20
-
-    // Allow bolus dosing below minValue during initial interval set to 15% of
-    // effect duration, so nominally 0.15*6*60 min = 54 min
-    let useInitialValueUntilPercent = 0.10
+    let useMinValueUntilPercent = 0.5
+    let use55UntilPercent = 0.2
     
-    guard percentEffectDuration > useInitialValueUntilPercent else {
-        return initialValue - BGzeroTempEffect
+    guard percentEffectDuration > use55UntilPercent else {
+        return 55.0 // dm61 allow dosing to 55 mg/dL during initial fraction of duration of insulin action. Use case: bolus allowed below suspend threshold if sufficient carbs taken
     }
+
     
     guard percentEffectDuration > useMinValueUntilPercent else {
-        return minValue - BGzeroTempEffect
+        return minValue
     }
 
     guard percentEffectDuration < 1 else {
-        return maxValue - BGzeroTempEffect
+        return maxValue
     }
 
     let slope = (maxValue - minValue) / (1 - useMinValueUntilPercent)
-    return minValue + slope * (percentEffectDuration - useMinValueUntilPercent) - BGzeroTempEffect
+    return minValue + slope * (percentEffectDuration - useMinValueUntilPercent)
 }
 
 
@@ -313,11 +294,9 @@ extension Collection where Element == GlucoseValue {
 
         let unit = correctionRange.unit
         let sensitivityValue = sensitivity.doubleValue(for: unit)
-        let initialThresholdValue = initialThreshold.doubleValue(for: unit)
-        let suspendThresholdValue = suspendThreshold.doubleValue(for: unit)
+        //let suspendThresholdValue = suspendThreshold.doubleValue(for: unit)
         
-        // Current BG value
-        let currentGlucose = self.first?.quantity.doubleValue(for: unit)
+        //let currentGlucose = self.first?.quantity.doubleValue(for: unit)
 
         
         // For each prediction above target, determine the amount of insulin necessary to correct glucose based on the modeled effectiveness of the insulin at that time
@@ -326,12 +305,12 @@ extension Collection where Element == GlucoseValue {
                 continue
             }
 
-            // (current Loop: If any predicted value is below the suspend threshold, return immediately)
-            // allow dosing above initial threshold, which is below suspend threshold for boluses
-            guard prediction.quantity >= initialThreshold else {
+            // If any predicted value is below the suspend threshold, return immediately
+            /* dm61 remove suspend limit
+            guard prediction.quantity >= suspendThreshold else {
                 return .suspend(min: prediction)
             }
-            
+            */
 
             // Update range statistics
             if minGlucose == nil || prediction.quantity < minGlucose!.quantity {
@@ -346,23 +325,33 @@ extension Collection where Element == GlucoseValue {
             // Target value initially dropped to InitialThreshold
             let targetValue = targetGlucoseValue(
                 percentEffectDuration: time / model.effectDuration,
-                initialValue: initialThresholdValue,
-                minValue: suspendThresholdValue,
-                maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit),
-                glucoseValue: currentGlucose!
-            )
+//                minValue: suspendThresholdValue,
+                minValue: correctionRange.minQuantity(at: prediction.startDate).doubleValue(for: unit),
+                maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit)
+            //        glucoseValue: currentGlucose!
+)
 
             // Compute the dose required to bring this prediction to target:
             // dose = (Glucose Δ) / (% effect × sensitivity)
 
-            let percentEffected = 1 - model.percentEffectRemaining(at: time)
+            //dm61 let percentEffected = 1 - model.percentEffectRemaining(at: time)
+            let percentEffected = Swift.max(.ulpOfOne, 1 - model.percentEffectRemaining(at: time))
             let effectedSensitivity = percentEffected * sensitivityValue
+            /* dm61 removed correctionUnits > 0
             guard let correctionUnits = insulinCorrectionUnits(
                 fromValue: predictedGlucoseValue,
                 toValue: targetValue,
                 effectedSensitivity: effectedSensitivity
             ), correctionUnits > 0 else {
                 continue
+            }
+            */
+            guard let correctionUnits = insulinCorrectionUnits(
+                fromValue: predictedGlucoseValue,
+                toValue: targetValue,
+                effectedSensitivity: effectedSensitivity
+                ) else {
+                    continue
             }
 
             // Update the correction only if we've found a new minimum
@@ -379,9 +368,21 @@ extension Collection where Element == GlucoseValue {
         }
 
         // Choose either the minimum glucose or eventual glocse as the correction delta
-        let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
+        //dm61 let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
         let eventualGlucoseTargets = correctionRange.quantityRange(at: eventual.startDate)
+        
+        if let minCorrectionUnits = minCorrectionUnits, let correctingGlucose = correctingGlucose {
+            return .aboveRange(
+                min: min,
+                correcting: correctingGlucose,
+                minTarget: eventualGlucoseTargets.lowerBound,
+                units: minCorrectionUnits
+            )
+        } else {
+            return nil
+        }
 
+        /* dm61 remove special cases
         // Treat the mininum glucose when both are below range
         if min.quantity < minGlucoseTargets.lowerBound &&
             eventual.quantity < eventualGlucoseTargets.lowerBound
@@ -415,6 +416,7 @@ extension Collection where Element == GlucoseValue {
         } else {
             return .inRange
         }
+        */
     }
 
     /// Recommends a temporary basal rate to conform a glucose prediction timeline to a correction range
@@ -462,7 +464,7 @@ extension Collection where Element == GlucoseValue {
         let scheduledBasalRate = basalRates.value(at: date)
         let maxBasalRate = maxBasalRate
 
-        /* dm61 allo high temping when bg below min target
+        /* dm61 allow high temping when bg below min target
         // TODO: Allow `highBasalThreshold` to be a configurable setting
         // (dm61 commented out lines bellow to allow high temping below minTarget but above suspend threshold)
         // if case .aboveRange(min: let min, correcting: _, minTarget: let highBasalThreshold, units: _)? = correction,
