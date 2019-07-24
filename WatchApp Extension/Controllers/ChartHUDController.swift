@@ -24,7 +24,7 @@ final class ChartHUDController: HUDInterfaceController, WKCrownDelegate {
         var title: String {
             switch self {
             case .iob:
-                return NSLocalizedString("Active Insulin", comment: "HUD row title for IOB")
+                return NSLocalizedString("IOB", comment: "HUD row title for IOB")
             case .cob:
                 return NSLocalizedString("Active Carbs", comment: "HUD row title for COB")
             case .netBasal:

@@ -843,7 +843,7 @@ extension LoopDataManager {
         if (workoutmode) {
             let currentValue = activeSuspend.doubleValue(for: HKUnit.milligramsPerDeciliter)
             let rangeMin = settings.glucoseTargetRangeScheduleApplyingOverrideIfActive?.minQuantity(at: Date()).doubleValue(for:HKUnit.milligramsPerDeciliter) ?? 170.0
-            activeSuspend = HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:max(currentValue, rangeMin - 20.0))
+            activeSuspend = HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:max(currentValue, rangeMin - 30.0))
             //activeSuspend = workoutSuspendQuantity
             NSLog("Workout mode, suspend threshold \(activeSuspend)")
         } else {
