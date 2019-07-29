@@ -969,6 +969,7 @@ extension LoopDataManager {
 
     }
     
+    // dm61 updateParameterEstimates, collects data and runs estimation
     /// - Throws:
     ///     - LoopError.configurationError
     ///     - LoopError.glucoseTooOld
@@ -1088,6 +1089,7 @@ extension LoopDataManager {
         
         parameterEstimates.insulinEffect = self.historicalInsulinEffect
         
+        /*
         // dm61 collect carb effect time series for parameter estimation
         // effects due to food entries over past 24 hours
         let startHistoricalCarbEffect = lastGlucoseDate.addingTimeInterval(.hours(-32.0))
@@ -1141,8 +1143,9 @@ extension LoopDataManager {
                 }
             }
         }
+        */
         
-        let listStart = startHistoricalCarbEffect
+        let listStart = lastGlucoseDate.addingTimeInterval(.hours(-32.0))
         updateGroup.enter()
         carbStore.getCarbStatus(start: listStart, effectVelocities:  insulinCounteractionEffects) { (result) in
             switch result {
@@ -1158,6 +1161,9 @@ extension LoopDataManager {
         
         parameterEstimates.carbStatuses = self.carbStatuses.sorted(by: { $0.startDate < $1.startDate })
         
+        parameterEstimates.updateParameterEstimates()
+        
+        /*
         carbStatusesCompleted = carbStatuses.filter { $0.absorption?.estimatedTimeRemaining ?? TimeInterval.minutes(1.0) == TimeInterval.minutes(0.0) }.filterDateRange(startEstimation, endEstimation)
         
         var activeCarbsStart = Date()
@@ -1246,9 +1252,8 @@ extension LoopDataManager {
         for noCarbsSegment in noCarbs {
             noCarbsSegment.estimateParametersNoCarbs()
         }
+         */
         
-        parameterEstimates.updateParameterEstimates()
-                
     }
     
 
@@ -1772,7 +1777,7 @@ extension LoopDataManager {
     /// - parameter completion: A closure called once the report has been generated. The closure takes a single argument of the report string.
     func generateDiagnosticReport(_ completion: @escaping (_ report: String) -> Void) {
         getLoopState { (manager, state) in
-
+            
             var entries: [String] = [
                 "## LoopDataManager",
                 // dm61 mse calculation
@@ -1781,7 +1786,7 @@ extension LoopDataManager {
                 "n: \(self.nMSE)",
                 "MeanSquareError: \(self.meanSquareError)\n",
                 // dm61
-                "settings: \(String(reflecting: manager.settings))",
+                "settings: \(String(reflecting: manager.settings))\n",
 
                 "insulinCounteractionEffects: [",
                 "* GlucoseEffectVelocity(start, end, mg/dL/min)",
@@ -1790,41 +1795,6 @@ extension LoopDataManager {
                 }),
                 "]",
                 
-                // dm61 historical data for parameter estimation
-                // dm61 observed carb effects
-                "historicalCarbEffect: [",
-                "* GlucoseEffect(start, mg/dL)",
-                (manager.historicalCarbEffect ?? []).reduce(into: "", { (entries, entry) in
-                    entries.append("* \(entry.startDate),  \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                // dm61 insulin effects
-                "historicalInsulinEffect: [",
-                "* GlucoseEffect(start, mg/dL)",
-                (manager.historicalInsulinEffect ?? []).reduce(into: "", { (entries, entry) in
-                    entries.append("* \(entry.startDate),  \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                // dm61 historical glucose data (just to check), may not need
-                "historicalGlucose: [",
-                "* HistoricalGlucoseValues(start, mg/dL)",
-                manager.historicalGlucose.reduce(into: "", { (entries, entry) in
-                    entries.append("* \(entry.startDate), \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                // dm61 statuses of carb entries
-                "\n carbStatuses: \(manager.carbStatuses) \n",
-                "\n carbStatusesForEstimation: \(manager.carbStatusesCompleted) \n",
-                "absorbedEntries: [",
-                "* Carb entry (start, end, entered [g], obserbed [g]) followed by effects: ",
-                manager.absorbedCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("* \(entry.startDate), \(entry.endDate),  \(entry.enteredCarbs.doubleValue(for: .gram())), \(entry.observedCarbs.doubleValue(for: .gram())), Glucose:  \(String(describing: entry.startGlucose?.startDate)), \(String(describing: entry.startGlucose?.quantity.doubleValue(for: .milligramsPerDeciliter))),  \(String(describing: entry.endGlucose?.startDate)), \(String(describing: entry.endGlucose?.quantity.doubleValue(for: .milligramsPerDeciliter))), Insulin effects: ,\(String(describing: entry.startInsulinEffect?.startDate)), \(String(describing: entry.startInsulinEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), \(String(describing: entry.endInsulinEffect?.startDate)), \(String(describing: entry.endInsulinEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), Carb effects: \(String(describing: entry.startCarbEffect?.startDate)), \(String(describing: entry.startCarbEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), \(String(describing: entry.endCarbEffect?.startDate)), \(String(describing: entry.endCarbEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), Counteraction effects: \(String(describing: entry.counteractionEffect?.doubleValue(for: .milligramsPerDeciliter))), \n *** ISF multiplier: \(String(describing: entry.insulinSensitivityMultiplier)), \n *** CR multiplier: \(String(describing: entry.carbRatioMultiplier)), \n *** CSF multiplier: \(String(describing: entry.carbSensitivityMultiplier)) \n")
-                }),
-                "]\n",
-
                 "insulinEffect: [",
                 "* GlucoseEffect(start, mg/dL)",
                 (manager.insulinEffect ?? []).reduce(into: "", { (entries, entry) in
@@ -1887,6 +1857,12 @@ extension LoopDataManager {
                 entries.append(report)
                 entries.append("")
             }
+            
+            self.parameterEstimates.updateParameterEstimates()
+            self.parameterEstimates.generateDiagnosticReport { (report) in
+                entries.append(report)
+                entries.append("")
+            }
 
             self.glucoseStore.generateDiagnosticReport { (report) in
                 entries.append(report)
@@ -1918,103 +1894,20 @@ extension LoopDataManager {
         getParameterEstimationLoopState { (manager, state) in
             
             let dateFormatter = DateFormatter()
-            dateFormatter.timeStyle = .medium
-            dateFormatter.dateStyle = .medium
-            let userCalendar = Calendar.current
-            var defaultDateComponents = DateComponents()
-            var defaultDate = Date()
-            defaultDateComponents.year = 1000
-            if let date = userCalendar.date(from: defaultDateComponents) {
-                defaultDate = date
-            }
+            dateFormatter.timeStyle = .short
+            dateFormatter.dateStyle = .short
             
-            var entries: [String] = [
-                "Estimation data start: \(dateFormatter.string(from: manager.startEstimation ?? defaultDate))",
-                "\n Estimation data end: \(dateFormatter.string(from: manager.endEstimation ?? defaultDate))",
-                "\n Estimates based on absorbed entries: [",
-                "* Carb entry (start, end, entered [g], observed [g]) followed by glucose effects and estimated parameter mutipliers:",
-                manager.absorbedCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("\n ---------- \n \(dateFormatter.string(from: entry.startDate)), \(dateFormatter.string(from: entry.endDate)),  \(entry.enteredCarbs.doubleValue(for: .gram())), \(entry.observedCarbs.doubleValue(for: .gram())), Glucose:  \(String(describing: entry.startGlucose?.startDate)), \(String(describing: entry.startGlucose?.quantity.doubleValue(for: .milligramsPerDeciliter))),  \(String(describing: entry.endGlucose?.startDate)), \(String(describing: entry.endGlucose?.quantity.doubleValue(for: .milligramsPerDeciliter))), Insulin effects: \(String(describing: entry.startInsulinEffect?.startDate)), \(String(describing: entry.startInsulinEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), \(String(describing: entry.endInsulinEffect?.startDate)), \(String(describing: entry.endInsulinEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), Carb effects: \(String(describing: entry.startCarbEffect?.startDate)), \(String(describing: entry.startCarbEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), \(String(describing: entry.endCarbEffect?.startDate)), \(String(describing: entry.endCarbEffect?.quantity.doubleValue(for: .milligramsPerDeciliter))), Counteraction effects: \(String(describing: entry.counteractionEffect?.doubleValue(for: .milligramsPerDeciliter))), \n *** ISF multiplier: \(String(describing: entry.insulinSensitivityMultiplier)), \n *** CR multiplier: \(String(describing: entry.carbRatioMultiplier)), \n *** CSF multiplier: \(String(describing: entry.carbSensitivityMultiplier)) \n")
-                }),
-                "]\n",
-                
-                /* dm61 take regression approach out for now
-                "\n Estimates based on no-carb intervals: [",
-                manager.noCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("\n ---------- \n \(dateFormatter.string(from: entry.startDate)), \(dateFormatter.string(from: entry.endDate)), \(String(describing: entry.regressionStatistics.slope)), \(String(describing: entry.regressionStatistics.slopeStandardError)),\(String(describing: entry.regressionStatistics.intercept)), \(String(describing: entry.regressionStatistics.interceptStandardError)), \(String(describing: entry.regressionStatistics.rSquared)), \(String(describing: entry.regressionStatistics.nSamples)) \n *** ISF multiplier: \(String(describing: entry.insulinSensitivityMultiplier)), \n *** Bias effect: \(String(describing: entry.biasEffect)) \n")
-                }),
-                "]\n", */
-                
-                "\n Estimates based on no-carb intervals: [",
-                manager.noCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("\n ---------- \n \(dateFormatter.string(from: entry.startDate)), \(dateFormatter.string(from: entry.endDate)),  \n *** ISF multiplier: \(String(describing: entry.insulinSensitivityMultiplier)), \n *** Basal multiplier: \(String(describing: entry.basalMultiplier)) \n Start glucose: \(String(describing: entry.startGlucose)) \n End glucose: \(String(describing: entry.endGlucose)) \n Start insulin effect: \(String(describing: entry.startGlucoseInsulin)) \n End insulin effect: \(String(describing: entry.endGlucoseInsulin)) \n Start basal effect: \(String(describing: entry.startGlucoseBasal)) \n End basal effect: \(String(describing: entry.endGlucoseBasal)) \n")
-                }),
-                "]\n",
-                
-                /* dm61 temporarily show only data relevant for the new estimator
-                // dm61 no-carb sequencies
-                "no-carb sequencies: [",
-                "* start, end, glucose-count, insulin-eff-count",
-                manager.noCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)),  \(dateFormatter.string(from: entry.endDate)), \(String(describing: entry.glucose?.count)), \(String(describing: entry.insulinEffect?.count)), \n\(String(describing: entry.deltaGlucose)), \n\(String(describing: entry.deltaInsulinEffect)) \n")
-                }),
-                "]", */
-                
-                // dm61 no-carb sequencies
-                "no-carb sequencies: [",
-                "* start, end, glucose-count, insulin-eff-count",
-                manager.noCarbs.reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)),  \(dateFormatter.string(from: entry.endDate)), \(String(describing: entry.glucose?.count)), \(String(describing: entry.insulinEffect?.count)), \n\(String(describing: entry.deltaGlucose)), \n\(String(describing: entry.deltaInsulinEffect)) \n")
-                }),
-                "]",
-
-                // dm61 statuses of carb entries
-                "\n carbStatuses: \(manager.carbStatuses) \n",
-                "\n carbStatusesForEstimation: \(manager.carbStatusesCompleted) \n",
-                
-                // dm61 historical data for parameter estimation
-                // dm61 observed carb effects
-                "historicalCarbEffect: [",
-                "* GlucoseEffect(start, mg/dL)",
-                (manager.historicalCarbEffect ?? []).reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)),  \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                // dm61 historical insulin effects
-                "historicalInsulinEffect: [",
-                "* GlucoseEffect(start, mg/dL)",
-                (manager.historicalInsulinEffect ?? []).reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)),  \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                // dm61 historical glucose data (just to check), may not need
-                "historicalGlucose: [",
-                "* HistoricalGlucoseValues(start, mg/dL)",
-                manager.historicalGlucose.reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)), \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]",
-                
-                "retrospectiveGlucoseDiscrepancies: [",
-                "* GlucoseEffect(start, mg/dL)",
-                (manager.retrospectiveGlucoseDiscrepancies ?? []).reduce(into: "", { (entries, entry) in
-                    entries.append("* \(dateFormatter.string(from: entry.startDate)), \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
-                }),
-                "]"
-                
-            ]
+            var entries: [String] = []
             
             self.parameterEstimates.generateDiagnosticReport { (report) in
                 entries.append(report)
                 entries.append("")
             }
-            
             completion(entries.joined(separator: "\n"))
             
         }
     }
+    
 }
 
 

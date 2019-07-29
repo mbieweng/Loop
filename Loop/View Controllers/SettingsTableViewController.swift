@@ -193,7 +193,7 @@ final class SettingsTableViewController: UITableViewController {
             case .estimation:
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
                 
-                cell.textLabel?.text = NSLocalizedString("Parameter Estimation", comment: "The title text for the parameter estimation cell")
+                cell.textLabel?.text = NSLocalizedString("Settings Review", comment: "The title text for the parameter estimation cell")
                 cell.detailTextLabel?.text = nil
                 cell.accessoryType = .disclosureIndicator
                 
