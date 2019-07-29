@@ -1329,7 +1329,7 @@ extension LoopDataManager {
         if let eventualGlucoseValue = LoopMath.predictGlucose(startingAt: glucose, momentum: momentum, effects: effects).last?.quantity.doubleValue(for: .milligramsPerDeciliter) {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
-        let maximumHyperLoopAgressiveness = 0.25
+        let maximumHyperLoopAgressiveness = 0.50
         let hyperLoopGlucoseThreshold = 140.0
         let hyperLoopGlucoseWindow = 40.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
