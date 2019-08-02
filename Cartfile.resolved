@@ -1,16 +1,8 @@
 github "LoopKit/Amplitude-iOS" "2137d5fd44bf630ed33e1e72d7af6d8f8612f270"
 github "i-schuetz/SwiftCharts" "0.6.5"
-<<<<<<< HEAD
-=======
-github "kdisimone/CGMBLEKit" "9ffe6455cd7f9d39a3f89c34ff77f435a6f3db53"
-github "kdisimone/G4ShareSpy" "86007af69a378a3235cc67895ab913dbd495f193"
-github "kdisimone/LoopKit" "5ff82b893ec439352080d54ffaf8a4f78a964191"
-github "kdisimone/dexcom-share-client-swift" "9810c126d2dc94ae4ffdc6350dd7057e859b7ad1"
-github "kdisimone/rileylink_ios" "b7d5d07fe17b8f48bcbf703225f2792852ab1525"
->>>>>>> f4e64607b1ed5c34e29dab70300685fd5dd37de5
 github "maxkonovalov/MKRingProgressView" "2.2.2"
 github "mbieweng/CGMBLEKit" "fd3bf1fd47e47dcbdf3925eeaa8ddfc0767cc213"
 github "mbieweng/G4ShareSpy" "8c301dd12e6ba54fce36ba7c050ac2a5da880a72"
-github "mbieweng/LoopKit" "3d5859c1abbd6c1c6b1297f0ddebdafd53b44413"
+github "mbieweng/LoopKit" "330bad99de8ad40668a86a363afdd38542c3cf94"
 github "mbieweng/dexcom-share-client-swift" "d8fa326554176e7413c68b0eacc695dd6cf39d96"
 github "mbieweng/rileylink_ios" "c571644b48105ce2a57fb149fcf868f7f9ce9ed4"

@@ -1335,7 +1335,7 @@ extension LoopDataManager {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
         let maximumHyperLoopAgressiveness = 0.50
-        let hyperLoopGlucoseThreshold = 140.0
+        let hyperLoopGlucoseThreshold = 120.0
         let hyperLoopGlucoseWindow = 40.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
         let hyperLoopAgressiveness = maximumHyperLoopAgressiveness * glucoseError / hyperLoopGlucoseWindow

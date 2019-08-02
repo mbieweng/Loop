@@ -51,6 +51,7 @@ extension InsulinCorrection {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
         
         // MB Aggressive
+        /*
         var aggressiveTempRateDelta : Double
 
         let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
@@ -60,12 +61,13 @@ extension InsulinCorrection {
         } else {
             aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
         }
-        
+ 
         
         //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
         rate += aggressiveTempRateDelta
         //
-        
+        */
+ 
         switch self {
         case .aboveRange, .inRange, .entirelyBelowRange:
             rate += scheduledBasalRate
@@ -212,7 +214,8 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
 ///   - percentEffectDuration: The percent of time elapsed of the insulin effect duration
 ///
 /// - Returns: effect on bg
-private func zeroTempEffect(percentEffectDuration: Double) -> Double {
+/*
+ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
     // WARNING: code not tested for Loop operating in mmol/L
     // values in the lines 199-203 may be customized
     
@@ -231,7 +234,7 @@ private func zeroTempEffect(percentEffectDuration: Double) -> Double {
 
     return Scale * ( component1 + component2 )
 }
-
+*/
 
 
 /// Computes a target glucose value for a correction, at a given time during the insulin effect duration
@@ -247,7 +250,7 @@ private func targetGlucoseValue(percentEffectDuration: Double, minValue: Double,
     let use55UntilPercent = 0.2
     
     guard percentEffectDuration > use55UntilPercent else {
-        return 55.0 // dm61 allow dosing to 55 mg/dL during initial fraction of duration of insulin action. Use case: bolus allowed below suspend threshold if sufficient carbs taken
+        return 80.0 // dm61 allow dosing to 55 mg/dL during initial fraction of duration of insulin action. Use case: bolus allowed below suspend threshold if sufficient carbs taken
     }
 
     
