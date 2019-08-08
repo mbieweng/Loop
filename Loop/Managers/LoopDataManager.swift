@@ -229,9 +229,8 @@ final class LoopDataManager {
     fileprivate var lastTempBasal: DoseEntry?
     fileprivate var lastRequestedBolus: DoseEntry?
     
-    // Parameter estimation
-    // private var parameterEstimates: ParameterEstimation = ParameterEstimation(startDate: Date(), endDate: Date())
-    private var parameterEstimates: ParameterEstimation?
+    // dm61-parameter-estimation
+    private var parameterEstimation: ParameterEstimation?
 
     /// The last date at which a loop completed, from prediction to dose (if dosing is enabled)
     var lastLoopCompleted: Date? {
@@ -1271,7 +1270,7 @@ extension LoopDataManager {
         }
     }
     
-    /// dm61-parameter-estimation
+    // dm61-parameter-estimation
     /// Collects data over past 24 hours and runs parameter estimation
     /// - Throws:
     ///     - LoopError.missingDataError
@@ -1282,7 +1281,7 @@ extension LoopDataManager {
         let startEstimationPeriod  =  Date(timeIntervalSinceNow: .hours(-24))
         let earliestEffectDate = startEstimationPeriod.addingTimeInterval(.hours(-8))
         
-        // Collect data for parameter estimation
+        // Collect data for parameter estimation: glucose, insulin effect, basal effect, carb statuses
         
         // Collect blood glucose values
         var historicalGlucose: [GlucoseValue] = []
@@ -1298,14 +1297,6 @@ extension LoopDataManager {
         guard let endEstimationPeriod = latestGlucoseDate else {
             throw LoopError.missingDataError(.glucose)
         }
-        
-        self.parameterEstimates = ParameterEstimation(startDate: startEstimationPeriod, endDate: endEstimationPeriod)
-        
-        self.parameterEstimates?.glucose = historicalGlucose
-        
-        // Collect effects of suspending insulin delivery
-        let historicalBasalEffect = updateBasalEffect(startDate: earliestEffectDate, endDate: endEstimationPeriod)
-        self.parameterEstimates?.basalEffect = historicalBasalEffect
         
         // Collect insulin effect time series
         var historicalInsulinEffect: [GlucoseEffect]?
@@ -1323,9 +1314,10 @@ extension LoopDataManager {
         }
         _ = updateGroup.wait(timeout: .distantFuture)
         
-        self.parameterEstimates?.insulinEffect = historicalInsulinEffect
+        // Collect effects of suspending insulin delivery
+        let historicalBasalEffect = updateBasalEffect(startDate: earliestEffectDate, endDate: endEstimationPeriod)
         
-        // Collect carb statuses
+        // Collect carb statuses based on dynamic carb absorption algorithm
         var carbStatuses: [CarbStatus<StoredCarbEntry>] = []
         updateGroup.enter()
         carbStore.getCarbStatus(start: earliestEffectDate, effectVelocities:  insulinCounteractionEffects) { (result) in
@@ -1340,15 +1332,17 @@ extension LoopDataManager {
         }
         _ = updateGroup.wait(timeout: .distantFuture)
         
-        self.parameterEstimates?.carbStatuses = carbStatuses.sorted(by: { $0.startDate < $1.startDate })
+        // ensure that carb statuses are sorted in chronological order
+        let carbStatusesSorted = carbStatuses.sorted(by: { $0.startDate < $1.startDate })
         
-        // compute  parameter estimates
-        self.parameterEstimates?.update()
+        // instantiate parameterEstimation and compute parameter estimates
+        self.parameterEstimation = ParameterEstimation(startDate: startEstimationPeriod, endDate: endEstimationPeriod, glucose: historicalGlucose, insulinEffect: historicalInsulinEffect, basalEffect: historicalBasalEffect, carbStatuses: carbStatusesSorted)
+        self.parameterEstimation?.update()
         
     }
     
-    /// Generates a glucose prediction effect of suspending insulin delivery over a period of time
-    ///
+    // dm61-parameter-estimation
+    /// Generates glucose effect of suspending insulin delivery over a period of time
     private func updateBasalEffect(startDate: Date, endDate: Date) -> [GlucoseEffect] {
         
         var basalEffect: [GlucoseEffect] = []
@@ -1507,8 +1501,8 @@ extension LoopDataManager {
     }
     
     
-    /// dm61-parameter-estimation
-    /// Executes a closure with access to the current state of the Loop and Parameter  Estimation
+    // dm61-parameter-estimation
+    /// Executes a closure with access to the current state of Parameter Estimation
     ///
     /// This operation is performed asynchronously and the closure will be executed on an arbitrary background queue.
     ///
@@ -1653,7 +1647,7 @@ extension LoopDataManager {
     }
     
     
-    /// dm61-parameter-estimation
+    // dm61-parameter-estimation
     /// Generates a parameter estimation report
     ///
     /// This operation is performed asynchronously and the completion will be executed on an arbitrary background queue.
@@ -1664,7 +1658,7 @@ extension LoopDataManager {
             
             var entries: [String] = []
             
-            self.parameterEstimates?.generateReport { (report) in
+            self.parameterEstimation?.generateReport { (report) in
                 entries.append(report)
                 entries.append("")
             }

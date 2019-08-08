@@ -24,13 +24,13 @@ import LoopCore
  
  For carb absorption  intervals, estimates for all three multipliers are computed based on the data available, with the underlying assumption that the user mealentries are approximately correct.
  
- Parameter estimation requires the following timelines from startDate to endDate:
+ Parameter estimation requires the following inputs from startDate to endDate:
  - glucose: timeline of glucose values
  - insulinEffect: glucose effect of insulin doses
  - basalEffect: glucose effect of suspending basal insulin
  - carbStatuses: carb entry statuses as reported by dynamic carb absorption algorithm
- Parameter estimation generates the following arays:
- - estimationIntervals: sequence of fasting/carbAbsorbing time intervals
+ Parameter estimation generates the following outputs:
+ - estimationIntervals: sequence of fasting or carbAbsorbing time intervals, including estimated parameters for each interval
  - parameterEstimationStatus: descriptive state of the class for diagnostic purposes
  */
 
@@ -47,11 +47,14 @@ class ParameterEstimation {
     let unit = HKUnit.milligramsPerDeciliter
     let velocityUnit = HKUnit.milligramsPerDeciliter.unitDivided(by: .minute())
     
-    init(startDate: Date, endDate: Date) {
+    init(startDate: Date, endDate: Date, glucose: [GlucoseValue], insulinEffect: [GlucoseEffect]?, basalEffect: [GlucoseEffect]?, carbStatuses: [CarbStatus<StoredCarbEntry>]) {
         self.startDate = startDate
         self.endDate = endDate
+        self.glucose = glucose
+        self.insulinEffect = insulinEffect
+        self.basalEffect = basalEffect
+        self.carbStatuses = carbStatuses
     }
-    
     
     /**
      updateParameterEstimates: assembles estimationIntervals and performs parameter estimation of the intervals from startDate to endDate
@@ -333,7 +336,7 @@ class EstimationInterval {
 }
 
 /**
- EstimatedMultipliers lums together the key data variables and the parameter  estimation outputs: the estimated multipliers for ISF, CR  and Basal  rate
+ EstimatedMultipliers collect the key data variables and the parameter  estimation outputs: the estimated multipliers for ISF, CR  and Basal  rate
  
  EstimatedMultipliers variables for an interval from startDate to endDate
  - basalMultiplier: estimated/user-setting for Basal rate (effect during estimation interval)
@@ -416,7 +419,7 @@ class EstimatedMultipliers {
             reviewReport += ["\(dateFormatter.string(from: startDate)) to \(dateFormatter.string(from: endDate))"]
             if abs( carbRatioMultiplier - 1.0 ) < 0.02 {
                 reviewReport += ["Good observed/entered carbs match,"]
-                reviewReport += ["parameter estimates are not available."]
+                reviewReport += ["parameter estimates are not available"]
             } else {
                 reviewReport += ["CR multiplier: \(reportCarbRatioMultiplier)"]
                 if abs(deltaGlucose) < 0.5 * deltaGlucoseBasal && abs(deltaGlucose) < 0.5 * (deltaGlucose + deltaGlucoseInsulin) {
@@ -548,7 +551,7 @@ extension ParameterEstimation {
                 let deltaGlucoseInsulin = estimationInterval.estimatedMultipliers?.deltaGlucoseInsulin,
                 let deltaGlucoseBasal = estimationInterval.estimatedMultipliers?.deltaGlucoseBasal,
                 let isfMultiplier = estimationInterval.estimatedMultipliers?.insulinSensitivityMultiplier,
-                let crMultiplier = estimationInterval.estimatedMultipliers?.insulinSensitivityMultiplier,
+                let crMultiplier = estimationInterval.estimatedMultipliers?.carbRatioMultiplier,
                 let basalMultiplier = estimationInterval.estimatedMultipliers?.basalMultiplier
                 else { continue
             }

@@ -201,7 +201,7 @@ final class SettingsTableViewController: UITableViewController {
             case .estimation:
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
                 
-                cell.textLabel?.text = NSLocalizedString("Review of Settings", comment: "The title text for the parameter estimation report cell")
+                cell.textLabel?.text = NSLocalizedString("Settings Review Report", comment: "The title text for the parameter estimation report cell")
                 cell.detailTextLabel?.text = nil
                 cell.accessoryType = .disclosureIndicator
                 
@@ -644,6 +644,7 @@ final class SettingsTableViewController: UITableViewController {
                 vc.title = sender?.textLabel?.text
 
                 show(vc, sender: sender)
+            // dm61-parameter-estimation
             case .estimation:
                 let vc = CommandResponseViewController.generateParameterEstimationReport(deviceManager: dataManager)
                 vc.title = sender?.textLabel?.text

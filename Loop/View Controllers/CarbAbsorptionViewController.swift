@@ -124,7 +124,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         // let midnight = Calendar.current.startOfDay(for: Date())
         // let listStart = min(midnight, chartStartDate, Date(timeIntervalSinceNow: -deviceManager.loopManager.carbStore.maximumAbsorptionTimeInterval))
         
-        // dm61 try Bharat's fix
+        // dm61-parameter-estimation extend view to past 24 hours (per Bharat)
         let visiblePeriod = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Calendar.current.startOfDay(for: Date())
         let listStart = min(visiblePeriod, chartStartDate)
 
@@ -181,8 +181,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
 
         if shouldUpdateCarbs {
             reloadGroup.enter()
-            //dm61 try Bharat's fix
-            // deviceManager.loopManager.carbStore.getTotalCarbs(since: midnight) {
+            // dm61-parameter-estimation extend view to past 24 hours (per Bharat)
             self.deviceManager.loopManager.carbStore.getTotalCarbs(since: visiblePeriod) { (result) in
                 switch result {
                 case .success(let total):
