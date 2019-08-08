@@ -67,8 +67,8 @@ final class SettingsTableViewController: UITableViewController {
 
     fileprivate enum LoopRow: Int, CaseCountable {
         case dosing = 0
-        case estimation
         case diagnostic
+        case estimation
     }
 
     fileprivate enum PumpRow: Int, CaseCountable {
@@ -190,14 +190,6 @@ final class SettingsTableViewController: UITableViewController {
                 switchCell.switch?.addTarget(self, action: #selector(dosingEnabledChanged(_:)), for: .valueChanged)
 
                 return switchCell
-            case .estimation:
-                let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
-                
-                cell.textLabel?.text = NSLocalizedString("Settings Review", comment: "The title text for the parameter estimation cell")
-                cell.detailTextLabel?.text = nil
-                cell.accessoryType = .disclosureIndicator
-                
-                return cell
             case .diagnostic:
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
 
@@ -205,6 +197,14 @@ final class SettingsTableViewController: UITableViewController {
                 cell.detailTextLabel?.text = nil
                 cell.accessoryType = .disclosureIndicator
 
+                return cell
+            case .estimation:
+                let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
+                
+                cell.textLabel?.text = NSLocalizedString("Review of Settings", comment: "The title text for the parameter estimation report cell")
+                cell.detailTextLabel?.text = nil
+                cell.accessoryType = .disclosureIndicator
+                
                 return cell
             }
         case .pump:
