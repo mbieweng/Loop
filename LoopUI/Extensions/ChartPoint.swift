@@ -60,16 +60,15 @@ extension ChartPoint {
         guard let targetRange = override.settings.targetRange else {
             return []
         }
+        let quantityRange = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: targetRange.minValue)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: targetRange.maxValue)
         return pointsForGlucoseRangeScheduleOverride(
-            range: targetRange.rangeWithMinimumIncremement(unit.chartableIncrement),
+            range: quantityRange.doubleRangeWithMinimumIncrement(in: unit),
             activeInterval: override.activeInterval,
             unit: unit,
             xAxisValues: xAxisValues,
             extendEndDateToChart: extendEndDateToChart
         )
     }
-    
-    
     private static func pointsForGlucoseRangeScheduleOverride(range: DoubleRange, activeInterval: DateInterval, unit: HKUnit, xAxisValues: [ChartAxisValue], extendEndDateToChart: Bool) -> [ChartPoint] {
         guard let lastXAxisValue = xAxisValues.last as? ChartAxisValueDate else {
             return []
@@ -104,7 +103,7 @@ extension ChartPoint: TimelineValue {
 }
 
 
-private extension Range where Bound == HKQuantity {
+private extension ClosedRange where Bound == HKQuantity {
     func doubleRangeWithMinimumIncrement(in unit: HKUnit) -> DoubleRange {
         let increment = unit.chartableIncrement
 

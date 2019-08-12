@@ -199,7 +199,7 @@ final class NightscoutDataManager {
             switch override.context {
             case .preMeal:
                     name = "preMeal"
-            case .custom:
+            case .custom, .legacyWorkout:
                     name = "Custom"
             case .preset(let preset):
                     name = preset.name

@@ -24,7 +24,7 @@ struct GlucoseChartData {
         }
     }
 
-    private(set) var historicalGlucoseRange: Range<HKQuantity>?
+    private(set) var historicalGlucoseRange: ClosedRange<HKQuantity>?
 
     var predictedGlucose: [SampleValue]? {
         didSet {
@@ -32,7 +32,7 @@ struct GlucoseChartData {
         }
     }
 
-    private(set) var predictedGlucoseRange: Range<HKQuantity>?
+    private(set) var predictedGlucoseRange: ClosedRange<HKQuantity>?
 
     init(unit: HKUnit?, correctionRange: GlucoseRangeSchedule?, scheduleOverride: TemporaryScheduleOverride?, historicalGlucose: [SampleValue]?, predictedGlucose: [SampleValue]?) {
         self.unit = unit
@@ -44,7 +44,7 @@ struct GlucoseChartData {
         self.predictedGlucoseRange = predictedGlucose?.quantityRange
     }
 
-    func chartableGlucoseRange(from interval: DateInterval) -> Range<HKQuantity> {
+    func chartableGlucoseRange(from interval: DateInterval) -> ClosedRange<HKQuantity> {
         let unit = self.unit ?? .milligramsPerDeciliter
 
         // Defaults
@@ -79,15 +79,9 @@ struct GlucoseChartData {
         let lowerBound = HKQuantity(unit: unit, doubleValue: min)
         let upperBound = HKQuantity(unit: unit, doubleValue: max)
 
-        return lowerBound..<upperBound
+        return lowerBound...upperBound
     }
 
-    var activeScheduleOverride: TemporaryScheduleOverride? {
-        guard let override = scheduleOverride, override.isActive() else {
-            return nil
-        }
-        return override
-    }
 
     private var activeOverrideQuantityRange: Range<HKQuantity>? {
         guard let targetRange = activeScheduleOverride?.settings.targetRange else {
@@ -99,6 +93,15 @@ struct GlucoseChartData {
         let upperBound = HKQuantity(unit: unit, doubleValue: targetRange.maxValue)
         return lowerBound..<upperBound
     }
+
+    var activeScheduleOverride: TemporaryScheduleOverride? {
+        guard let override = scheduleOverride, override.isActive() else {
+            return nil
+        }
+        return override
+    }
+
+   
 }
 
 private extension HKUnit {
@@ -118,7 +121,7 @@ private extension HKUnit {
         if self == .milligramsPerDeciliter {
             return 75
         } else {
-            return 3
+            return 4
         }
     }
 }

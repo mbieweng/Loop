@@ -6,6 +6,16 @@
 //  Copyright © 2016 Nathan Racklyeft. All rights reserved.
 //
 
-// Change this on first setup to your own unique organization identifier in
-// reverse-domain name syntax.
-MAIN_APP_BUNDLE_IDENTIFIER = com.digitalaltitudes.loopkit
+// This is automatically disambiguated by development team, but you may choose to change this to
+// support running multiple apps simultaneously.
+MAIN_APP_BUNDLE_IDENTIFIER = com.${DEVELOPMENT_TEAM}.loopkit
+MAIN_APP_DISPLAY_NAME = Loop
+
+APPICON_NAME = AppIcon
+
+// Exclude additional assets by default, and let other configurations that provide them add the file back in
+EXCLUDED_SOURCE_FILE_NAMES = AdditionalAssets.xcassets
+
+// Optional workspace configuration overrides
+#include? "../LoopConfigOverride.xcconfig"
+

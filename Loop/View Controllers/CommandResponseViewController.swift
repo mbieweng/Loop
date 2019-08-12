@@ -37,7 +37,6 @@ extension CommandResponseViewController {
         return vc
     }
     
-    // dm61-parameter-estimation
     static func generateParameterEstimationReport(deviceManager: DeviceDataManager) -> T {
         let date = Date()
         let vc = T(command: { (completionHandler) in
@@ -52,10 +51,11 @@ extension CommandResponseViewController {
                 }
             }
             
-            return NSLocalizedString("Settings review based on glucose, insulin delivery, and meal entries data over the past 24 hours", comment: "The loading message for the parameter estimation report screen")
+            return NSLocalizedString("Parameter multipliers are estimated based on glucose, insulin delivery, and meal entries over the past 24 hours. It is recommended that you review the past meal entries and make any edits, additions or deletions needed to improve accuracy.", comment: "The loading message for the parameter estimation report screen")
         })
         vc.fileName = "Loop Settings Review \(ISO8601DateFormatter.string(from: date, timeZone: .current, formatOptions: [.withSpaceBetweenDateAndTime, .withInternetDateTime])).md"
         
         return vc
     }
+    
 }
