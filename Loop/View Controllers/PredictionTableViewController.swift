@@ -140,7 +140,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             }
             
             if self.refreshContext.remove(.targets) != nil {
-                self.glucoseChart.suspendThresholdValue = manager.settings.suspendThreshold?.quantity.doubleValue(for: self.glucoseChart.glucoseUnit)
+                self.glucoseChart.suspendThresholdValue = manager.currentSuspendThreshold().doubleValue(for: self.glucoseChart.glucoseUnit)
 
                 self.glucoseChart.targetGlucoseSchedule = manager.settings.glucoseTargetRangeSchedule
             }

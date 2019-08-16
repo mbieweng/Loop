@@ -822,7 +822,8 @@ extension LoopDataManager {
         
         if (workoutmode) {
             let currentValue = activeSuspend.doubleValue(for: HKUnit.milligramsPerDeciliter)
-            let rangeMin = settings.glucoseTargetRangeScheduleApplyingOverrideIfActive?.minQuantity(at: Date()).doubleValue(for:HKUnit.milligramsPerDeciliter) ?? 170.0
+            let rangeMin = settings.scheduleOverride?.settings.targetRange?.minValue ?? 170.0
+            //let rangeMin = settings.glucoseTargetRangeScheduleApplyingOverrideIfActive.minQuantity(at: Date()).doubleValue(for:HKUnit.milligramsPerDeciliter) ?? 170.0
             activeSuspend = HKQuantity(unit:HKUnit.milligramsPerDeciliter,  doubleValue:max(currentValue, rangeMin - 30.0))
             //activeSuspend = workoutSuspendQuantity
             NSLog("Workout mode, suspend threshold \(activeSuspend)")
@@ -998,7 +999,7 @@ extension LoopDataManager {
         if let eventualGlucoseValue = LoopMath.predictGlucose(startingAt: glucose, momentum: momentum, effects: effects).last?.quantity.doubleValue(for: .milligramsPerDeciliter) {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
-        let maximumHyperLoopAgressiveness = 0.50
+        let maximumHyperLoopAgressiveness = 0.5
         let hyperLoopGlucoseThreshold = 120.0
         let hyperLoopGlucoseWindow = 40.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
@@ -1539,9 +1540,7 @@ extension LoopDataManager {
                 "]",
 
                 "glucoseMomentumEffect: \(manager.glucoseMomentumEffect ?? [])",
-                "",
                 "retrospectiveGlucoseEffect: \(manager.retrospectiveGlucoseEffect)",
-                "",
                 "recommendedTempBasal: \(String(describing: state.recommendedTempBasal))",
                 "recommendedBolus: \(String(describing: state.recommendedBolus))",
                 "lastBolus: \(String(describing: manager.lastRequestedBolus))",

@@ -35,21 +35,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         rootViewController.rootViewController.deviceManager = deviceManager
 
-        // GarminConnectManager.shared.deviceManager = deviceManager
-        // GarminConnectManager.shared.setup()
- 
-
         return true
     }
 
-    /*
-    func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
-        /// Handle Garmin device list 
-        NSLog("Open url");
-        // return GarminConnectManager.shared.processDeviceUrl(url: url, options:options)
-    }
-*/
-    
     func applicationWillResignActive(_ application: UIApplication) {
     }
 

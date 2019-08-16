@@ -44,42 +44,19 @@ extension InsulinCorrection {
         scheduledBasalRate: Double,
         maxBasalRate: Double,
         duration: TimeInterval,
-        rateRounder: ((Double) -> Double)?,   
-        currentGlucose: GlucoseValue?
-
+        rateRounder: ((Double) -> Double)?
     ) -> TempBasalRecommendation {
         var rate = units / (duration / TimeInterval(hours: 1))  // units/hour
-        
-        // MB Aggressive
-        /*
-        var aggressiveTempRateDelta : Double
-
-        let glucVal = currentGlucose?.quantity.doubleValue(for: HKUnit.milligramsPerDeciliter) ?? 0;
-        if( glucVal < 140 ) {
-            aggressiveTempRateDelta = Swift.min(rate, 0)
-            //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("Current glucose \(glucVal) aggressive high temp disabled")
-        } else {
-            aggressiveTempRateDelta = Swift.min(rate, scheduledBasalRate)
-        }
- 
-        
-        //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp BaseRecommendation:\(rate), Extra:\(aggressiveTempRateDelta), TargetRate:\(rate+aggressiveTempRateDelta), ScheduledBasal:\(scheduledBasalRate), Current gluc: \(glucVal)")
-        rate += aggressiveTempRateDelta
-        //
-        */
- 
         switch self {
         case .aboveRange, .inRange, .entirelyBelowRange:
             rate += scheduledBasalRate
         case .suspend:
             break
         }
-        
+
         rate = Swift.min(maxBasalRate, Swift.max(0, rate))
 
         rate = rateRounder?(rate) ?? rate
-        
-        //DiagnosticLogger.shared.forCategory("MBAggressiveTemp").debug("AggressiveTemp FinalBasalRecommendation:\(rate)")
 
         return TempBasalRecommendation(
             unitsPerHour: rate,
@@ -182,7 +159,7 @@ extension TempBasalRecommendation {
             // If we recommend the in-progress scheduled basal rate of the pump, do nothing
             return nil
         }
-  
+
         return self
     }
 }
@@ -483,8 +460,7 @@ extension Collection where Element: GlucoseValue {
             scheduledBasalRate: scheduledBasalRate,
             maxBasalRate: maxBasalRate,
             duration: duration,
-            rateRounder: rateRounder,
-            currentGlucose: self.first
+            rateRounder: rateRounder
         )
 
         return temp?.ifNecessary(

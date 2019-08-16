@@ -70,7 +70,3 @@ RemoteSettings.plist
 
 # Framework development
 Loop.xcworkspace
-
-#Garmin frameworks
-ConnectIQ.framework/
-GarminWidget/bin/

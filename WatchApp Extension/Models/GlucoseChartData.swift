@@ -82,6 +82,12 @@ struct GlucoseChartData {
         return lowerBound...upperBound
     }
 
+    var activeScheduleOverride: TemporaryScheduleOverride? {
+        guard let override = scheduleOverride, override.isActive() else {
+            return nil
+        }
+        return override
+    }
 
     private var activeOverrideQuantityRange: Range<HKQuantity>? {
         guard let targetRange = activeScheduleOverride?.settings.targetRange else {
@@ -93,15 +99,6 @@ struct GlucoseChartData {
         let upperBound = HKQuantity(unit: unit, doubleValue: targetRange.maxValue)
         return lowerBound..<upperBound
     }
-
-    var activeScheduleOverride: TemporaryScheduleOverride? {
-        guard let override = scheduleOverride, override.isActive() else {
-            return nil
-        }
-        return override
-    }
-
-   
 }
 
 private extension HKUnit {

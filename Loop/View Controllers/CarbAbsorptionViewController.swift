@@ -20,6 +20,7 @@ private extension RefreshContext {
     static let all: Set<RefreshContext> = [.glucose, .carbs, .status]
 }
 
+
 final class CarbAbsorptionViewController: ChartsTableViewController, IdentifiableClass {
 
     private let log = OSLog(category: "StatusTableViewController")
@@ -575,7 +576,6 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 }
             }
         }
-        
     }
     
     @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {

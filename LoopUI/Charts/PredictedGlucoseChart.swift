@@ -189,6 +189,7 @@ extension PredictedGlucoseChart {
         let layers: [ChartLayer?] = [
             gridLayer,
             targetsLayer,
+            suspendThresholdLayer,
             xAxisLayer,
             yAxisLayer,
             glucoseChartCache?.highlightLayer,
