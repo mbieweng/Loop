@@ -1087,7 +1087,7 @@ extension LoopDataManager {
         retrospectiveGlucoseDiscrepancies = insulinCounteractionEffects.subtracting(carbEffects, withUniformInterval: carbStore.delta)
 
         retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
-        
+
         // Calculate retrospective correction
         retrospectiveGlucoseEffect = retrospectiveCorrection.computeEffect(
             startingAt: glucose,
@@ -1219,7 +1219,6 @@ extension LoopDataManager {
         } else {
             lastTempBasal = nil
         }
-        
         let tempBasal = predictedGlucose.recommendedTempBasal(
             to: glucoseTargetRange,
             suspendThreshold: settings.suspendThreshold?.quantity,
