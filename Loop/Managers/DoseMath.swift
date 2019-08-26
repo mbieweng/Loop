@@ -192,11 +192,6 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
 private func targetGlucoseValue(percentEffectDuration: Double, minValue: Double, maxValue: Double) -> Double {
     // The inflection point in time: before it we use minValue, after it we linearly blend from minValue to maxValue
     let useMinValueUntilPercent = 0.5
-    let use55UntilPercent = 0.05
-    
-    guard percentEffectDuration > use55UntilPercent else {
-        return 80.0 // dm61 allow dosing to 55 mg/dL during initial fraction of duration of insulin action. Use case: bolus allowed below suspend threshold if sufficient carbs taken
-    }
 
     guard percentEffectDuration > useMinValueUntilPercent else {
         return minValue
@@ -226,7 +221,6 @@ extension Collection where Element: GlucoseValue {
     private func insulinCorrection(
         to correctionRange: GlucoseRangeSchedule,
         at date: Date,
-        initialThreshold: HKQuantity,
         suspendThreshold: HKQuantity,
         sensitivity: HKQuantity,
         model: InsulinModel
@@ -241,11 +235,8 @@ extension Collection where Element: GlucoseValue {
 
         let unit = correctionRange.unit
         let sensitivityValue = sensitivity.doubleValue(for: unit)
-        //let suspendThresholdValue = suspendThreshold.doubleValue(for: unit)
-        
-        //let currentGlucose = self.first?.quantity.doubleValue(for: unit)
+        let suspendThresholdValue = suspendThreshold.doubleValue(for: unit)
 
-        
         // For each prediction above target, determine the amount of insulin necessary to correct glucose based on the modeled effectiveness of the insulin at that time
         for prediction in self {
             guard validDateRange.contains(prediction.startDate) else {
@@ -253,11 +244,9 @@ extension Collection where Element: GlucoseValue {
             }
 
             // If any predicted value is below the suspend threshold, return immediately
-            /* dm61 remove suspend limit
             guard prediction.quantity >= suspendThreshold else {
                 return .suspend(min: prediction)
             }
-            */
 
             // Update range statistics
             if minGlucose == nil || prediction.quantity < minGlucose!.quantity {
@@ -269,36 +258,23 @@ extension Collection where Element: GlucoseValue {
             let time = prediction.startDate.timeIntervalSince(date)
 
             // Compute the target value as a function of time since the dose started
-            // Target value initially dropped to InitialThreshold
             let targetValue = targetGlucoseValue(
                 percentEffectDuration: time / model.effectDuration,
-//                minValue: suspendThresholdValue,
-                minValue: correctionRange.minQuantity(at: prediction.startDate).doubleValue(for: unit),
+                minValue: suspendThresholdValue, 
                 maxValue: correctionRange.quantityRange(at: prediction.startDate).averageValue(for: unit)
-            //        glucoseValue: currentGlucose!
-)
+            )
 
             // Compute the dose required to bring this prediction to target:
             // dose = (Glucose Δ) / (% effect × sensitivity)
 
-            //dm61 let percentEffected = 1 - model.percentEffectRemaining(at: time)
-            let percentEffected = Swift.max(.ulpOfOne, 1 - model.percentEffectRemaining(at: time))
+            let percentEffected = 1 - model.percentEffectRemaining(at: time)
             let effectedSensitivity = percentEffected * sensitivityValue
-            /* dm61 removed correctionUnits > 0
             guard let correctionUnits = insulinCorrectionUnits(
                 fromValue: predictedGlucoseValue,
                 toValue: targetValue,
                 effectedSensitivity: effectedSensitivity
             ), correctionUnits > 0 else {
                 continue
-            }
-            */
-            guard let correctionUnits = insulinCorrectionUnits(
-                fromValue: predictedGlucoseValue,
-                toValue: targetValue,
-                effectedSensitivity: effectedSensitivity
-                ) else {
-                    continue
             }
 
             // Update the correction only if we've found a new minimum
@@ -315,21 +291,9 @@ extension Collection where Element: GlucoseValue {
         }
 
         // Choose either the minimum glucose or eventual glocse as the correction delta
-        //dm61 let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
+        let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
         let eventualGlucoseTargets = correctionRange.quantityRange(at: eventual.startDate)
-        
-        if let minCorrectionUnits = minCorrectionUnits, let correctingGlucose = correctingGlucose {
-            return .aboveRange(
-                min: min,
-                correcting: correctingGlucose,
-                minTarget: eventualGlucoseTargets.lowerBound,
-                units: minCorrectionUnits
-            )
-        } else {
-            return nil
-        }
 
-        /* dm61 remove special cases
         // Treat the mininum glucose when both are below range
         if min.quantity < minGlucoseTargets.lowerBound &&
             eventual.quantity < eventualGlucoseTargets.lowerBound
@@ -363,7 +327,6 @@ extension Collection where Element: GlucoseValue {
         } else {
             return .inRange
         }
-        */
     }
 
     /// Recommends a temporary basal rate to conform a glucose prediction timeline to a correction range
@@ -398,30 +361,23 @@ extension Collection where Element: GlucoseValue {
         duration: TimeInterval = .minutes(30),
         continuationInterval: TimeInterval = .minutes(11)
     ) -> TempBasalRecommendation? {
-        
         let correction = self.insulinCorrection(
             to: correctionRange,
             at: date,
-            initialThreshold: suspendThreshold ?? correctionRange.minQuantity(at: date),
             suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
             sensitivity: sensitivity.quantity(at: date),
             model: model
         )
 
         let scheduledBasalRate = basalRates.value(at: date)
-        let maxBasalRate = maxBasalRate
+        var maxBasalRate = maxBasalRate
 
-        /* dm61 allow high temping when bg below min target
         // TODO: Allow `highBasalThreshold` to be a configurable setting
-        // (dm61 commented out lines bellow to allow high temping below minTarget but above suspend threshold)
-        // if case .aboveRange(min: let min, correcting: _, minTarget: let highBasalThreshold, units: _)? = correction,
-        //    min.quantity < highBasalThreshold
-        // {
-        //    maxBasalRate = scheduledBasalRate
-        //}
-        
-        
-        */
+        if case .aboveRange(min: let min, correcting: _, minTarget: let highBasalThreshold, units: _)? = correction,
+            min.quantity < highBasalThreshold
+        {
+            maxBasalRate = scheduledBasalRate
+        }
 
         let temp = correction?.asTempBasal(
             scheduledBasalRate: scheduledBasalRate,
@@ -464,7 +420,6 @@ extension Collection where Element: GlucoseValue {
         guard let correction = self.insulinCorrection(
             to: correctionRange,
             at: date,
-            initialThreshold: HKQuantity(unit: HKUnit.milligramsPerDeciliter, doubleValue: 80),
             suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
             sensitivity: sensitivity.quantity(at: date),
             model: model

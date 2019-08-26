@@ -35,11 +35,7 @@ final class LoopDataManager {
 
     weak var delegate: LoopDataManagerDelegate?
 
-    private let standardCorrectionEffectDuration = TimeInterval.minutes(60.0)
-
     private let logger: CategoryLogger
-
-    var suggestedCarbCorrection: Int?
 
     // References to registered notification center observers
     private var notificationObservers: [Any] = []
@@ -108,7 +104,6 @@ final class LoopDataManager {
         retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
 
         overrideHistory.delegate = self
-
         cacheStore.delegate = self
 
         // Observe changes
@@ -172,7 +167,6 @@ final class LoopDataManager {
                 self.insulinEffect = nil
             }
             UserDefaults.appGroup?.loopSettings = settings
-            suggestedCarbCorrection = nil
             notify(forChange: .preferences)
             AnalyticsManager.shared.didChangeLoopSettings(from: oldValue, to: settings)
         }
@@ -261,7 +255,6 @@ final class LoopDataManager {
             NotificationManager.clearLoopNotRunningNotifications()
             NotificationManager.scheduleLoopNotRunningNotifications()
             AnalyticsManager.shared.loopDidSucceed()
-            self.suggestedCarbCorrection = nil
             NotificationCenter.default.post(name: .LoopCompleted, object: self)
         }
     }
@@ -1157,7 +1150,7 @@ extension LoopDataManager {
         }
 
         let pumpStatusDate = doseStore.lastAddedPumpData
-
+        
         let startDate = Date()
 
         guard startDate.timeIntervalSince(glucose.startDate) <= settings.recencyInterval else {
@@ -1198,7 +1191,7 @@ extension LoopDataManager {
         else {
             throw LoopError.configurationError(.generalSettings)
         }
-
+        
         guard lastRequestedBolus == nil
         else {
             // Don't recommend changes if a bolus was just requested.
@@ -1219,9 +1212,10 @@ extension LoopDataManager {
         } else {
             lastTempBasal = nil
         }
+        
         let tempBasal = predictedGlucose.recommendedTempBasal(
             to: glucoseTargetRange,
-            suspendThreshold: settings.suspendThreshold?.quantity,
+            suspendThreshold: currentSuspendThreshold(), // settings.suspendThreshold?.quantity,
             sensitivity: insulinSensitivity,
             model: model,
             basalRates: basalRates,
@@ -1380,6 +1374,7 @@ extension LoopDataManager {
     
 }
 
+
 /// Describes a view into the loop state
 protocol LoopState {
     /// The last-calculated carbs on board
@@ -1453,7 +1448,7 @@ extension LoopDataManager {
             }
             return loopDataManager.recommendedTempBasal
         }
-
+        
         var recommendedBolus: (recommendation: BolusRecommendation, date: Date)? {
             dispatchPrecondition(condition: .onQueue(loopDataManager.dataAccessQueue))
             guard loopDataManager.lastRequestedBolus == nil else {
