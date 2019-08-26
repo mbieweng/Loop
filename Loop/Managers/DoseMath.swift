@@ -182,38 +182,6 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
     return glucoseCorrection / effectedSensitivity
 }
 
-
-
-/// dm61 function required for dynamic super bolus calculation
-/// Computes effect of zero temping on predicted bg at percentEffectDuration
-///
-/// - Parameters:
-///   - percentEffectDuration: The percent of time elapsed of the insulin effect duration
-///
-/// - Returns: effect on bg
-/*
- private func zeroTempEffect(percentEffectDuration: Double) -> Double {
-    // WARNING: code not tested for Loop operating in mmol/L
-    // values in the lines 199-203 may be customized
-    
-    let Aggressiveness = 0.3 // choose between 0 (no super bolus) to 1 (max super bolus)
-    let BasalRate = 0.70 // set to minimum daily basal rate in [U/h]
-    let InsulinSensitivity = 40.0 // set to minimum daily ISF in [(mg/dL)/U]
-    let td = 360.0 // set to td = DIA = 360 min nominally for exponential curves
-    let tp = 55.0 // set to peak insulin action, Novolog = 75 min, FIASP = 55 min for exp curves
-    
-    let τ = tp * (1 - tp / td) / (1 - 2 * tp / td)
-    let a = τ / td
-    let Scale = 6.0 * Aggressiveness * BasalRate * InsulinSensitivity / ( 1 - 2 * a + (1 + 2 * a) * exp(-1/a) )
-    let p = percentEffectDuration
-    let component1 = (-6 * pow(a,2) + 2 * a * (1 - 2 * p) + p * (1 - p)) * exp(-p/a)
-    let component2 = 2 * a * (3 * a - 1) + (1 - 2 * a) * p
-
-    return Scale * ( component1 + component2 )
-}
-*/
-
-
 /// Computes a target glucose value for a correction, at a given time during the insulin effect duration
 ///
 /// - Parameters:
@@ -224,13 +192,12 @@ private func insulinCorrectionUnits(fromValue: Double, toValue: Double, effected
 private func targetGlucoseValue(percentEffectDuration: Double, minValue: Double, maxValue: Double) -> Double {
     // The inflection point in time: before it we use minValue, after it we linearly blend from minValue to maxValue
     let useMinValueUntilPercent = 0.5
-    let use55UntilPercent = 0.2
+    let use55UntilPercent = 0.05
     
     guard percentEffectDuration > use55UntilPercent else {
         return 80.0 // dm61 allow dosing to 55 mg/dL during initial fraction of duration of insulin action. Use case: bolus allowed below suspend threshold if sufficient carbs taken
     }
 
-    
     guard percentEffectDuration > useMinValueUntilPercent else {
         return minValue
     }
