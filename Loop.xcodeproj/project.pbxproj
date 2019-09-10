@@ -368,7 +368,6 @@
 		89E26800229267DF00A3F2AF /* Optional.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E267FE229267DF00A3F2AF /* Optional.swift */; };
 		9E0F6349218D4AC1006E5D21 /* IntegralRetrospectiveCorrectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0F6348218D4AC1006E5D21 /* IntegralRetrospectiveCorrectionTests.swift */; };
 		9E38926722F4C97900AC2801 /* ParameterEstimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E38926622F4C97900AC2801 /* ParameterEstimation.swift */; };
-		9E575201217D87E7002D167B /* IntegralRetrospectiveCorrection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E575200217D87E7002D167B /* IntegralRetrospectiveCorrection.swift */; };
 		9E604099218F8850003D93A9 /* glucose_discrepancies_constant_positive.json in Resources */ = {isa = PBXBuildFile; fileRef = 9E604098218F8850003D93A9 /* glucose_discrepancies_constant_positive.json */; };
 		9E60409B218FFF75003D93A9 /* glucose_discrepancies_single_same_sign.json in Resources */ = {isa = PBXBuildFile; fileRef = 9E60409A218FFF75003D93A9 /* glucose_discrepancies_single_same_sign.json */; };
 		9EAFDFEE218E6CBC0016F9ED /* glucose_discrepancies_sampled.json in Resources */ = {isa = PBXBuildFile; fileRef = 9EAFDFED218E6CBB0016F9ED /* glucose_discrepancies_sampled.json */; };
@@ -1207,6 +1206,9 @@
 		2700D6E423011DF600C007D3 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
+				9E60409A218FFF75003D93A9 /* glucose_discrepancies_single_same_sign.json */,
+				9E604098218F8850003D93A9 /* glucose_discrepancies_constant_positive.json */,
+				9EAFDFED218E6CBB0016F9ED /* glucose_discrepancies_sampled.json */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -1655,7 +1657,6 @@
 		43F78D2C1C8FC58F002152D1 /* LoopTests */ = {
 			isa = PBXGroup;
 			children = (
-				9E0F634A218D4DC8006E5D21 /* Fixtures */,
 				43E2D90F1D20C581004DA55F /* Info.plist */,
 				7D2366E421250E0A0028B67D /* InfoPlist.strings */,
 				43E2D8C91D20B9E7004DA55F /* KeychainManagerTests.swift */,
@@ -2412,7 +2413,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -f $PROJECT_DIR/.gitmodules ]; then\n    echo \"Skipping checkout due to presence of .gitmodules file\"\n    if [ $ACTION = \"install\" ]; then\n        echo \"You're installing: Make sure to keep all submodules up-to-date and run carthage build after changes.\"\n    fi\nelse\n    echo \"Bootstrapping carthage dependencies\"\n    unset LLVM_TARGET_TRIPLE_SUFFIX\n    /usr/local/bin/carthage bootstrap --project-directory \"$SRCROOT\" --cache-builds\nfi\n";
+			shellScript = "if [ -f $PROJECT_DIR/.gitmodules ]; then\n    echo \"Skipping checkout due to presence of .gitmodules file\"\n    if [ $ACTION = \"install\" ]; then\n        echo \"You're installing: Make sure to keep all submodules up-to-date and run carthage build after changes.\"\n    fi\nelse\n    echo \"Bootstrapping carthage dependencies\"\n    unset LLVM_TARGET_TRIPLE_SUFFIX\n#    /usr/local/bin/carthage bootstrap --project-directory \"$SRCROOT\" --cache-builds\nfi\n";
 		};
 		432CF88220D8BCD90066B889 /* Homebrew & Carthage Setup */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3818,7 +3819,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JWS46GTGXX;
 				INFOPLIST_FILE = LoopTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.loudnate.LoopTests;
@@ -3836,7 +3837,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JWS46GTGXX;
 				INFOPLIST_FILE = LoopTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.loudnate.LoopTests;
