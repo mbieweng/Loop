@@ -24,7 +24,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return window?.rootViewController as? RootNavigationController
     }
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         window?.tintColor = UIColor.tintColor
 
         NotificationManager.authorize(delegate: self)
@@ -35,17 +35,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         rootViewController.rootViewController.deviceManager = deviceManager
 
-        GarminConnectManager.shared.deviceManager = deviceManager
-        GarminConnectManager.shared.setup()
- 
-
         return true
-    }
-
-    func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
-        /// Handle Garmin device list 
-        NSLog("Open url");
-        return GarminConnectManager.shared.processDeviceUrl(url: url, options:options)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -58,7 +48,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        deviceManager.pumpManager?.updateBLEHeartbeatPreference()
+        deviceManager.updatePumpManagerBLEHeartbeatPreference()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -66,7 +56,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - Continuity
 
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
 
         if #available(iOS 12.0, *) {
             if userActivity.activityType == NewCarbEntryIntent.className {

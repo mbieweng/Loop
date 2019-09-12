@@ -42,6 +42,9 @@ final class StatusExtensionDataManager {
     }
 
     private func createContext(glucoseUnit: HKUnit, _ completionHandler: @escaping (_ context: StatusExtensionContext?) -> Void) {
+
+        let basalDeliveryState = deviceManager.pumpManager?.status.basalDeliveryState
+
         deviceManager.loopManager.getLoopState { (manager, state) in
             let dataManager = self.deviceManager
             var context = StatusExtensionContext()
@@ -89,22 +92,17 @@ final class StatusExtensionDataManager {
                     interval: second.startDate.timeIntervalSince(first.startDate))
             }
 
-            let date = state.lastTempBasal?.startDate ?? Date()
-            if let scheduledBasal = manager.basalRateScheduleApplyingOverrideHistory?.between(start: date, end: date).first {
-                let netBasal = NetBasal(
-                    lastTempBasal: state.lastTempBasal,
-                    maxBasal: manager.settings.maximumBasalRatePerHour,
-                    scheduledBasal: scheduledBasal
-                )
-
+            if let basalDeliveryState = basalDeliveryState,
+                let basalSchedule = manager.basalRateScheduleApplyingOverrideHistory,
+                let netBasal = basalDeliveryState.getNetBasal(basalSchedule: basalSchedule, settings: manager.settings)
+            {
                 context.netBasal = NetBasalContext(rate: netBasal.rate, percentage: netBasal.percent, start: netBasal.start, end: netBasal.end)
             }
-            
-            
+
             context.batteryPercentage = dataManager.pumpManager?.status.pumpBatteryChargeRemaining
             context.reservoirCapacity = dataManager.pumpManager?.pumpReservoirCapacity
 
-            if let sensorInfo = dataManager.cgmManager?.sensorState {
+            if let sensorInfo = dataManager.sensorState {
                 context.sensor = SensorDisplayableContext(
                     isStateValid: sensorInfo.isStateValid,
                     stateDescription: sensorInfo.stateDescription,
@@ -114,7 +112,7 @@ final class StatusExtensionDataManager {
             }
             
             if let pumpManagerHUDProvider = dataManager.pumpManagerHUDProvider {
-                context.pumpManagerHUDViewsContext = PumpManagerHUDViewsContext(pumpManagerHUDViewsRawValue: PumpManagerHUDViewsRawValueFromHudProvider(pumpManagerHUDProvider))
+                context.pumpManagerHUDViewsContext = PumpManagerHUDViewsContext(pumpManagerHUDViewsRawValue: PumpManagerHUDViewsRawValueFromHUDProvider(pumpManagerHUDProvider))
             }
 
             completionHandler(context)

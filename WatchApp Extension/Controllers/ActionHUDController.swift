@@ -22,7 +22,17 @@ final class ActionHUDController: HUDInterfaceController {
 
     private lazy var preMealButtonGroup = ButtonGroup(button: preMealButton, image: preMealButtonImage, background: preMealButtonBackground, onBackgroundColor: .carbsColor, offBackgroundColor: .darkCarbsColor)
 
-    private lazy var overrideButtonGroup = ButtonGroup(button: overrideButton, image: overrideButtonImage, background: overrideButtonBackground, onBackgroundColor: .workoutColor, offBackgroundColor: .darkWorkoutColor)
+    private lazy var overrideButtonGroup = ButtonGroup(button: overrideButton, image: overrideButtonImage, background: overrideButtonBackground, onBackgroundColor: .overrideColor, offBackgroundColor: .darkOverrideColor)
+
+    @IBOutlet var overrideButtonLabel: WKInterfaceLabel! {
+        didSet {
+            if FeatureFlags.sensitivityOverridesEnabled {
+                overrideButtonLabel.setText(NSLocalizedString("Override", comment: "The text for the Watch button for enabling a temporary override"))
+            } else {
+                overrideButtonLabel.setText(NSLocalizedString("Workout", comment: "The text for the Watch button for enabling workout mode"))
+            }
+        }
+    }
 
     override func willActivate() {
         super.willActivate()
@@ -53,10 +63,18 @@ final class ActionHUDController: HUDInterfaceController {
             preMealButtonGroup.state = .off
         }
 
-        if loopManager.settings.overridePresets.isEmpty {
+        if !canEnableOverride {
             overrideButtonGroup.state = .disabled
         } else if overrideButtonGroup.state == .disabled {
             overrideButtonGroup.state = .off
+        }
+    }
+
+    private var canEnableOverride: Bool {
+        if FeatureFlags.sensitivityOverridesEnabled {
+            return !loopManager.settings.overridePresets.isEmpty
+        } else {
+            return loopManager.settings.legacyWorkoutTargetRange != nil
         }
     }
 
@@ -68,7 +86,7 @@ final class ActionHUDController: HUDInterfaceController {
         case .preMeal?:
             preMealButtonGroup.state = .on
             overrideButtonGroup.turnOff()
-        case .preset?, .custom?:
+        case .legacyWorkout?, .preset?, .custom?:
             preMealButtonGroup.turnOff()
             overrideButtonGroup.state = .on
         }
@@ -91,7 +109,12 @@ final class ActionHUDController: HUDInterfaceController {
         if overrideButtonGroup.state == .on {
             sendOverride(nil)
         } else {
-            presentController(withName: OverrideSelectionController.className, context: self as OverrideSelectionControllerDelegate)
+            if FeatureFlags.sensitivityOverridesEnabled {
+                presentController(withName: OverrideSelectionController.className, context: self as OverrideSelectionControllerDelegate)
+            } else {
+                let override = loopManager.settings.legacyWorkoutOverride(for: .infinity)
+                sendOverride(override)
+            }
         }
     }
 
@@ -105,17 +128,21 @@ final class ActionHUDController: HUDInterfaceController {
         settings.scheduleOverride = override
         let userInfo = LoopSettingsUserInfo(settings: settings)
         do {
-            try WCSession.default.sendSettingsUpdateMessage(userInfo, completionHandler: { error in
+            try WCSession.default.sendSettingsUpdateMessage(userInfo, completionHandler: { (result) in
                 DispatchQueue.main.async {
                     self.pendingMessageResponses -= 1
-                    if let error = error {
+
+                    switch result {
+                    case .success(let context):
+                        if self.pendingMessageResponses == 0 {
+                            self.loopManager.settings.scheduleOverride = override
+                        }
+
+                        ExtensionDelegate.shared().loopManager.updateContext(context)
+                    case .failure(let error):
                         if self.pendingMessageResponses == 0 {
                             ExtensionDelegate.shared().present(error)
                             self.updateForOverrideContext(self.loopManager.settings.scheduleOverride?.context)
-                        }
-                    } else {
-                        if self.pendingMessageResponses == 0 {
-                            self.loopManager.settings.scheduleOverride = override
                         }
                     }
                 }

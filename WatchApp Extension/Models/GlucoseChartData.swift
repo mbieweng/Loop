@@ -24,7 +24,7 @@ struct GlucoseChartData {
         }
     }
 
-    private(set) var historicalGlucoseRange: Range<HKQuantity>?
+    private(set) var historicalGlucoseRange: ClosedRange<HKQuantity>?
 
     var predictedGlucose: [SampleValue]? {
         didSet {
@@ -32,7 +32,7 @@ struct GlucoseChartData {
         }
     }
 
-    private(set) var predictedGlucoseRange: Range<HKQuantity>?
+    private(set) var predictedGlucoseRange: ClosedRange<HKQuantity>?
 
     init(unit: HKUnit?, correctionRange: GlucoseRangeSchedule?, scheduleOverride: TemporaryScheduleOverride?, historicalGlucose: [SampleValue]?, predictedGlucose: [SampleValue]?) {
         self.unit = unit
@@ -44,7 +44,7 @@ struct GlucoseChartData {
         self.predictedGlucoseRange = predictedGlucose?.quantityRange
     }
 
-    func chartableGlucoseRange(from interval: DateInterval) -> Range<HKQuantity> {
+    func chartableGlucoseRange(from interval: DateInterval) -> ClosedRange<HKQuantity> {
         let unit = self.unit ?? .milligramsPerDeciliter
 
         // Defaults
@@ -56,7 +56,7 @@ struct GlucoseChartData {
             max = Swift.max(max, correction.value.upperBound.doubleValue(for: unit))
         }
 
-        if let override = activeOverrideQuantityRange {
+        if let override = activeScheduleOverride?.settings.targetRange {
             min = Swift.min(min, override.lowerBound.doubleValue(for: unit))
             max = Swift.max(max, override.upperBound.doubleValue(for: unit))
         }
@@ -79,7 +79,7 @@ struct GlucoseChartData {
         let lowerBound = HKQuantity(unit: unit, doubleValue: min)
         let upperBound = HKQuantity(unit: unit, doubleValue: max)
 
-        return lowerBound..<upperBound
+        return lowerBound...upperBound
     }
 
     var activeScheduleOverride: TemporaryScheduleOverride? {
@@ -87,17 +87,6 @@ struct GlucoseChartData {
             return nil
         }
         return override
-    }
-
-    private var activeOverrideQuantityRange: Range<HKQuantity>? {
-        guard let targetRange = activeScheduleOverride?.settings.targetRange else {
-            return nil
-        }
-
-        let unit = self.unit ?? .milligramsPerDeciliter
-        let lowerBound = HKQuantity(unit: unit, doubleValue: targetRange.minValue)
-        let upperBound = HKQuantity(unit: unit, doubleValue: targetRange.maxValue)
-        return lowerBound..<upperBound
     }
 }
 
@@ -118,7 +107,7 @@ private extension HKUnit {
         if self == .milligramsPerDeciliter {
             return 75
         } else {
-            return 3
+            return 4
         }
     }
 }

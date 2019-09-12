@@ -6,8 +6,8 @@
 //  Copyright © 2019 LoopKit Authors. All rights reserved.
 //
 
-import LoopCore
 import LoopKitUI
+import LoopCore
 
 
 extension OverrideSelectionViewController: IdentifiableClass { }
