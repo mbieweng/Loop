@@ -223,6 +223,8 @@ final class LoopDataManager {
     private let lockedBasalDeliveryState: Locked<PumpManagerStatus.BasalDeliveryState?>
 
     fileprivate var lastRequestedBolus: DoseEntry?
+    
+    fileprivate var parameterEstimation: ParameterEstimation?
 
     /// The last date at which a loop completed, from prediction to dose (if dosing is enabled)
     var lastLoopCompleted: Date? {
@@ -1060,6 +1062,100 @@ extension LoopDataManager {
             }
         }
     }
+    
+    /// Collects data over past 24 hours and runs parameter estimation
+    /// - Throws:
+    ///     - LoopError.missingDataError
+    fileprivate func computeParameterEstimates() throws {
+        dispatchPrecondition(condition: .onQueue(dataAccessQueue))
+        let updateGroup = DispatchGroup()
+        
+        let startEstimationPeriod  =  Date(timeIntervalSinceNow: .hours(-24))
+        let earliestEffectDate = startEstimationPeriod.addingTimeInterval(.hours(-8))
+        
+        // Collect data for parameter estimation: glucose, insulin effect, basal effect, carb statuses
+        
+        // Collect blood glucose values
+        var historicalGlucose: [GlucoseValue] = []
+        var latestGlucoseDate: Date?
+        updateGroup.enter()
+        glucoseStore.getCachedGlucoseSamples(start: earliestEffectDate) { (values) in
+            historicalGlucose = values
+            latestGlucoseDate = values.last?.startDate
+            updateGroup.leave()
+        }
+        _ = updateGroup.wait(timeout: .distantFuture)
+        
+        guard let endEstimationPeriod = latestGlucoseDate else {
+            throw LoopError.missingDataError(.glucose)
+        }
+        
+        // Collect insulin effect time series
+        var historicalInsulinEffect: [GlucoseEffect]?
+        updateGroup.enter()
+        doseStore.getGlucoseEffects(start: earliestEffectDate) { (result) -> Void in
+            switch result {
+            case .failure(let error):
+                self.logger.error(error)
+                historicalInsulinEffect = nil
+            case .success(let effects):
+                historicalInsulinEffect = effects.filterDateRange(earliestEffectDate, endEstimationPeriod)
+            }
+            
+            updateGroup.leave()
+        }
+        _ = updateGroup.wait(timeout: .distantFuture)
+        
+        // Collect effects of suspending insulin delivery
+        let historicalBasalEffect = updateBasalEffect(startDate: earliestEffectDate, endDate: endEstimationPeriod)
+        
+        // Collect carb statuses based on dynamic carb absorption algorithm
+        var carbStatuses: [CarbStatus<StoredCarbEntry>] = []
+        updateGroup.enter()
+        carbStore.getCarbStatus(start: earliestEffectDate, effectVelocities:  insulinCounteractionEffects) { (result) in
+            switch result {
+            case .success(let status):
+                carbStatuses = status
+            case .failure(let error):
+                self.logger.error(error)
+            }
+            
+            updateGroup.leave()
+        }
+        _ = updateGroup.wait(timeout: .distantFuture)
+        
+        // ensure that carb statuses are sorted in chronological order
+        let carbStatusesSorted = carbStatuses.sorted(by: { $0.startDate < $1.startDate })
+        
+        // instantiate parameterEstimation and compute parameter estimates
+        self.parameterEstimation = ParameterEstimation(startDate: startEstimationPeriod, endDate: endEstimationPeriod, glucose: historicalGlucose, insulinEffect: historicalInsulinEffect, basalEffect: historicalBasalEffect, carbStatuses: carbStatusesSorted)
+        self.parameterEstimation?.update()
+        
+    }
+    
+    /// Generates glucose effect of suspending insulin delivery over a period of time
+    private func updateBasalEffect(startDate: Date, endDate: Date) -> [GlucoseEffect] {
+        
+        var basalEffect: [GlucoseEffect] = []
+        // Get settings, otherwise clear effect and throw error
+        guard
+            let insulinModel = insulinModelSettings?.model,
+            let insulinSensitivity = insulinSensitivitySchedule,
+            let basalRateSchedule = basalRateSchedule
+            else {
+                return(basalEffect)
+        }
+        
+        let insulinActionDuration = insulinModel.effectDuration
+        
+        // use LoopKit method tempBasalGlucoseEffects to generate zero temp effects
+        let startZeroTempDose = startDate.addingTimeInterval(-insulinActionDuration)
+        let endZeroTempDose = endDate
+        let zeroTemp = DoseEntry(type: .tempBasal, startDate: startZeroTempDose, endDate: endZeroTempDose, value: 0.0, unit: DoseUnit.unitsPerHour)
+        basalEffect = zeroTemp.tempBasalGlucoseEffects(insulinModel: insulinModel, insulinSensitivity: insulinSensitivity, basalRateSchedule: basalRateSchedule).filterDateRange(startDate, endDate)
+        return(basalEffect)
+    }
+    
 }
 
 /// Describes a view into the loop state
@@ -1180,6 +1276,34 @@ extension LoopDataManager {
             handler(self, LoopStateView(loopDataManager: self, updateError: updateError))
         }
     }
+    
+    /// Executes a closure with access to the current state of Parameter Estimation
+    ///
+    /// This operation is performed asynchronously and the closure will be executed on an arbitrary background queue.
+    ///
+    /// - Parameter handler: A closure called when the state is ready
+    /// - Parameter manager: The loop manager
+    /// - Parameter state: The current state of the manager. This is invalid to access outside of the closure.
+    func getParameterEstimationState(_ handler: @escaping (_ manager: LoopDataManager, _ state: LoopState) -> Void) {
+        dataAccessQueue.async {
+            var updateError: Error?
+            
+            do {
+                try self.update()
+            } catch let error {
+                updateError = error
+            }
+            
+            do {
+                try self.computeParameterEstimates()
+            } catch let error {
+                updateError = error
+            }
+            
+            handler(self, LoopStateView(loopDataManager: self, updateError: updateError))
+        }
+    }
+    
 }
 
 
@@ -1274,6 +1398,26 @@ extension LoopDataManager {
             }
         }
     }
+    
+    /// Generates a parameter estimation report
+    ///
+    /// This operation is performed asynchronously and the completion will be executed on an arbitrary background queue.
+    ///
+    /// - parameter completion: A closure called once the report has been generated. The closure takes a single argument of the report string.
+    func generateParameterEstimationReport(_ completion: @escaping (_ report: String) -> Void) {
+        getParameterEstimationState { (manager, state) in
+            
+            var entries: [String] = []
+            
+            self.parameterEstimation?.generateReport { (report) in
+                entries.append(report)
+                entries.append("")
+            }
+            completion(entries.joined(separator: "\n"))
+            
+        }
+    }
+    
 }
 
 
