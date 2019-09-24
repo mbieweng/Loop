@@ -23,7 +23,7 @@
 
 /* Begin PBXBuildFile section */
 		2700D6E7230127E600C007D3 /* IntegralRetrospectiveCorrection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E575200217D87E7002D167B /* IntegralRetrospectiveCorrection.swift */; };
-		27825614230A32F30017D824 /* OmniKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1C7F1BF220D675700689850 /* OmniKit.framework */; };
+		27825614230A32F30017D824 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		27D46934221BA618002A494C /* FPUDelayTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D46932221BA618002A494C /* FPUDelayTableViewController.swift */; };
 		27D46935221BA618002A494C /* FPURatioTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D46933221BA618002A494C /* FPURatioTableViewController.swift */; };
 		43027F0F1DFE0EC900C51989 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F526D5E1DF2459000A04910 /* HKUnit.swift */; };
@@ -1077,7 +1077,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				434FB6461D68F1CD007B9C70 /* Amplitude.framework in Frameworks */,
-				27825614230A32F30017D824 /* OmniKit.framework in Frameworks */,
+				27825614230A32F30017D824 /* (null) in Frameworks */,
 				43A8EC6F210E622700A81379 /* CGMBLEKitUI.framework in Frameworks */,
 				438A95A81D8B9B24009D12E1 /* CGMBLEKit.framework in Frameworks */,
 				43C246A81D89990F0031F8D1 /* Crypto.framework in Frameworks */,
@@ -1851,16 +1851,6 @@
 				43F78D4B1C914197002152D1 /* LoopKit.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		9E0F634A218D4DC8006E5D21 /* Fixtures */ = {
-			isa = PBXGroup;
-			children = (
-				9EAFDFED218E6CBB0016F9ED /* glucose_discrepancies_sampled.json */,
-				9E604098218F8850003D93A9 /* glucose_discrepancies_constant_positive.json */,
-				9E60409A218FFF75003D93A9 /* glucose_discrepancies_single_same_sign.json */,
-			);
-			path = Fixtures;
 			sourceTree = "<group>";
 		};
 		C16DA84022E8E104008624C2 /* Plugins */ = {
@@ -3878,7 +3868,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JWS46GTGXX;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -3900,7 +3890,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JWS46GTGXX;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";

@@ -50,5 +50,5 @@ extension UIColor {
     
     @nonobjc static let pumpStatusNormal = UIColor.systemGray
 
-    @nonobjc static let thresholdLineColor = UIColor.HIGRedColor()
+    @nonobjc static let thresholdLineColor = UIColor.red
 }

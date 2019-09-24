@@ -26,5 +26,5 @@ extension UIColor {
 
     @nonobjc static let subtitleLabelColor = UIColor(white: 0, alpha: 0.4)
     
-    @nonobjc static let thresholdLineColor = UIColor.HIGRedColor()
+    @nonobjc static let thresholdLineColor = UIColor.red
 }
