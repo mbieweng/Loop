@@ -1853,6 +1853,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		9E0F634A218D4DC8006E5D21 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				9EAFDFED218E6CBB0016F9ED /* glucose_discrepancies_sampled.json */,
+				9E604098218F8850003D93A9 /* glucose_discrepancies_constant_positive.json */,
+				9E60409A218FFF75003D93A9 /* glucose_discrepancies_single_same_sign.json */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
 		C16DA84022E8E104008624C2 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
@@ -3391,7 +3401,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LOCALIZED_STRING_MACRO_NAMES = (
 					NSLocalizedString,
 					CFLocalizedString,
@@ -3457,7 +3467,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LOCALIZED_STRING_MACRO_NAMES = (
 					NSLocalizedString,
 					CFLocalizedString,
