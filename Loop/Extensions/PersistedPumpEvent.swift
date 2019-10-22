@@ -46,9 +46,9 @@ extension PersistedPumpEvent {
                 unabsorbed: 0,  // The pump's reported IOB isn't relevant, nor stored
                 duration: duration,
                 carbs: 0,
-                ratio: 0
+                ratio: 0,
                 /// MB Temp fix for duplicate boluses
-                //id: dose.syncIdentifier
+                id: dose.syncIdentifier
             )
         case .resume:
             return PumpResumeTreatment(timestamp: dose.startDate, enteredBy: source)
@@ -63,11 +63,11 @@ extension PersistedPumpEvent {
                 absolute: dose.unitsPerHour,
                 
                 
-                duration: Int(dose.endDate.timeIntervalSince(dose.startDate).minutes)
                 /// MB Temp fix for duplicate boluses
-                //duration: dose.endDate.timeIntervalSince(dose.startDate),
-                // amount: dose.deliveredUnits,
-                // id: dose.syncIdentifier
+                // duration: Int(dose.endDate.timeIntervalSince(dose.startDate).minutes)
+                duration: dose.endDate.timeIntervalSince(dose.startDate),
+                amount: dose.deliveredUnits,
+                id: dose.syncIdentifier
             )
         }
     }

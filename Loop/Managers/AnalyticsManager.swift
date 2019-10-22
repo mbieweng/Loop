@@ -159,8 +159,8 @@ final class AnalyticsManager: IdentifiableClass {
         logEvent("CGM Fetch", outOfSession: true)
     }
 
-    func loopDidSucceed() {
-        logEvent("Loop success", outOfSession: true)
+    func loopDidSucceed(_ duration: TimeInterval) {
+        logEvent("Loop success", withProperties: ["duration": duration], outOfSession: true)
     }
 
     func loopDidError() {
