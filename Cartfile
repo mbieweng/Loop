@@ -2,6 +2,6 @@ github "mbieweng/LoopKit" "mb"
 github "mbieweng/CGMBLEKit" "mb"
 github "mbieweng/dexcom-share-client-swift" "mb"
 github "mbieweng/G4ShareSpy" "mb" 
-github "mbieweng/rileylink_ios" "mb"
+github "mbieweng/rileylink_ios" "f670d564464bbbb25ba2663a80aa6c823b702a37"
 github "LoopKit/Amplitude-iOS" "decreepify"
 github "i-schuetz/SwiftCharts" == 0.6.5
