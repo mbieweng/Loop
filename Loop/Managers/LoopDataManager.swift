@@ -889,8 +889,8 @@ extension LoopDataManager {
         // High and low alerts
         if let glucose = predictedGlucose {
             
-            // 45 min check
-            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(45*60) }.min{ $0.quantity < $1.quantity }) {
+            // 30 min check
+            if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.min{ $0.quantity < $1.quantity }) {
                 let lowAlertThreshold = GlucoseThreshold (unit: unit, value:80)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
