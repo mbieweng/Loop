@@ -11,6 +11,20 @@ import HealthKit
 public struct LoopSettings: Equatable {
     public var dosingEnabled = false
 
+    public var microbolusesEnabled = false
+
+    public var microbolusesSize = 30.0
+
+    public var microbolusesWithoutCarbsEnabled = false
+
+    public var microbolusesWithoutCarbsSize = 30.0
+
+    public var microbolusesSafeMode: Microbolus.SafeMode = .enabled
+
+    public var microbolusesMinimumBolusSize = 0.0
+
+    public var microbolusesOpenBolusScreen = false
+
     public let dynamicCarbAbsorptionEnabled = true
 
     public static let defaultCarbAbsorptionTimes: CarbStore.DefaultAbsorptionTimes = (fast: .hours(0.5), medium: .hours(2.5), slow: .hours(4))
@@ -60,7 +74,7 @@ public struct LoopSettings: Equatable {
     public var glucoseUnit: HKUnit? {
         return glucoseTargetRangeSchedule?.unit
     }
-    
+
     // MARK - Push Notifications
     
     public var deviceToken: Data?
@@ -204,6 +218,35 @@ extension LoopSettings: RawRepresentable {
             self.dosingEnabled = dosingEnabled
         }
 
+        if let microbolusesEnabled = rawValue["microbolusesEnabled"] as? Bool {
+            self.microbolusesEnabled = microbolusesEnabled
+        }
+
+        if let microbolusesSize = rawValue["microbolusesSize"] as? Double {
+            self.microbolusesSize = microbolusesSize
+        }
+
+        if let microbolusesWithoutCarbsEnabled = rawValue["microbolusesWithoutCarbsEnabled"] as? Bool {
+            self.microbolusesWithoutCarbsEnabled = microbolusesWithoutCarbsEnabled
+        }
+
+        if let microbolusesWithoutCarbsSize = rawValue["microbolusesWithoutCarbsSize"] as? Double {
+            self.microbolusesWithoutCarbsSize = microbolusesWithoutCarbsSize
+        }
+
+        if let microbolusesSafeModeRaw = rawValue["microbolusesSafeMode"] as? Int,
+            let microbolusesSafeMode = Microbolus.SafeMode(rawValue: microbolusesSafeModeRaw) {
+            self.microbolusesSafeMode = microbolusesSafeMode
+        }
+
+        if let microbolusesMinimumBolusSize = rawValue["microbolusesMinimumBolusSize"] as? Double {
+            self.microbolusesMinimumBolusSize = microbolusesMinimumBolusSize
+        }
+
+        if let microbolusesOpenBolusScreen = rawValue["microbolusesOpenBolusScreen"] as? Bool {
+            self.microbolusesOpenBolusScreen = microbolusesOpenBolusScreen
+        }
+
         if let glucoseRangeScheduleRawValue = rawValue["glucoseTargetRangeSchedule"] as? GlucoseRangeSchedule.RawValue {
             self.glucoseTargetRangeSchedule = GlucoseRangeSchedule(rawValue: glucoseRangeScheduleRawValue)
 
@@ -256,7 +299,14 @@ extension LoopSettings: RawRepresentable {
             "version": LoopSettings.version,
             "dosingEnabled": dosingEnabled,
             "overridePresets": overridePresets.map { $0.rawValue },
-            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled
+            "integralRetrospectiveCorrectionEnabled": integralRetrospectiveCorrectionEnabled,
+            "microbolusesEnabled": microbolusesEnabled,
+            "microbolusesSize": microbolusesSize,
+            "microbolusesWithoutCarbsEnabled": microbolusesWithoutCarbsEnabled,
+            "microbolusesWithoutCarbsSize": microbolusesWithoutCarbsSize,
+            "microbolusesSafeMode": microbolusesSafeMode.rawValue,
+            "microbolusesMinimumBolusSize": microbolusesMinimumBolusSize,
+            "microbolusesOpenBolusScreen": microbolusesOpenBolusScreen
         ]
 
         raw["glucoseTargetRangeSchedule"] = glucoseTargetRangeSchedule?.rawValue

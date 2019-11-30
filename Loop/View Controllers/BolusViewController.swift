@@ -38,7 +38,9 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
         let amount = bolusRecommendation?.amount ?? 0
         bolusAmountTextField.accessibilityHint = String(format: NSLocalizedString("Recommended Bolus: %@ Units", comment: "Accessibility hint describing recommended bolus units"), spellOutFormatter.string(from: amount) ?? "0")
 
-        acceptRecommendedBolus()
+        //acceptRecommendedBolus()
+        //bolusAmountTextField?.text = bolusUnitsFormatter.string(from: amount/2)
+                         
         //bolusAmountTextField.selectAll(nil)
         
         bolusAmountTextField.becomeFirstResponder()
@@ -47,8 +49,10 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        acceptRecommendedBolus()
-        
+        //acceptRecommendedBolus()
+        let amount = round((bolusRecommendation?.amount ?? 0)*6)/10
+        bolusAmountTextField?.text = bolusUnitsFormatter.string(from:  amount)
+            
     }
 
     func generateActiveInsulinDescription(activeInsulin: Double?, pendingInsulin: Double?) -> String
@@ -78,7 +82,6 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
         didSet {
             let amount = bolusRecommendation?.amount ?? 0
             recommendedBolusAmountLabel?.text = bolusUnitsFormatter.string(from: amount)
-           // acceptRecommendedBolus();
             updateNotice()
             if let pendingInsulin = bolusRecommendation?.pendingInsulin {
                 self.pendingInsulin = pendingInsulin
