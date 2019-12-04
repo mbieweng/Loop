@@ -1072,8 +1072,8 @@ extension LoopDataManager {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
         let maximumHyperLoopAgressiveness = 0.50
-        let hyperLoopGlucoseThreshold = 180.0
-        let hyperLoopGlucoseWindow = 20.0
+        let hyperLoopGlucoseThreshold = 170.0
+        let hyperLoopGlucoseWindow = 30.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
         let hyperLoopAgressiveness = maximumHyperLoopAgressiveness * glucoseError / hyperLoopGlucoseWindow
         fractionalZeroTempEffect = effectFraction(glucoseEffect: zeroTempEffect, fraction: hyperLoopAgressiveness)
@@ -1370,6 +1370,14 @@ extension LoopDataManager {
             completion(false, nil)
             return
         }
+        
+        let noLow = !(lowTrend && glucose.quantity < HKQuantity.init(unit: HKUnit.milligramsPerDeciliter, doubleValue: 160))
+        guard noLow else {
+            logger.debug("Glucose is less than 160 with downtrend. Microbolus is not allowed.")
+            completion(false, nil)
+            return
+        }
+        
 
         let minSize = 30.0
 
