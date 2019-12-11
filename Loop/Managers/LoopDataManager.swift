@@ -1304,6 +1304,12 @@ extension LoopDataManager {
             return
         }
 
+        guard let bolusState = delegate?.bolusState, case .none = bolusState else {
+            logger.debug("Already bolusing. Cancel microbolus calculation.")
+            completion(false, nil)
+            return
+        }
+
         let cob = carbsOnBoard?.quantity.doubleValue(for: .gram()) ?? 0
         let cobChek = (cob > 0 && settings.microbolusSettings.enabled) || (cob == 0 && settings.microbolusSettings.enabledWithoutCarbs)
 
@@ -1861,6 +1867,9 @@ protocol LoopDataManagerDelegate: class {
     ///   - bolus: The new recommended micro bolus
     ///   - completion: A closure called once on completion
     func loopDataManager(_ manager: LoopDataManager, didRecommendMicroBolus bolus: (amount: Double, date: Date), completion: @escaping (_ error: Error?) -> Void) -> Void
+
+    /// Current bolus state
+    var bolusState: PumpManagerStatus.BolusState? { get }
 }
 
 private extension TemporaryScheduleOverride {
