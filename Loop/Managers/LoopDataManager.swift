@@ -1361,13 +1361,6 @@ extension LoopDataManager {
             completion(false, nil)
             return
         }
-        
-        guard let rangeMin = settings.scheduleOverride?.settings.targetRange?.lowerBound, glucose.quantity > rangeMin else {
-            logger.debug("Current glucose is below the min target range. Microbolus is not allowed.")
-                       completion(false, nil)
-                       return
-        }
-                  
 
         let lowTrend = controlGlucoseQuantity.map { $0 < glucose.quantity } ?? true
 
@@ -1385,6 +1378,11 @@ extension LoopDataManager {
             return
         }
         
+        guard let rangeMin = settings.scheduleOverride?.settings.targetRange?.lowerBound, glucose.quantity > rangeMin else {
+            logger.debug("Current glucose is below the min target range. Microbolus is not allowed.")
+            completion(false, nil)
+            return
+        }
 
         let minSize = 30.0
 
