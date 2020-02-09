@@ -86,7 +86,7 @@ final class LoopDataManager {
             carbRatioSchedule: carbRatioSchedule,
             insulinSensitivitySchedule: insulinSensitivitySchedule,
             overrideHistory: overrideHistory,
-            carbAbsorptionModel: .adaptiveRateNonlinear
+            carbAbsorptionModel: .nonlinear
         )
 
         totalRetrospectiveCorrection = nil
@@ -967,7 +967,8 @@ extension LoopDataManager {
             }
             
             // Bolus needed
-            do {
+           
+            if(!settings.microbolusSettings.enabled) {
                 let minAlertBolus : Double = 2.0;
                 let minTime : Double = 9 * 60 // sec;
                 let bolusAmount : Double = recommendedBolus?.recommendation.amount ?? 0
@@ -983,8 +984,8 @@ extension LoopDataManager {
                 } else {
                     bolusAlertStartTime = Date.init();
                 }
-                
             }
+            
             
         }
         
@@ -1072,8 +1073,8 @@ extension LoopDataManager {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
         let maximumHyperLoopAgressiveness = 0.50
-        let hyperLoopGlucoseThreshold = 170.0
-        let hyperLoopGlucoseWindow = 30.0
+        let hyperLoopGlucoseThreshold = 160.0
+        let hyperLoopGlucoseWindow = 60.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
         let hyperLoopAgressiveness = maximumHyperLoopAgressiveness * glucoseError / hyperLoopGlucoseWindow
         fractionalZeroTempEffect = effectFraction(glucoseEffect: zeroTempEffect, fraction: hyperLoopAgressiveness)
@@ -1363,7 +1364,7 @@ extension LoopDataManager {
         }
 
         guard let threshold = settings.suspendThreshold, glucose.quantity > threshold.quantity else {
-            logger.debug("Current glucose is below the suspend threshold.")
+            logger.debug("Current glucose is below the suspend threshold. Microbolus is not allowed.")
             completion(false, nil)
             return
         }
@@ -1384,12 +1385,14 @@ extension LoopDataManager {
             return
         }
         
-        guard let rangeMin = settings.scheduleOverride?.settings.targetRange?.lowerBound, glucose.quantity > rangeMin else {
-            logger.debug("Current glucose is below the min target range. Microbolus is not allowed.")
-            completion(false, nil)
-            return
+        if(settings.scheduleOverrideEnabled()) {
+            guard let rangeMin = settings.scheduleOverride?.settings.targetRange?.lowerBound, glucose.quantity > rangeMin else {
+                logger.debug("Current glucose is below the min target range. Microbolus is not allowed.")
+                completion(false, nil)
+                return
+            }
         }
-
+        
         let minSize = 30.0
 
         var maxBasalMinutes: Double = {
