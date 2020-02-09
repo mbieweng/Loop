@@ -163,7 +163,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
                 reloadGroup.enter()
                 manager.carbStore.getGlucoseEffects(start: chartStartDate, effectVelocities: manager.settings.dynamicCarbAbsorptionEnabled ? insulinCounteractionEffects : nil) { (result) in
                     switch result {
-                    case .success(let effects):
+                    case .success(let (_, effects)):
                         carbEffects = effects
                     case .failure(let error):
                         carbEffects = []
@@ -483,7 +483,7 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     override func restoreUserActivityState(_ activity: NSUserActivity) {
         switch activity.activityType {
         case NSUserActivity.newCarbEntryActivityType:
-            performSegue(withIdentifier: CarbEntryEditViewController.className, sender: activity)
+            performSegue(withIdentifier: CarbEntryViewController.className, sender: activity)
         default:
             break
         }
@@ -499,18 +499,16 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         }
 
         switch targetViewController {
-        case let vc as BolusViewController:
-            vc.configureWithLoopManager(self.deviceManager.loopManager,
-                recommendation: sender as? BolusRecommendation,
-                glucoseUnit: self.carbEffectChart.glucoseUnit
-            )
-        case let vc as CarbEntryEditViewController:
+        case is BolusViewController:
+            assertionFailure()
+        case let vc as CarbEntryViewController:
             if let selectedCell = sender as? UITableViewCell, let indexPath = tableView.indexPath(for: selectedCell), indexPath.row < carbStatuses.count {
                 vc.originalCarbEntry = carbStatuses[indexPath.row].entry
             } else if let activity = sender as? NSUserActivity {
                 vc.restoreUserActivityState(activity)
             }
 
+            vc.deviceManager = deviceManager
             vc.defaultAbsorptionTimes = deviceManager.loopManager.carbStore.defaultAbsorptionTimes
             vc.preferredUnit = deviceManager.loopManager.carbStore.preferredUnit
         default:
@@ -518,75 +516,41 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         }
     }
 
-    /// Unwind segue action from the CarbEntryEditViewController
-    ///
-    /// - parameter segue: The unwind segue
-    ///
-    /// RSS - This triggers when you edit an existing carb value and hit save.
+    @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {}
     
-    @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
-        guard let editVC = segue.source as? CarbEntryEditViewController,
-            let updatedEntry = editVC.updatedCarbEntry
-            else {
-                return
+    @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {
+        guard let bolusViewController = segue.source as? BolusViewController else {
+            return
         }
 
-        let notOpenBolusScreen = deviceManager.loopManager.settings.notOpenBolusScreen
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: editVC.originalCarbEntry) { (result) in
+        if let updatedEntry = bolusViewController.updatedCarbEntry {
+            if #available(iOS 12.0, *), bolusViewController.originalCarbEntry == nil {
+                let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
+                interaction.donate { (error) in
+                    if let error = error {
+                        os_log(.error, "Failed to donate intent: %{public}@", String(describing: error))
+                    }
+                }
+            }
+
+            deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry, replacing: bolusViewController.originalCarbEntry) { (result) in
                 DispatchQueue.main.async {
                     switch result {
-                    case .success(let recommendation):
-                        guard !notOpenBolusScreen else { return }
-                        if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
-                            self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
+                    case .success:
+                        // Enact the user-entered bolus
+                        if let bolus = bolusViewController.bolus, bolus > 0 {
+                            self.deviceManager.enactBolus(units: bolus) { _ in }
                         }
                     case .failure(let error):
                         // Ignore bolus wizard errors
                         if error is CarbStore.CarbStoreError {
-                             self.present(UIAlertController(with: error), animated: true)
-            
+                            self.present(UIAlertController(with: error), animated: true)
                         }
                     }
-            }
-        }
-        
-        // Now run a second time for the fat and protein...
-        guard let editFPUVC = segue.source as? CarbEntryEditViewController
-            else {
-                return
-            }
-        
-        editFPUVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0 // Safer default.
-        editFPUVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
-
-        guard let updatedFPUEntry = editFPUVC.updatedFPCarbEntry
-            else {
-                return
-        }
-    
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPUEntry, replacing: editFPUVC.originalCarbEntry) { (result) in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    // Never give bolus for fat and protein.
-                    print("Not recommending bolus for fat or protein.")
-                case .failure(let error):
-                    // Ignore bolus wizard errors
-                    if error is CarbStore.CarbStoreError {
-                        self.present(UIAlertController(with: error), animated: true)
-                    }
                 }
             }
+        } else if let bolus = bolusViewController.bolus, bolus > 0 {
+            deviceManager.enactBolus(units: bolus) { _ in }
         }
     }
-    
-    @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {
-        if let bolusViewController = segue.source as? BolusViewController {
-            if let bolus = bolusViewController.bolus, bolus > 0 {
-                deviceManager.enactBolus(units: bolus) { (_) in
-                }
-            }
-        }
-    }
-
 }

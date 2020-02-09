@@ -316,7 +316,7 @@ final class StatusTableViewController: ChartsTableViewController {
         // TODO: Don't always assume currentContext.contains(.status)
         reloadGroup.enter()
         self.deviceManager.loopManager.getLoopState { (manager, state) -> Void in
-            predictedGlucoseValues = state.predictedGlucose ?? []
+            predictedGlucoseValues = state.predictedGlucoseIncludingPendingInsulin ?? []
 
             // Retry this refresh again if predicted glucose isn't available
             if state.predictedGlucose == nil {
@@ -1063,7 +1063,7 @@ final class StatusTableViewController: ChartsTableViewController {
     override func restoreUserActivityState(_ activity: NSUserActivity) {
         switch activity.activityType {
         case NSUserActivity.newCarbEntryActivityType:
-            performSegue(withIdentifier: CarbEntryEditViewController.className, sender: activity)
+            performSegue(withIdentifier: CarbEntryViewController.className, sender: activity)
         default:
             break
         }
@@ -1082,10 +1082,9 @@ final class StatusTableViewController: ChartsTableViewController {
         case let vc as CarbAbsorptionViewController:
             vc.deviceManager = deviceManager
             vc.hidesBottomBarWhenPushed = true
-        case let vc as CarbEntryTableViewController:
-            vc.carbStore = deviceManager.loopManager.carbStore
-            vc.hidesBottomBarWhenPushed = true
-        case let vc as CarbEntryEditViewController:
+        case let vc as CarbEntryViewController:
+            vc.deviceManager = deviceManager
+            vc.glucoseUnit = statusCharts.glucose.glucoseUnit
             vc.defaultAbsorptionTimes = deviceManager.loopManager.carbStore.defaultAbsorptionTimes
             vc.preferredUnit = deviceManager.loopManager.carbStore.preferredUnit
 
@@ -1096,10 +1095,10 @@ final class StatusTableViewController: ChartsTableViewController {
             vc.doseStore = deviceManager.loopManager.doseStore
             vc.hidesBottomBarWhenPushed = true
         case let vc as BolusViewController:
-            vc.configureWithLoopManager(self.deviceManager.loopManager,
-                recommendation: sender as? BolusRecommendation,
-                glucoseUnit: self.statusCharts.glucose.glucoseUnit
-            )
+            vc.deviceManager = deviceManager
+            vc.glucoseUnit = statusCharts.glucose.glucoseUnit
+            vc.configuration = .manualCorrection
+            AnalyticsManager.shared.didDisplayBolusScreen()
         case let vc as OverrideSelectionViewController:
             if deviceManager.loopManager.settings.futureOverrideEnabled() {
                 vc.scheduledOverride = deviceManager.loopManager.settings.scheduleOverride
@@ -1116,79 +1115,46 @@ final class StatusTableViewController: ChartsTableViewController {
         }
     }
 
-    /// Unwind segue action from the CarbEntryEditViewController
-    ///
-    /// - parameter segue: The unwind segue
-    /// RSS - This triggers when you enter carb and hit save.
-    
-    @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {
-        guard let carbVC = segue.source as? CarbEntryEditViewController, let updatedEntry = carbVC.updatedCarbEntry else {
+    @IBAction func unwindFromEditing(_ segue: UIStoryboardSegue) {}
+
+    @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {
+        guard let bolusViewController = segue.source as? BolusViewController else {
             return
         }
 //<<<<<<< HEAD
         
         // RSS - Do we need to do an addCarbEntry here for the Protain and Fat portion?
 
-        if #available(iOS 12.0, *) {
-            let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
-            interaction.donate { [weak self] (error) in
-                if let error = error {
-                    self?.log.error("Failed to donate intent: %{public}@", String(describing: error))
-                }
-            }
-        }
-
-        let notOpenBolusScreen = deviceManager.loopManager.settings.notOpenBolusScreen
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedEntry) { (result) -> Void in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let recommendation):
-                    guard !notOpenBolusScreen else { return }
-                    if self.active && self.visible, let bolus = recommendation?.amount, bolus > 0 {
-                        self.performSegue(withIdentifier: BolusViewController.className, sender: recommendation)
-                    }
-                case .failure(let error):
-                    // Ignore bolus wizard errors
-                    if error is CarbStore.CarbStoreError {
-                        self.present(UIAlertController(with: error), animated: true)
-                    } else {
-                        self.log.error("Failed to add carb entry: %{public}@", String(describing: error))
+        if let carbEntry = bolusViewController.updatedCarbEntry {
+            if #available(iOS 12.0, *) {
+                let interaction = INInteraction(intent: NewCarbEntryIntent(), response: nil)
+                interaction.donate { [weak self] (error) in
+                    if let error = error {
+                        self?.log.error("Failed to donate intent: %{public}@", String(describing: error))
                     }
                 }
             }
-        }
 
-        carbVC.FPCaloriesRatio = deviceManager.loopManager.settings.fpuRatio ?? 150.0
-        carbVC.onsetDelay = deviceManager.loopManager.settings.fpuDelay ?? 60.0
-
-        // RSS - Repeat for the fat and protein portion...
-        guard let updatedFPEntry = carbVC.updatedFPCarbEntry else {
-            return
-        }
-
-        deviceManager.loopManager.addCarbEntryAndRecommendBolus(updatedFPEntry) { (result) -> Void in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    // Never give bolus for fat and protein.
-                    print("Not recommending bolus for fat or protein.")
-                case .failure(let error):
-                    // Ignore bolus wizard errors
-                    if error is CarbStore.CarbStoreError {
-                        self.present(UIAlertController(with: error), animated: true)
-                    } else {
-                        //self.deviceManager.logger.addError(error, fromSource: "Bolus")
+            deviceManager.loopManager.addCarbEntryAndRecommendBolus(carbEntry) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        // Enact the user-entered bolus
+                        if let bolus = bolusViewController.bolus, bolus > 0 {
+                            self.deviceManager.enactBolus(units: bolus) { _ in }
+                        }
+                    case .failure(let error):
+                        // Ignore bolus wizard errors
+                        if error is CarbStore.CarbStoreError {
+                            self.present(UIAlertController(with: error), animated: true)
+                        } else {
+                            self.log.error("Failed to add carb entry: %{public}@", String(describing: error))
+                        }
                     }
                 }
             }
-        }
-    }
-
-    @IBAction func unwindFromBolusViewController(_ segue: UIStoryboardSegue) {
-        if let bolusViewController = segue.source as? BolusViewController {
-            if let bolus = bolusViewController.bolus, bolus > 0 {
-                deviceManager.enactBolus(units: bolus) { (_) in }
-            }
+        } else if let bolus = bolusViewController.bolus, bolus > 0 {
+            self.deviceManager.enactBolus(units: bolus) { _ in }
         }
     }
 
@@ -1348,7 +1314,7 @@ final class StatusTableViewController: ChartsTableViewController {
     // MARK: - Testing scenarios
 
     override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
-        if let testingScenariosManager = deviceManager.testingScenariosManager, testingScenariosManager.scenarioURLs.isEmpty {
+        if let testingScenariosManager = deviceManager.testingScenariosManager, !testingScenariosManager.scenarioURLs.isEmpty {
             if motion == .motionShake {
                 // presentScenarioSelector()
             }
@@ -1421,6 +1387,10 @@ extension StatusTableViewController: DoseProgressObserver {
 }
 
 extension StatusTableViewController: OverrideSelectionViewControllerDelegate {
+    func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didUpdatePresets presets: [TemporaryScheduleOverridePreset]) {
+        deviceManager.loopManager.settings.overridePresets = presets
+    }
+
     func overrideSelectionViewController(_ vc: OverrideSelectionViewController, didConfirmOverride override: TemporaryScheduleOverride) {
         deviceManager.loopManager.settings.scheduleOverride = override
     }

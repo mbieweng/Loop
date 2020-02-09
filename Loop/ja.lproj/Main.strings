@@ -1,5 +1,5 @@
 /* Class = "UINavigationItem"; title = "Status"; ObjectID = "3kU-n2-fha"; */
-"3kU-n2-fha.title" = "状態";
+"3kU-n2-fha.title" = "ステータス";
 
 /* Class = "UILabel"; text = "3.5 U/hour @ 12:12 PM"; ObjectID = "5gz-kZ-iF1"; */
 "5gz-kZ-iF1.text" = "3.5 U/時 @ 12:12 PM";
@@ -8,7 +8,7 @@
 "5oA-6d-ZTL.text" = "ボーラス";
 
 /* Class = "UILabel"; text = "Pump ID"; ObjectID = "5TX-kX-nBo"; */
-"5TX-kX-nBo.text" = "ポンプ ID";
+"5TX-kX-nBo.text" = "ポンプID";
 
 /* Class = "UITextField"; accessibilityLabel = "Bolus Amount"; ObjectID = "7LT-50-ZzK"; */
 "7LT-50-ZzK.accessibilityLabel" = "ボーラス量";
@@ -24,9 +24,6 @@
 
 /* Class = "UINavigationItem"; title = "Bolus"; ObjectID = "aiu-ZA-zVa"; */
 "aiu-ZA-zVa.title" = "ボーラス";
-
-/* Class = "UILabel"; text = "Title"; ObjectID = "B9F-K3-7RI"; */
-"B9F-K3-7RI.text" = "タイトル";
 
 /* Class = "UILabel"; text = "Label"; ObjectID = "bIL-Ub-qYp"; */
 "bIL-Ub-qYp.text" = "ラベル";
@@ -44,7 +41,7 @@
 "cpo-Po-gFM.text" = "ラベル";
 
 /* Class = "UILabel"; text = "g Total"; ObjectID = "d3X-AN-tA5"; */
-"d3X-AN-tA5.text" = "合計 g";
+"d3X-AN-tA5.text" = "g 合計";
 
 /* Class = "UILabel"; text = "Future glucose is predicted by combining the effects of multiple inputs. Use this tool to toggle various inputs to see how they compare to the final prediction."; ObjectID = "D4C-I2-dhA"; */
 "D4C-I2-dhA.text" = "予想グルコースは複数のインプットの効果を組み合わせて算出されます。このツールでは様々なインプットを切り替えて最終予想にどのように関わっているか見ることができます。";
@@ -89,7 +86,7 @@
 "l7l-mw-Oc9.text" = "ラベル";
 
 /* Class = "UILabel"; text = "Tap to set"; ObjectID = "m9c-SQ-djE"; */
-"m9c-SQ-djE.text" = "タップして設定";
+"m9c-SQ-djE.text" = "タップして確定";
 
 /* Class = "UILabel"; accessibilityLabel = "Units"; ObjectID = "mVz-dr-xLU"; */
 "mVz-dr-xLU.accessibilityLabel" = "単位";
@@ -125,7 +122,7 @@
 "viU-7a-kbI.text" = "残存インスリン: 1.5U";
 
 /* Class = "UINavigationItem"; title = "Carbohydrates"; ObjectID = "Vpi-5b-bY5"; */
-"Vpi-5b-bY5.title" = "糖質";
+"Vpi-5b-bY5.title" = "残存糖質";
 
 /* Class = "UITextField"; text = "4 hour"; ObjectID = "Wk3-xv-IM5"; */
 "Wk3-xv-IM5.text" = "4時間";

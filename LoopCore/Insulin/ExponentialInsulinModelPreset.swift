@@ -38,19 +38,20 @@ extension ExponentialInsulinModelPreset {
             return .minutes(55)
         }
     }
-    var initialDelay: TimeInterval {
+    
+    var effectDelay: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(20)
+            return .minutes(10)
         case .humalogNovologChild:
-            return .minutes(20)
+            return .minutes(10)
         case .fiasp:
-            return .minutes(5)
+            return .minutes(10)
         }
     }
-    
+
     var model: InsulinModel {
-        return ExponentialInsulinModel(actionDuration: actionDuration, peakActivityTime: peakActivity, initialDelay: initialDelay)
+        return ExponentialInsulinModel(actionDuration: actionDuration, peakActivityTime: peakActivity, delay: effectDelay)
     }
     
 }
@@ -59,6 +60,10 @@ extension ExponentialInsulinModelPreset {
 extension ExponentialInsulinModelPreset: InsulinModel {
     public var effectDuration: TimeInterval {
         return model.effectDuration
+    }
+    
+    public var delay: TimeInterval {
+        return model.delay
     }
 
     public func percentEffectRemaining(at time: TimeInterval) -> Double {
