@@ -112,21 +112,13 @@ final class AnalyticsManager: IdentifiableClass {
         if newValue.suspendThreshold != oldValue.suspendThreshold {
             logEvent("Minimum BG Guard change")
         }
-        
-        if newValue.fpuRatio != oldValue.fpuRatio {
-            logEvent("FPU Ratio change")
-        }
-        
-        if newValue.fpuDelay != oldValue.fpuDelay {
-            logEvent("FPU Delay change")
-        }
 
         if newValue.dosingEnabled != oldValue.dosingEnabled {
             logEvent("Closed loop enabled change")
         }
-        
-        if newValue.integralRetrospectiveCorrectionEnabled != oldValue.integralRetrospectiveCorrectionEnabled {
-            logEvent("Integral retrospective correction enabled change")
+
+        if newValue.retrospectiveCorrectionEnabled != oldValue.retrospectiveCorrectionEnabled {
+            logEvent("Retrospective correction enabled change")
         }
 
         if newValue.glucoseTargetRangeSchedule != oldValue.glucoseTargetRangeSchedule {

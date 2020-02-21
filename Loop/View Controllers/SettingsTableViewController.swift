@@ -252,7 +252,7 @@ final class SettingsTableViewController: UITableViewController {
             case .carbRatio:
                 configCell.textLabel?.text = NSLocalizedString("Carb Ratios", comment: "The title text for the carb ratio schedule")
 
-                if let carbRatioSchedule = dataManager.loopManager.carbStore.carbRatioSchedule {
+                if let carbRatioSchedule = dataManager.loopManager.carbRatioSchedule {
                     let unit = carbRatioSchedule.unit
                     let value = valueNumberFormatter.string(from: carbRatioSchedule.averageQuantity().doubleValue(for: unit)) ?? SettingsTableViewCell.NoValueString
 
@@ -263,7 +263,7 @@ final class SettingsTableViewController: UITableViewController {
             case .insulinSensitivity:
                 configCell.textLabel?.text = NSLocalizedString("Insulin Sensitivities", comment: "The title text for the insulin sensitivity schedule")
 
-                if let insulinSensitivitySchedule = dataManager.loopManager.carbStore.insulinSensitivitySchedule {
+                if let insulinSensitivitySchedule = dataManager.loopManager.insulinSensitivitySchedule {
                     let unit = insulinSensitivitySchedule.unit
                     // Schedule is in mg/dL or mmol/L, but we display as mg/dL/U or mmol/L/U
                     let average = insulinSensitivitySchedule.averageQuantity().doubleValue(for: unit)
@@ -293,22 +293,6 @@ final class SettingsTableViewController: UITableViewController {
                 
                 if let suspendThreshold = dataManager.loopManager.settings.suspendThreshold {
                     let value = valueNumberFormatter.string(from: suspendThreshold.value, unit: suspendThreshold.unit) ?? SettingsTableViewCell.TapToSetString
-                    configCell.detailTextLabel?.text = value
-                } else {
-                    configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
-                }
-            case .fpRatio:
-                configCell.textLabel?.text = NSLocalizedString("Fat-Protein Ratio", comment: "The title text in settings")
-                if let fpuRatio = dataManager.loopManager.settings.fpuRatio {
-                    let value = valueNumberFormatter.string(from: fpuRatio) ??  SettingsTableViewCell.TapToSetString
-                    configCell.detailTextLabel?.text = value
-                } else {
-                    configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
-                }
-            case .fpDelay: // This displays the value on the otions screen but not in the cell itself.
-                configCell.textLabel?.text = NSLocalizedString("Fat-Protein Delay", comment: "The title text in settings")
-                if let fpuDelay = dataManager.loopManager.settings.fpuDelay {
-                    let value = valueNumberFormatter.string(from: fpuDelay) ?? SettingsTableViewCell.TapToSetString
                     configCell.detailTextLabel?.text = value
                 } else {
                     configCell.detailTextLabel?.text = SettingsTableViewCell.TapToSetString
@@ -499,7 +483,6 @@ final class SettingsTableViewController: UITableViewController {
         case .configuration:
             let row = ConfigurationRow(rawValue: indexPath.row)!
             switch row {
-
             case .carbRatio:
                 let scheduleVC = DailyQuantityScheduleTableViewController()
 
@@ -557,34 +540,6 @@ final class SettingsTableViewController: UITableViewController {
                     self.show(vc, sender: sender)
                 } else if let unit = dataManager.loopManager.glucoseStore.preferredUnit {
                     let vc = GlucoseThresholdTableViewController(threshold: nil, glucoseUnit: unit)
-                    vc.delegate = self
-                    vc.indexPath = indexPath
-                    vc.title = sender?.textLabel?.text
-                    self.show(vc, sender: sender)
-                }
-                case .fpRatio: // This is where they get set when you click on the option..
-                if let theFPURatio = dataManager.loopManager.settings.fpuRatio {
-                    let vc = FPURatioTableViewController(fpuRatioVal: theFPURatio)
-                    vc.delegate = self
-                    vc.indexPath = indexPath
-                    vc.title = sender?.textLabel?.text
-                    self.show(vc, sender: sender)
-                } else {
-                    let vc = FPURatioTableViewController(fpuRatioVal: nil)
-                    vc.delegate = self
-                    vc.indexPath = indexPath
-                    vc.title = sender?.textLabel?.text
-                    self.show(vc, sender: sender)
-                }
-            case .fpDelay: // This is where they get set when you click on the option..
-                if let theFPUDelay = dataManager.loopManager.settings.fpuDelay {
-                    let vc = FPUDelayTableViewController(fpuDelayVal: theFPUDelay)
-                    vc.delegate = self
-                    vc.indexPath = indexPath
-                    vc.title = sender?.textLabel?.text
-                    self.show(vc, sender: sender)
-                } else {
-                    let vc = FPUDelayTableViewController(fpuDelayVal: nil)
                     vc.delegate = self
                     vc.indexPath = indexPath
                     vc.title = sender?.textLabel?.text
@@ -716,13 +671,6 @@ final class SettingsTableViewController: UITableViewController {
 
     @objc private func dosingEnabledChanged(_ sender: UISwitch) {
         dataManager.loopManager.settings.dosingEnabled = sender.isOn
-
-        tableView.reloadRows(
-            at: [
-                IndexPath(row: LoopRow.microbolus.rawValue, section: Section.loop.rawValue)
-            ],
-            with: .none
-        )
     }
 }
 
@@ -923,18 +871,6 @@ extension SettingsTableViewController: LoopKitUI.TextFieldTableViewControllerDel
                         dataManager.loopManager.settings.suspendThreshold = GlucoseThreshold(unit: controller.glucoseUnit, value: minBGGuard)
                     } else {
                         dataManager.loopManager.settings.suspendThreshold = nil
-                    }
-                    case .fpRatio: 
-                    if let value = controller.value, let fpuRatio = valueNumberFormatter.number(from: value)?.doubleValue {
-                        dataManager.loopManager.settings.fpuRatio = fpuRatio
-                    } else {
-                        dataManager.loopManager.settings.fpuRatio = nil
-                    }
-                case .fpDelay:
-                    if let value = controller.value, let fpuDelay = valueNumberFormatter.number(from: value)?.doubleValue {
-                        dataManager.loopManager.settings.fpuDelay = fpuDelay
-                    } else {
-                        dataManager.loopManager.settings.fpuDelay = nil
                     }
                 default:
                     assertionFailure()

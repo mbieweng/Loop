@@ -106,16 +106,6 @@ extension UserDefaults {
                 if maximumBasalRatePerHour! <= 0 {
                     maximumBasalRatePerHour = nil
                 }
-                
-                var fpuRatio: Double? = double(forKey: "com.loudnate.Naterade.FPURatio")
-                if fpuRatio! <= 0 {
-                    fpuRatio = nil
-                }
-                
-                var fpuDelay: Double? = double(forKey: "com.loudnate.Naterade.FPUDelay")
-                if fpuDelay! <= 0 {
-                    fpuDelay = nil
-                }
 
                 var maximumBolus: Double? = double(forKey: "com.loudnate.Naterade.MaximumBolus")
                 if maximumBolus! <= 0 {
@@ -127,11 +117,7 @@ extension UserDefaults {
                     glucoseTargetRangeSchedule: glucoseTargetRangeSchedule,
                     maximumBasalRatePerHour: maximumBasalRatePerHour,
                     maximumBolus: maximumBolus,
-                    suspendThreshold: suspendThreshold,
-//                 retrospectiveCorrectionEnabled: bool(forKey: "com.loudnate.Loop.RetrospectiveCorrectionEnabled"),
-                    integralRetrospectiveCorrectionEnabled: bool(forKey: "com.loopkit.Loop.IntegralRetrospectiveCorrectionEnabled"),
-                    fpuRatio: fpuRatio,
-                    fpuDelay: fpuDelay
+                    suspendThreshold: suspendThreshold
                 )
                 self.loopSettings = settings
 

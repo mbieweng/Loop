@@ -62,6 +62,8 @@ final class BolusViewController: ChartsTableViewController, IdentifiableClass, U
 
         let amount = bolusRecommendation?.amount ?? 0
         bolusAmountTextField.accessibilityHint = String(format: NSLocalizedString("Recommended Bolus: %@ Units", comment: "Accessibility hint describing recommended bolus units"), spellOutFormatter.string(from: amount) ?? "0")
+        bolusAmountChanged()
+        bolusAmountTextField.becomeFirstResponder()
     }
 
     override func viewDidLayoutSubviews() {
@@ -143,7 +145,8 @@ final class BolusViewController: ChartsTableViewController, IdentifiableClass, U
         didSet {
             let amount = bolusRecommendation?.amount ?? 0
             recommendedBolusAmountLabel?.text = bolusUnitsFormatter.string(from: amount)
-
+            bolusAmountTextField.text = bolusUnitsFormatter.string(from: amount)   // MB Prefill with recommened amount
+            
             updateNotice()
             let wasNoticeRowHidden = oldValue?.notice == nil
             let isNoticeRowHidden = bolusRecommendation?.notice == nil
@@ -456,7 +459,7 @@ final class BolusViewController: ChartsTableViewController, IdentifiableClass, U
             return nil
         }
 
-        return amount >= 0 ? amount : nil
+        return amount > 0 ? amount : nil
     }
 
     private var enteredBolus: DoseEntry? {

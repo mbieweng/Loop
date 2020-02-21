@@ -11,10 +11,9 @@ import LoopCore
 // MARK: - Static configuration
 extension LoopSettings {
     var enabledEffects: PredictionInputEffect {
-        var inputs = PredictionInputEffect.all
-        if !retrospectiveCorrectionEnabled {
-            inputs.remove(.retrospection)
-        }
+        let inputs = PredictionInputEffect.all
+        // To disable retrospective correction, uncomment line below and change `let` to `var` above
+        // inputs.remove(.retrospection)
         return inputs
     }
 
@@ -22,12 +21,7 @@ extension LoopSettings {
 
     /// Creates an instance of the enabled retrospective correction implementation
     var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection {
-        
-        if (integralRetrospectiveCorrectionEnabled) {
-            return IntegralRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
-        } else {
-            return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
-        }
-        
+        return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
     }
+    
 }

@@ -26,8 +26,6 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
         tableView.rowHeight = UITableView.automaticDimension
         tableView.cellLayoutMarginsFollowReadableWidth = true
-        
-        tableView.register(SwitchTableViewCell.self, forCellReuseIdentifier: SwitchTableViewCell.className)
 
         glucoseChart.glucoseDisplayRange = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 60)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 200)
 
@@ -188,17 +186,8 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
     private enum Section: Int, CaseIterable {
         case charts
         case inputs
-        case settings
-        
-        static let count = 3
     }
 
-    fileprivate enum SettingsRow: Int, CaseCountable {
-        case integralRetrospectiveCorrection
-  
-        static let count = 1
-    }
-    
     private var eventualGlucoseDescription: String?
 
     private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection, .zeroTemp]
@@ -215,8 +204,6 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             return 1
         case .inputs:
             return availableInputs.count
-        case .settings:
-            return SettingsRow.count
         }
     }
     
@@ -240,20 +227,6 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             let cell = tableView.dequeueReusableCell(withIdentifier: PredictionInputEffectTableViewCell.className, for: indexPath) as! PredictionInputEffectTableViewCell
             self.tableView(tableView, updateTextFor: cell, at: indexPath)
             return cell
-        case .settings:
-            let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
-
-            switch SettingsRow(rawValue: indexPath.row)! {
-            case .integralRetrospectiveCorrection:
-                switchCell.textLabel?.text = NSLocalizedString("Integral Retrospective Correction", comment: "Title of the switch which toggles integral retrospective correction effects")
-                // switchCell.detailTextLabel?.text = NSLocalizedString("Respond more aggressively to persistent discrepancies between observed glucose movement and predictions based on carbohydrate and insulin models.", comment: "The description of the switch which toggles integral retrospective correction effects")
-                switchCell.switch?.isOn = deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled
-                switchCell.switch?.addTarget(self, action: #selector(integralRetrospectiveCorrectionSwitchChanged(_:)), for: .valueChanged)
-
-                switchCell.contentView.layoutMargins.left = tableView.separatorInset.left
-            }
-
-            return switchCell
         }
     }
     
@@ -293,94 +266,43 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
             values.append(formatter.string(from: lastDiscrepancy.quantity, for: glucoseChart.glucoseUnit) ?? "?")
 
             let retro = String(
-                format: NSLocalizedString("prediction-description-retrospective-correction", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
+                format: NSLocalizedString("Predicted: %1$@\nActual: %2$@ (%3$@)", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
                 values[0], values[1], values[2]
             )
-            if !deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled {
-                // Standard retrospective correction
-                subtitleText = String(format: "%@\n%@", subtitleText, retro)
-            } else {
-                // Integral retrospective correction
-                var integralEffectDisplay = "?"
-                var totalEffectDisplay = "?"
-                if let totalEffect = self.totalRetrospectiveCorrection {
-                    let integralEffectValue = totalEffect.doubleValue(for: glucoseChart.glucoseUnit) - lastDiscrepancy.quantity.doubleValue(for: glucoseChart.glucoseUnit)
-                    let integralEffect = HKQuantity(unit: glucoseChart.glucoseUnit, doubleValue: integralEffectValue)
-                    integralEffectDisplay = formatter.string(from: integralEffect, for: glucoseChart.glucoseUnit) ?? "?"
-                    totalEffectDisplay = formatter.string(from: totalEffect, for: glucoseChart.glucoseUnit) ?? "?"
-                }
-                let integralRetro = String(
-                    format: NSLocalizedString("prediction-description-integral-retrospective-correction", comment: "Format string describing integral retrospective correction. (1: Integral glucose effect)(2: Total glucose effect)"),
-                    integralEffectDisplay, totalEffectDisplay
-                )
-                subtitleText = String(format: "%@\n%@", retro, integralRetro)
-            }
+
+            // Standard retrospective correction
+            subtitleText = String(format: "%@\n%@", subtitleText, retro)
         }
-        
+
         cell.subtitleLabel?.text = subtitleText
     }
-    
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch Section(rawValue: section)! {
-        case .settings:
-            return NSLocalizedString("Algorithm Settings", comment: "The title of the section containing algorithm settings")
-        default:
-            return nil
-        }
-    }
-    
+
     // MARK: - UITableViewDelegate
-    
+
     override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         switch Section(rawValue: indexPath.section)! {
         case .charts:
             return 275
         case .inputs:
             return 60
-        case .settings:
-            return 60
         }
     }
-    
+
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard Section(rawValue: indexPath.section) == .inputs else { return }
-        
+
         let input = availableInputs[indexPath.row]
         let isSelected = selectedInputs.contains(input)
-        
+
         if let cell = tableView.cellForRow(at: indexPath) {
             cell.accessoryType = !isSelected ? .checkmark : .none
         }
-        
+
         selectedInputs.formSymmetricDifference(input)
-        
+
         tableView.deselectRow(at: indexPath, animated: true)
-        
+
         refreshContext.update(with: .status)
         reloadData()
-    }
-    
-    // MARK: - Actions
-    
-    /*
-    @objc private func retrospectiveCorrectionSwitchChanged(_ sender: UISwitch) {
-        deviceManager.loopManager.settings.retrospectiveCorrectionEnabled = sender.isOn
-        
-        // if retrospective correction is disabled, integral retrospective correction must also be disabled
-        if !sender.isOn {
-            deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled = sender.isOn
-        }
-        
-        if  let row = availableInputs.index(where: { $0 == .retrospection }),
-            let cell = tableView.cellForRow(at: IndexPath(row: row, section: Section.inputs.rawValue)) as? PredictionInputEffectTableViewCell
-        {
-            cell.enabled = self.deviceManager.loopManager.settings.retrospectiveCorrectionEnabled
-        }
-    }
- */
-    
-    
-    @objc private func integralRetrospectiveCorrectionSwitchChanged(_ sender: UISwitch) {
-        deviceManager.loopManager.settings.integralRetrospectiveCorrectionEnabled = sender.isOn
     }
 }

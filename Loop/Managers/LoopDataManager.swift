@@ -873,26 +873,6 @@ extension LoopDataManager {
 
                 updateGroup.leave()
             }
-
-            // effects due to future food entries, for carb-correction purposes
-            let sampleStart = lastGlucoseDate.addingTimeInterval(.minutes(-20.0))
-            updateGroup.enter()
-            carbStore.getGlucoseEffects(
-                start: sampleStart,
-                sampleStart: sampleStart,
-                effectVelocities: settings.dynamicCarbAbsorptionEnabled ? insulinCounteractionEffects : nil
-            ) { (result) -> Void in
-                switch result {
-                case .failure(let error):
-                    self.logger.error(error)
-                    self.carbEffectFutureFood = nil
-                case .success(let effects):
-                    self.carbEffectFutureFood = effects
-                }
-
-                updateGroup.leave()
-            }
-
         }
 
         if carbsOnBoard == nil {
@@ -1200,8 +1180,8 @@ extension LoopDataManager {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
         }
         let maximumHyperLoopAgressiveness = 0.50
-        let hyperLoopGlucoseThreshold = 160.0
-        let hyperLoopGlucoseWindow = 60.0
+        let hyperLoopGlucoseThreshold = currentSuspendThreshold().doubleValue(for: HKUnit.milligramsPerDeciliter) + 50 // 160.0
+        let hyperLoopGlucoseWindow = 50.0
         let glucoseError = max(0.0, min(hyperLoopGlucoseWindow, glucoseValue - hyperLoopGlucoseThreshold))
         let hyperLoopAgressiveness = maximumHyperLoopAgressiveness * glucoseError / hyperLoopGlucoseWindow
         fractionalZeroTempEffect = effectFraction(glucoseEffect: zeroTempEffect, fraction: hyperLoopAgressiveness)
