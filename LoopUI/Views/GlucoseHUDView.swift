@@ -128,7 +128,7 @@ public final class GlucoseHUDView: BaseHUDView {
             sensorAlertState = .ok
         }
 
-        //unitLabel.text = unitStrings.joined(separator: " ")
+        unitLabel.text = unitStrings.joined(separator: " ")
         accessibilityValue = accessibilityStrings.joined(separator: ", ")
     }
     

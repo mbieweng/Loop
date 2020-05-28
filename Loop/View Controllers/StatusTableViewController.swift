@@ -5,7 +5,6 @@
 //  Created by Nathan Racklyeft on 9/6/15.
 //  Copyright © 2015 Nathan Racklyeft. All rights reserved.
 //
-//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import UIKit
 import HealthKit
@@ -212,8 +211,6 @@ final class StatusTableViewController: ChartsTableViewController {
             }
         }
     }
-    
-    //var dataManager: DeviceDataManager! // RSS
 
     // Toggles the display mode based on the screen aspect ratio. Should not be updated outside of reloadData().
     private var landscapeMode = false
@@ -1146,9 +1143,6 @@ final class StatusTableViewController: ChartsTableViewController {
         guard let bolusViewController = segue.source as? BolusViewController else {
             return
         }
-//<<<<<<< HEAD
-        
-        // RSS - Do we need to do an addCarbEntry here for the Protain and Fat portion?
 
         if let carbEntry = bolusViewController.updatedCarbEntry {
             if #available(iOS 12.0, *) {

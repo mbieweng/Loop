@@ -4,7 +4,6 @@
 //
 //  Copyright © 2017 LoopKit Authors. All rights reserved.
 //
-//  Fat-Protein Unit code by Robert Silvers, 10/2018.
 
 import UIKit
 import HealthKit
@@ -81,8 +80,6 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
     private var refreshContext = RefreshContext.all
 
     private var reloading = false
-    
-    var dataManager: DeviceDataManager! // RSS
 
     private var carbStatuses: [CarbStatus<StoredCarbEntry>] = []
 
@@ -125,9 +122,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
         }
         charts.startDate = chartStartDate
 
-        // Extend view to past 24 hours (per Bharat)
-        let visiblePeriod = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Calendar.current.startOfDay(for: Date())
-        let listStart = min(visiblePeriod, chartStartDate)
+        let midnight = Calendar.current.startOfDay(for: Date())
+        let listStart = min(midnight, chartStartDate, Date(timeIntervalSinceNow: -deviceManager.loopManager.carbStore.maximumAbsorptionTimeInterval))
 
         let reloadGroup = DispatchGroup()
         let shouldUpdateGlucose = currentContext.contains(.glucose)
@@ -179,8 +175,8 @@ final class CarbAbsorptionViewController: ChartsTableViewController, Identifiabl
 
         if shouldUpdateCarbs {
             reloadGroup.enter()
-            // Extend view to past 24 hours (per Bharat)
-            self.deviceManager.loopManager.carbStore.getTotalCarbs(since: visiblePeriod) { (result) in                switch result {
+            deviceManager.loopManager.carbStore.getTotalCarbs(since: midnight) { (result) in
+                switch result {
                 case .success(let total):
                     carbTotal = total
                 case .failure(let error):

@@ -460,7 +460,7 @@ final class BolusViewController: ChartsTableViewController, IdentifiableClass, U
             return nil
         }
 
-        return amount > 0 ? amount : nil
+        return amount >= 0 ? amount : nil
     }
 
     private var enteredBolus: DoseEntry? {

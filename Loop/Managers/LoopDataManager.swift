@@ -10,7 +10,6 @@ import Foundation
 import HealthKit
 import LoopKit
 import LoopCore
-import Combine
 
 
 final class LoopDataManager {
@@ -38,8 +37,6 @@ final class LoopDataManager {
 
     private let logger: CategoryLogger
 
-    private var loopSubscription: AnyCancellable?
-
     // References to registered notification center observers
     private var notificationObservers: [Any] = []
 
@@ -49,9 +46,6 @@ final class LoopDataManager {
         }
     }
 
-    // Make overall retrospective effect available for display to the user
-    var totalRetrospectiveCorrection: HKQuantity?
-    
     // dm61 variables for mean square error calculation
     var meanSquareError: Double = 0
     var nMSE: Double = 0.0
@@ -89,8 +83,6 @@ final class LoopDataManager {
             overrideHistory: overrideHistory,
             carbAbsorptionModel: .nonlinear
         )
-
-        totalRetrospectiveCorrection = nil
 
         doseStore = DoseStore(
             healthStore: healthStore,
@@ -703,37 +695,15 @@ extension LoopDataManager {
     /// Executes an analysis of the current data, and recommends an adjustment to the current
     /// temporary basal rate.
     func loop() {
-        let updatePublisher = Deferred {
-            Future<(), Error> { promise in
-                do {
-                    try self.update()
-                    promise(.success(()))
-                } catch let error {
-                    promise(.failure(error))
-                }
-            }
-        }
-        .subscribe(on: dataAccessQueue)
-        .eraseToAnyPublisher()
+        self.dataAccessQueue.async {
+            self.logger.default("Loop running")
+            NotificationCenter.default.post(name: .LoopRunning, object: self)
 
-        let enactBolusPublisher = Deferred {
-            Future<Bool, Error> { promise in
-                self.calculateAndEnactMicroBolusIfNeeded { enacted, error in
-                    if let error = error {
-                        promise(.failure(error))
-                    }
-                    promise(.success(enacted))
-                }
-            }
-        }
-        .subscribe(on: dataAccessQueue)
-        .eraseToAnyPublisher()
+            self.lastLoopError = nil
+            let startDate = Date()
 
-        let setBasalPublisher = Deferred {
-            Future<(), Error> { promise in
-                guard self.settings.dosingEnabled else {
-                    return promise(.success(()))
-                }
+            do {
+                try self.update()
 
                 if self.settings.dosingEnabled {
                     self.enactDose { (error) -> Void in
@@ -747,39 +717,19 @@ extension LoopDataManager {
                         self.logger.default("Loop ended")
                         self.notify(forChange: .tempBasal)
                     }
-                    promise(.success(()))
-                }
 
-            }
-        }
-        .subscribe(on: dataAccessQueue)
-        .eraseToAnyPublisher()
-
-        logger.default("Loop running")
-        NotificationCenter.default.post(name: .LoopRunning, object: self)
-
-        loopSubscription?.cancel()
-
-        let startDate = Date()
-        loopSubscription = updatePublisher
-            .flatMap { _ in setBasalPublisher }
-            .flatMap { _ in enactBolusPublisher }
-            .receive(on: dataAccessQueue)
-        .sink(
-            receiveCompletion: { completion in
-                switch completion {
-                case .finished:
-                    self.lastLoopError = nil
+                    // Delay the notification until we know the result of the temp basal
+                    return
+                } else {
                     self.loopDidComplete(date: Date(), duration: -startDate.timeIntervalSinceNow)
-                case let .failure(error):
-                    self.lastLoopError = error
-                    self.logger.error(error)
                 }
-                self.logger.default("Loop ended")
-                self.notify(forChange: .tempBasal)
-        },
-            receiveValue: { _ in }
-        )
+            } catch let error {
+                self.lastLoopError = error
+            }
+
+            self.logger.default("Loop ended")
+            self.notify(forChange: .tempBasal)
+        }
     }
 
     /// - Throws:
@@ -1012,23 +962,23 @@ extension LoopDataManager {
             
             // Bolus needed
            
-            if(!settings.microbolusSettings.enabled) {
-                let minAlertBolus : Double = 2.0;
-                let minTime : Double = 9 * 60 // sec;
-                let bolusAmount : Double = recommendedBolus?.recommendation.amount ?? 0
-                
-                if(bolusAmount > minAlertBolus) {
-                    if (bolusAlertStartTime.timeIntervalSinceNow < -minTime ) {
-                        NotificationManager.sendRecommendBolusNotification(quantity: bolusAmount)
-                        DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
-                        bolusAlertStartTime = Date.init();
-                    } else {
-                        //DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
-                    }
-                } else {
+            //if(!settings.microbolusSettings.enabled) {
+            let minAlertBolus : Double = 2.0;
+            let minTime : Double = 9 * 60 // sec;
+            let bolusAmount : Double = recommendedManualBolus?.recommendation.amount ?? 0
+            
+            if(bolusAmount > minAlertBolus) {
+                if (bolusAlertStartTime.timeIntervalSinceNow < -minTime ) {
+                    NotificationManager.sendRecommendBolusNotification(quantity: bolusAmount)
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend bolus alert \(bolusAmount)")
                     bolusAlertStartTime = Date.init();
+                } else {
+                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("Recommend \(bolusAmount) bolus for past \(-bolusAlertStartTime.timeIntervalSinceNow/60) min, waiting for \(minTime/60) ")
                 }
+            } else {
+                bolusAlertStartTime = Date.init();
             }
+            // }
             
             
         }
@@ -1304,21 +1254,17 @@ extension LoopDataManager {
         guard let carbEffects = self.carbEffect else {
             retrospectiveGlucoseDiscrepancies = nil
             retrospectiveGlucoseEffect = []
-            totalRetrospectiveCorrection = nil
             throw LoopError.missingDataError(.carbEffect)
         }
 
         // Get most recent glucose, otherwise clear effect and throw error
         guard let glucose = self.glucoseStore.latestGlucose else {
             retrospectiveGlucoseEffect = []
-            totalRetrospectiveCorrection = nil
             throw LoopError.missingDataError(.glucose)
         }
 
         // Get timeline of glucose discrepancies
         retrospectiveGlucoseDiscrepancies = insulinCounteractionEffects.subtracting(carbEffects, withUniformInterval: carbStore.delta)
-
-        retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
 
         // Calculate retrospective correction
         retrospectiveGlucoseEffect = retrospectiveCorrection.computeEffect(
@@ -1992,17 +1938,6 @@ protocol LoopDataManagerDelegate: class {
     ///   - units: The recommended bolus in U
     /// - Returns: a supported bolus volume in U. The volume returned should be the nearest deliverable volume.
     func loopDataManager(_ manager: LoopDataManager, roundBolusVolume units: Double) -> Double
-
-    /// Informs the delegate that a micro bolus is recommended
-    ///
-    /// - Parameters:
-    ///   - manager: The manager
-    ///   - bolus: The new recommended micro bolus
-    ///   - completion: A closure called once on completion
-    func loopDataManager(_ manager: LoopDataManager, didRecommendMicroBolus bolus: (amount: Double, date: Date), completion: @escaping (_ error: Error?) -> Void) -> Void
-
-    /// Current bolus state
-    var bolusState: PumpManagerStatus.BolusState? { get }
 }
 
 private extension TemporaryScheduleOverride {

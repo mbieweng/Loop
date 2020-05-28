@@ -12,7 +12,7 @@ import LoopKit
 import LoopKitUI
 import LoopCore
 import LoopTestingKit
-import Combine
+
 
 final class SettingsTableViewController: UITableViewController {
 
@@ -53,7 +53,6 @@ final class SettingsTableViewController: UITableViewController {
 
     fileprivate enum LoopRow: Int, CaseCountable {
         case dosing = 0
-        case microbolus
         case diagnostic
         case estimation
     }
@@ -92,8 +91,6 @@ final class SettingsTableViewController: UITableViewController {
 
         return formatter
     }()
-
-    private var microbolusCancellable: AnyCancellable?
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         switch segue.destination {
@@ -180,26 +177,6 @@ final class SettingsTableViewController: UITableViewController {
                 switchCell.switch?.addTarget(self, action: #selector(dosingEnabledChanged(_:)), for: .valueChanged)
 
                 return switchCell
-            case .microbolus:
-                let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
-
-                cell.textLabel?.text = NSLocalizedString("Microboluses", comment: "The title text for the Microboluses cell")
-                let settings = dataManager.loopManager.settings
-                cell.detailTextLabel?.text = {
-                    guard settings.dosingEnabled else {
-                        return "Disabled"
-                    }
-                    switch (settings.microbolusSettings.enabledWithoutCarbs, settings.microbolusSettings.enabled) {
-                    case (true, true): return "Always"
-                    case (false, true): return "With Carbs"
-                    case (true, false): return "Without Carbs"
-                    default: return "Disabled"
-                    }
-                }()
-                cell.accessoryType = .disclosureIndicator
-
-                return cell
-
             case .diagnostic:
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
 
@@ -611,34 +588,6 @@ final class SettingsTableViewController: UITableViewController {
                 vc.title = sender?.textLabel?.text
                 show(vc, sender: sender)
             
-            case .microbolus:
-                var settings = dataManager.loopManager.settings
-                guard settings.dosingEnabled else { break }
-
-                let viewModel = MicrobolusView.ViewModel(
-                    microbolusesWithCOB: settings.microbolusSettings.enabled,
-                    withCOBValue: settings.microbolusSettings.size,
-                    microbolusesWithoutCOB: settings.microbolusSettings.enabledWithoutCarbs,
-                    withoutCOBValue: settings.microbolusSettings.sizeWithoutCarbs,
-                    safeMode: settings.microbolusSettings.safeMode,
-                    microbolusesMinimumBolusSize: settings.microbolusSettings.minimumBolusSize,
-                    openBolusScreen: settings.microbolusSettings.shouldOpenBolusScreen
-                )
-
-                microbolusCancellable = viewModel.changes()
-                    .sink { [weak self] result in
-                        guard let self = self else { return }
-                        settings.microbolusSettings = result
-                        self.dataManager.loopManager.settings = settings
-                        self.tableView.reloadRows(at: [indexPath], with: .none)
-                }
-
-                let vc = MicrobolusViewController(viewModel: viewModel)
-                vc.onDeinit = {
-                    self.microbolusCancellable?.cancel()
-                }
-
-                show(vc, sender: sender)
             case .dosing:
                 break
             }

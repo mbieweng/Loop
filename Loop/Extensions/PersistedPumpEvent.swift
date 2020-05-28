@@ -7,26 +7,12 @@
 
 import LoopKit
 import NightscoutUploadKit
-import MinimedKit
 
 
 extension PersistedPumpEvent {
     func treatment(enteredBy source: String) -> NightscoutTreatment? {
         // Doses can be inferred from other types of events, e.g. a No Delivery Alarm type indicates a suspend in delivery.
         // At the moment, Nightscout only supports straightforward events
-        
-        if let raw = raw, PumpEventType(rawValue: raw[0]) == .bgReceived, let bgReceived = BGReceivedPumpEvent(
-        availableData: raw,
-        pumpModel: PumpModel.model523
-        ) {
-        return BGCheckNightscoutTreatment(
-            timestamp: date,
-            enteredBy: source,
-            glucose: bgReceived.amount,
-            glucoseType: .Meter,
-            units: .MGDL)
-    }
-        
         guard let type = type, let dose = dose, dose.type.pumpEventType == type else {
             return nil
         }
@@ -47,7 +33,6 @@ extension PersistedPumpEvent {
                 duration: duration,
                 carbs: 0,
                 ratio: 0,
-                /// MB Temp fix for duplicate boluses
                 id: dose.syncIdentifier
             )
         case .resume:
@@ -61,10 +46,6 @@ extension PersistedPumpEvent {
                 temp: .Absolute,  // DoseEntry only supports .absolute types
                 rate: dose.unitsPerHour,
                 absolute: dose.unitsPerHour,
-                
-                
-                /// MB Temp fix for duplicate boluses
-                // duration: Int(dose.endDate.timeIntervalSince(dose.startDate).minutes)
                 duration: dose.endDate.timeIntervalSince(dose.startDate),
                 amount: dose.deliveredUnits,
                 id: dose.syncIdentifier

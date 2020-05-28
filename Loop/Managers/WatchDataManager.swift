@@ -205,9 +205,6 @@ final class WatchDataManager: NSObject {
             context.recommendedBolusDose = state.recommendedBolus?.recommendation.amount
             context.cob = state.carbsOnBoard?.quantity.doubleValue(for: HKUnit.gram())
             context.glucoseTrendRawValue = self.deviceManager.sensorState?.trendType?.rawValue
-            context.doNotOpenBolusScreenWithMicroboluses = loopManager.settings.dosingEnabled
-                && loopManager.settings.microbolusSettings.enabled
-                && !loopManager.settings.microbolusSettings.shouldOpenBolusScreen
 
             context.cgmManagerState = self.deviceManager.cgmManager?.rawValue
 

@@ -211,8 +211,7 @@ final class DeviceDataManager {
                 }
                 
                 let report = [
-                    "## LoopVersion",
-                    "* Version: \(Bundle.main.localizedNameAndVersion)",
+                    Bundle.main.localizedNameAndVersion,
                     "* gitRevision: \(Bundle.main.gitRevision ?? "N/A")",
                     "* gitBranch: \(Bundle.main.gitBranch ?? "N/A")",
                     "* sourceRoot: \(Bundle.main.sourceRoot ?? "N/A")",
@@ -715,15 +714,6 @@ extension DeviceDataManager: LoopDataManagerDelegate {
             completion(bolusError)
         }
     }
-
-    func loopDataManager(_ manager: LoopDataManager, didRecommendMicroBolus bolus: (amount: Double, date: Date), completion: @escaping (_ error: Error?) -> Void) -> Void {
-        enactBolus(
-            units: bolus.amount,
-            at: bolus.date,
-            completion: completion)
-    }
-
-    var bolusState: PumpManagerStatus.BolusState? { pumpManager?.status.bolusState }
 }
 
 extension Notification.Name {

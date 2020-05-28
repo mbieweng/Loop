@@ -32,7 +32,6 @@ final class WatchContext: RawRepresentable {
     var lastNetTempBasalDose: Double?
     var lastNetTempBasalDate: Date?
     var recommendedBolusDose: Double?
-    var doNotOpenBolusScreenWithMicroboluses: Bool?
 
     var cob: Double?
     var iob: Double?
@@ -71,7 +70,6 @@ final class WatchContext: RawRepresentable {
         lastNetTempBasalDate = rawValue["bad"] as? Date
         recommendedBolusDose = rawValue["rbo"] as? Double
         cob = rawValue["cob"] as? Double
-        doNotOpenBolusScreenWithMicroboluses = rawValue["mb"] as? Bool
 
         cgmManagerState = rawValue["cgmManagerState"] as? CGMManager.RawStateValue
 
@@ -105,7 +103,6 @@ final class WatchContext: RawRepresentable {
         raw["r"] = reservoir
         raw["rbo"] = recommendedBolusDose
         raw["rp"] = reservoirPercentage
-        raw["mb"] = doNotOpenBolusScreenWithMicroboluses
 
         raw["pg"] = predictedGlucose?.rawValue
 

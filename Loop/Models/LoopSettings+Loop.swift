@@ -23,5 +23,4 @@ extension LoopSettings {
     var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection {
         return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
     }
-    
 }

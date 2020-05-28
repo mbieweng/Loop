@@ -31,9 +31,9 @@ extension ExponentialInsulinModelPreset {
     var peakActivity: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(85)
-        case .humalogNovologChild:
             return .minutes(75)
+        case .humalogNovologChild:
+            return .minutes(65)
         case .fiasp:
             return .minutes(55)
         }
@@ -53,7 +53,6 @@ extension ExponentialInsulinModelPreset {
     var model: InsulinModel {
         return ExponentialInsulinModel(actionDuration: actionDuration, peakActivityTime: peakActivity, delay: effectDelay)
     }
-    
 }
 
 
