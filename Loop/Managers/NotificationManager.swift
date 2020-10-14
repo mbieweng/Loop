@@ -130,6 +130,7 @@ struct NotificationManager {
 
         notification.sound = .default
         notification.categoryIdentifier = LoopNotificationCategory.lowGluc.rawValue
+    
         
         let request = UNNotificationRequest(
             identifier: "\(LoopNotificationCategory.lowGluc.rawValue)\(UUID().uuidString)",
