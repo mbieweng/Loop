@@ -5,7 +5,6 @@
 //  Created by Dragan Maksimovic on 7/16/19.
 //  Copyright © 2019 LoopKit Authors. All rights reserved.
 //
-
 import Foundation
 import HealthKit
 import LoopKit
@@ -309,7 +308,8 @@ class EstimationInterval {
             let basalEffect = self.basalEffect?.filterDateRange(start, end),
             glucose.count > 5
             else {
-                return( nil )
+            let noEstimatedParameters: EstimatedMultipliers? = nil
+                return( noEstimatedParameters )
         }
         
         guard
@@ -320,7 +320,8 @@ class EstimationInterval {
             let startBasal = basalEffect.first?.quantity.doubleValue(for: unit),
             let endBasal = basalEffect.last?.quantity.doubleValue(for: unit)
             else {
-                return( nil )
+            let noEstimatedParameters: EstimatedMultipliers? = nil
+                return( noEstimatedParameters )
         }
         
         let deltaGlucose = endGlucose - startGlucose

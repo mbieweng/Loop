@@ -312,7 +312,8 @@ final class LoopDataManager {
         NotificationManager.scheduleLoopNotRunningNotifications()
         AnalyticsManager.shared.loopDidSucceed(duration)
         NotificationCenter.default.post(name: .LoopCompleted, object: self)
-
+        
+        self.checkAlerts() // MB
     }
 }
 
@@ -874,7 +875,7 @@ extension LoopDataManager {
         }
         
         // MB Custom
-        checkAlerts()
+        // checkAlerts()
        
     }
     
@@ -910,7 +911,7 @@ extension LoopDataManager {
                 //NSLog("MB Prediction error alert: %.0f", currentVal-retroVal)
                 NotificationManager.sendForecastErrorNotification(quantity: lastDiscrepancy);
             } else {
-                NSLog("MB Prediction error ok %.0f", lastDiscrepancy)
+                DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Prediction error ok")
             }
             
         }
@@ -921,14 +922,14 @@ extension LoopDataManager {
             
             // 30 min check
             if let nextHourMinGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.min{ $0.quantity < $1.quantity }) {
-                let lowAlertThreshold = GlucoseThreshold (unit: unit, value:80)
+                let lowAlertThreshold = GlucoseThreshold (unit: unit, value:85)
                 if nextHourMinGlucose.quantity <= lowAlertThreshold.quantity {
                     // alert
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit), time:nextHourMinGlucose.startDate, currentGlucose:glucoseStore.latestGlucose?.quantity.doubleValue(for: unit) ?? nextHourMinGlucose.quantity.doubleValue(for: unit));
-                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ALERT: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min low glucose ALERT: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
 
                 } else {
-                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 45 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
                 }
             }
 
@@ -941,13 +942,13 @@ extension LoopDataManager {
                     NotificationManager.sendLowGlucoseNotification(quantity: nextHourMinGlucose.quantity.doubleValue(for: unit), time:nextHourMinGlucose.startDate, currentGlucose:glucoseStore.latestGlucose?.quantity.doubleValue(for: unit) ?? nextHourMinGlucose.quantity.doubleValue(for: unit));
                     DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ALERT: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
                 } else {
-                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 60 min low glucose ok: min \(nextHourMinGlucose.quantity) threshold \(lowAlertThreshold)")
 
                 }
             }
             
             // High glucose
-            let highAlertThreshold = GlucoseThreshold (unit: unit, value:220)
+            let highAlertThreshold = GlucoseThreshold (unit: unit, value:180)
             if let nextHourMaxGlucose = (glucose.filter { $0.startDate <= Date().addingTimeInterval(30*60) }.last) {
                 if nextHourMaxGlucose.quantity >= highAlertThreshold.quantity {
                     // alert
@@ -955,7 +956,7 @@ extension LoopDataManager {
                     NotificationManager.sendHighGlucoseNotification(quantity: nextHourMaxGlucose.quantity.doubleValue(for: unit), time:nextHourMaxGlucose.startDate, currentGlucose:glucoseStore.latestGlucose?.quantity.doubleValue(for: unit) ?? nextHourMaxGlucose.quantity.doubleValue(for: unit));
                     DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ALERT: min \(nextHourMaxGlucose.quantity) threshold \(highAlertThreshold)")
                 } else {
-                    //DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ok: min \nextHourMaxGlucose.quantity) threshold \(highAlertThreshold)")
+                    DiagnosticLogger.shared.forCategory("MBAlerts").debug("MB Next 30 min high glucose ok: min \(nextHourMaxGlucose.quantity) threshold \(highAlertThreshold)")
 
                 }
             }
