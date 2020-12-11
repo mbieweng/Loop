@@ -1134,6 +1134,7 @@ extension LoopDataManager {
         }
 
         // dm61 hyperLoop
+        /*
         var glucoseValue = glucose.quantity.doubleValue(for: .milligramsPerDeciliter)
         if let eventualGlucoseValue = LoopMath.predictGlucose(startingAt: glucose, momentum: momentum, effects: effects).last?.quantity.doubleValue(for: .milligramsPerDeciliter) {
             glucoseValue = max( glucoseValue, eventualGlucoseValue )
@@ -1151,7 +1152,8 @@ extension LoopDataManager {
         } else {
             effects.append(self.fractionalZeroTempEffect)
         }
-
+        */
+        
         var prediction = LoopMath.predictGlucose(startingAt: glucose, momentum: momentum, effects: effects)
 
         // Dosing requires prediction entries at least as long as the insulin model duration.
