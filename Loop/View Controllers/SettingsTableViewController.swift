@@ -582,12 +582,11 @@ final class SettingsTableViewController: UITableViewController {
                 vc.title = sender?.textLabel?.text
 
                 show(vc, sender: sender)
-            
             case .estimation:
                 let vc = CommandResponseViewController.generateParameterEstimationReport(deviceManager: dataManager)
                 vc.title = sender?.textLabel?.text
+                
                 show(vc, sender: sender)
-            
             case .dosing:
                 break
             }

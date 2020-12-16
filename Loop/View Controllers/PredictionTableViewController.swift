@@ -190,7 +190,7 @@ class PredictionTableViewController: ChartsTableViewController, IdentifiableClas
 
     private var eventualGlucoseDescription: String?
 
-    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection, .zeroTemp]
+    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection, .suspendInsulinDelivery]
 
     private var selectedInputs = PredictionInputEffect.all
     

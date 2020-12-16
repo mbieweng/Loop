@@ -5,6 +5,7 @@
 //  Created by Dragan Maksimovic on 7/16/19.
 //  Copyright © 2019 LoopKit Authors. All rights reserved.
 //
+
 import Foundation
 import HealthKit
 import LoopKit
@@ -74,15 +75,15 @@ class ParameterEstimation {
             // Calculate parameter estimates over fasting subIntervals
             if estimationInterval.estimationIntervalType == .fasting {
                 var startSubInterval = estimationInterval.startDate
-                while startSubInterval.addingTimeInterval(.minutes(60)) <
+                while startSubInterval.addingTimeInterval(.minutes(180)) <
                     estimationInterval.endDate {
-                        var endSubInterval = startSubInterval.addingTimeInterval(.minutes(60))
-                        if endSubInterval.addingTimeInterval(.minutes(60)) > estimationInterval.endDate {
+                        var endSubInterval = startSubInterval.addingTimeInterval(.minutes(180))
+                        if endSubInterval.addingTimeInterval(.minutes(30)) > estimationInterval.endDate {
                             endSubInterval = estimationInterval.endDate
                         }
                         let estimatedMultipliers = estimationInterval.estimateParameterMultipliers(startSubInterval, endSubInterval)
                         estimationInterval.estimatedMultipliersSubIntervals.append(estimatedMultipliers)
-                        startSubInterval = endSubInterval.addingTimeInterval(.minutes(-30))
+                        startSubInterval = endSubInterval.addingTimeInterval(.minutes(-150))
                 }
             }
             
